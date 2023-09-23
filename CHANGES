@@ -1,0 +1,240 @@
+#=================================================
+#
+# initial: 2019-10-24
+#
+
+changes since version 2019-09-18:
+- bld/Makefile
+  - added NetCDF settings suitable for iLab platform
+- models_assim/beps_build_control
+  - set default simulation days to 7
+- models_assim/controlInput_mod.F90
+  - integrated modified version received from MSWU
+- models_assim/esmf_wrf_timemgr/ESMF_Stubs.F90
+  - outcommented include directive for mpif.h
+- scripts/create_newcase_assim
+  - script now ensures that 'obj/Mkdepends' is executable.
+
+#=================================================
+#
+# changes until version 2019-11-12:
+#
+- bld/Makefile
+  - integrated NetCDF/module specifications introduced by MSWU,
+    but moved those from branch iLab-platform to the else branch.
+- scripts/create_newcase_assim
+  - integrated changes by MSWU (2019-11-11)
+- inputdata/beps_site
+  - added additional data files sent by MSWU (2019-11-11),
+    (Site_Vcmax_yyyymm.nc, BEPS_prior_parameter_58para.nc)
+- models_assim
+  - adopted changes made by MSWU (2019-11-11)
+- regenerated reference output with the recent code revision.
+
+#=================================================
+#
+# changes until version 2019-11-22:
+#
+- bld/Makefile, models_assim/beps_build_control
+  - added flags to trigger running on iLab platform and with  debug compilation
+- models_assim
+  - adapted all changes made by MSWU (2019-11-18/2019-11-21/2019-11-22)
+    to adress missing initialisations and underflow problems.
+
+#=================================================
+#
+# changes until version 2020-04-06:
+#
+- models_assim
+  - models_assim/beps_soilMod.F90
+    - avoid unintentional save attribute for local variables 
+    - subroutine init_soil_parameters takes care of perturbations for parameters
+      Ksat/b 
+  - models_assim/beps_time_manager.F90
+    - added routine 'timemgr_diff_secs'
+    - added routine 'get_doys'
+    - function 'get_curr_calday' returns integer (instead of float)
+      (compiler had detected type inconsistency in calling contexts)
+  - models_assim/bepstype.F90
+    - public assible variable 'v2last' should have save attribute
+    - no need for 'use beps_par'
+    - indentation
+  - models_assim/bepstypeInit.F90
+    - avoid use of pointer by applying use-statements with appropriate rename
+    - indentation
+  - models_assim/controlInput_mod.F90
+    - uncommented unrequired 'use esmf'
+    - should not have 'include netcdf' together with 'use netcdf'
+    - avoid use of pointer(s) in I/O routines
+    - introduced variable 'fname' for filename
+    - reading routines with additional arguments (to avoid 'use beps_time_manager')
+  - models_assim/inter_prg.F90
+    - fixed uninitialised variables (g2_h2o, Ac_snow_o, ...)
+    !! NOTE:applied changes yield (very small) changes to the generated NetCDF output of BEPS
+    - subroutine 'inter_prg' with additional argument to avoid 'use beps_time_manager'
+  - models_assim/mid_results.F90
+    - added subroutine 'midres_dump' (for debugging purpose)
+  - models_assim/outputMod.F90
+    - slight reduction of terminal output (in order to ease readability of log files)
+    - indentation
+    - implemented consistent writing of time-values (at site-scale, hourly output)
+    - implemented consistent initialisation of NetCDF datasets with fill-value (at site-scale, hourly output)
+      *ATTENTION*: fill-value initialisation has been commented-out, as
+                   Mousong reported about problems with the NetCDF library on his platform.
+  - models_assim/rainsnowMod.F90
+    - fixed uninitialised variable (snowrate_o, routine 'snowpack_stage1')
+  - models_assim/s_coszs.F90
+    - routine 's_coszs' with additional arguments to avoid 'use beps_time_manager'
+
+- models_assim/iLab *added*
+  - directory providing a functional implementation of BEPS and the
+    corresponding tangent linear code.
+- models_assim/iLab/driver *added*
+  - directory providing the driver for running the functional implementation of BEPS
+    and it's derivative.
+
+- bld:
+  - bld/prepare_case.sh, bld/beps_build_nml.sh  *added*
+    - revised build process completely to be more flexible
+      and allow comparison against regression results
+  - Makefile
+    - has been extensively modified in order to support functional implementation
+      of BEPS and it's derivative.
+  - Makefile.org
+    - original Makefile as prepared by Mousong.
+
+- scripts:
+  - scripts/beps_inspect.py *added*
+    - (basic) python3 utility for comparison of two BEPS NetCDF output files.
+
+- iLab_refout_20100615-20100630: *added*
+  - reference output (new period)
+
+
+#=================================================
+#
+# changes until version 2020-09-03:
+#
+- bld
+  - bld/Makefile
+    - added platform dependent switch for compiler setting
+    - updated path settings for Mousong's platform to the recent
+      changes for his new computer.
+    - switched from -Og to -O0 when compiling in debug mode.
+    - added targets to create drivers for running
+      vector-forward and backward derivative code.
+  - bld/prepare_case.sh
+    - added command line switches to create and run vector-forward and backward code.
+  - scripts/beps_inspect.py
+    - improved and extended BEPS NetCDF file comparison
+    - added subcommand to compare ASCII Jacobian files.
+- models_assim
+  - models_assim/beps_soilMod.F90
+    - reverted change in subroutine init_soil_parameters
+      (perturbations for parameters Ksat/b now again in main loop)
+  - models_assim/beps_time_manager.F90
+    - function 'get_doys' switched to integer return type (before float)
+  - models_assim/AnGsMod.F90
+    - outcommented unused assignment (subroutine leaf_temperature) which
+      yields division-by-zero with check options and -O0
+  - models_assim/outputMod.F90
+    - change from YYYYMMDD to YYYY-MM-DD format for reference date in NetCDF files
+    - avoid dependency on beps_time_manager, routine 'av_output' now gets
+      required temporal information as actual arguments.
+  - models_assim/restart.F90
+    - avoid dependency on beps_time_manager, routine 'restart_io' now gets
+      required temporal information as actual arguments.
+  - models_assim/driver.F90
+    - adapted to changes in routines av_output/restart_io
+  - models_assim/bepsfunc_setup.F90
+    models_assim/mo_bepsfunc_ctl.f90
+    - renamed and extended routine 'num_time_steps' => 'beps_time_setup'
+      which is now responsible to collect all temporal information
+      (*before* BEPS can be run)
+  - models_assim/bepsfunc.F90
+    - no longer apply beps_time_manager for the temporal loop,
+      instead perform standard do-loop based on the (beforehand) collected
+      temporal information.
+      (Note, these changes will allow generation of adjoint code).
+  - models_assim/iLab/driver/runderiv.F90
+    - added support for vector-forward and backward derivative code
+  - models_assim/iLab/adsupport *added*
+    - added push/pop library routines (required for backward mode)
+
+
+#=================================================
+#
+# changes until version 2021-04-09:
+#
+- bld/Makefile
+  - adapted to changes  applied by MSW (bepspkg_2020-09-21_essi, bepspkg_2020-10-21_essi)
+- models_assim
+  - integrated changes applied by MSW (bepspkg_2020-09-21_essi, bepspkg_2020-10-21_essi),
+    in particular
+    - models_assim/beps_cos.F90  DELETED
+    - models_assim/cos_grnd.F90  ADDED
+    - models_assim/cos_plant.F90 ADDED
+  - models_assim/driver.F90
+    - kept version from bepspkg_2020-09-21_essi
+      (i.e. not calculating daily VOD as in bepspkg_2020-10-21_essi)
+  - models_assim/iLab/bepsfunc.F90
+    models_assim/iLab/bepsfunc_setup.F90
+    - revised code to adapt to changes made by MSW and to be compliant with driver.F90
+  - removed VOD from simulation vector
+    - models_assim/iLab/mo_bepsfunc_ctl.f90
+    - models_assim/iLab/bepsfunc.F90
+  - removed scalar tangent-linear code, since not needed in applications
+    - models_assim/iLab/bepsderiv_fw.f90   DELETED
+  - added environment for data assimililation,
+    several files have been added and few previous files are not needed anymore:
+    - models_assim/iLab/cost.f90              ADDED
+    - models_assim/iLab/devprior.f90          ADDED
+    - models_assim/iLab/misfit.f90            ADDED
+    - models_assim/iLab/obs.f90               ADDED
+    - models_assim/iLab/prior.f90             ADDED
+    - models_assim/iLab/driver/runsimobs.f90  ADDED
+    - models_assim/iLab/driver/rundfprv.f90   ADDED
+    - models_assim/iLab/driver/runf.f90       DELETED
+    - models_assim/iLab/nr                    ADDED (skeleton directory for Numerical Recipes)
+  - models_assim/iLab/adsupport renamed to models_assim/iLab/adsupportlib
+
+
+#=================================================
+#
+# changes until version 2021-12-21:
+#
+- integrated code changes by MSW (bepspkg_2021-06-03, 10 PFTs and activated SIF parameters)
+   - bld/beps_build_nml.sh
+   - models_assim/AnGsMod.F90
+   - models_assim/beps_par.F90
+   - models_assim/beps_phenology.F90
+   - models_assim/controlInput_mod.F90
+   - models_assim/cos_plant.F90
+   - models_assim/ecoRespMod.F90
+   - models_assim/iLab/driver/runsimobs.f90
+   - models_assim/inter_prg.F90
+   - models_assim/readcoef.F90
+   - models_assim/readparam.F90
+   - inputdata/beps_site/BEPS_prior_parameter_97para.nc (ADDED)
+   - inputdata/beps_site/Site_boundary_data_10pft.nc (ADDED)
+   - inputdata/beps_site/Site_lai_2010_2015_daily_10pft.nc (ADDED)
+- bld
+   - bld/beps_build_nml.sh
+     - potentially handle 10/100/500/1000 grid point cases
+   - bld/Makefile
+     - support ifort on iLab platform (and may serve as hint for Mousong, too)
+- models_assim
+   - models_assim/iLab/bepsfunc_setup.F90
+     (report (scaled) prior control vector as text file)
+   - models_assim/controlInput_mod.F90
+     (extended debug output)
+   - models_assim/iLab/bepsfunc_setup.F90
+     (extended logging output)
+   - models_assim/iLab/diffsizes.f90
+     (increased number of directions to 97)
+   - models_assim/iLab/obs.f90
+     (revised mmax)
+- removed input data files not relevant for BEPS package
+   - inputdata/beps_site/Site_Vcmax_??????.nc
+   - inputdata/beps_site/copy_vcmax.csh
+   - inputdata/beps_site/Site_Vcmax_template.nc

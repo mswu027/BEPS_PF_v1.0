@@ -1,0 +1,1690 @@
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   shr_kind_mod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   mid_results.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   beps_con.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   beps_par.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   meteoMod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   beps_soilMod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   ecoRespMod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   bepstype.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   ESMF_BaseMod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   ESMF_BaseTimeMod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   ESMF_CalendarMod.f90
+ESMF_CalendarMod.f90:454:18:
+
+   ndayinyearsec = ( tmpbasetime%S / 86400_ESMF_KIND_I8 ) + 1
+                  1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   ESMF_ShrTimeMod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   ESMF_FractionMod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   ESMF_TimeIntervalMod.f90
+ESMF_TimeIntervalMod.f90:1653:17:
+
+     timeInt%YR = timeInt%YR + timeInt%MM/12_ESMF_KIND_I8
+                 1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeIntervalMod.f90:1661:21:
+
+         timeInt%MM = timeInt%MM + 12_ESMF_KIND_I8
+                     1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeIntervalMod.f90:1665:21:
+
+         timeInt%MM = timeInt%MM - 12_ESMF_KIND_I8
+                     1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeIntervalMod.f90:439:13:
+
+         YY = years + timeinterval%MM / 12_ESMF_KIND_I8
+             1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeIntervalMod.f90:448:13:
+
+         MM = timeinterval%MM + years*12
+             1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeIntervalMod.f90:521:12:
+
+         D = seconds / 86400_ESMF_KIND_I8
+            1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeIntervalMod.f90:522:35:
+
+         IF ( PRESENT(S) )   S    = mod( seconds, 86400_ESMF_KIND_I8 )
+                                   1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeIntervalMod.f90:525:35:
+
+         IF ( PRESENT(S) )   S    = seconds
+                                   1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeIntervalMod.f90:549:13:
+
+         Sn = timeinterval%basetime%Sn
+             1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeIntervalMod.f90:552:13:
+
+         Sd = timeinterval%basetime%Sd
+             1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   ESMF_Stubs.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   ESMF_TimeMod.f90
+ESMF_TimeMod.f90:1473:1:
+
+         retval )
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+ESMF_TimeMod.f90:462:14:
+
+           d = cnt
+              1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeMod.f90:471:12:
+
+         H = mod( time%basetime%S, 86400_ESMF_KIND_I8 ) / 3600_ESMF_KIND_I8
+            1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeMod.f90:474:12:
+
+         M = mod( time%basetime%S, 3600_ESMF_KIND_I8) / 60_ESMF_KIND_I8
+            1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeMod.f90:477:12:
+
+         S = mod( time%basetime%S, 60_ESMF_KIND_I8 )
+            1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeMod.f90:482:14:
+
+           S = mod( time%basetime%S, 86400_ESMF_KIND_I8 )
+              1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeMod.f90:493:13:
+
+         Sd = time%basetime%Sd
+             1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeMod.f90:494:13:
+
+         Sn = time%basetime%Sn
+             1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeMod.f90:506:15:
+
+         hour = mod( time%basetime%S, 86400_ESMF_KIND_I8 ) / 3600_ESMF_KIND_I8
+               1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeMod.f90:507:17:
+
+         minute = mod( time%basetime%S, 3600_ESMF_KIND_I8) / 60_ESMF_KIND_I8
+                 1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeMod.f90:508:17:
+
+         second = mod( time%basetime%S, 60_ESMF_KIND_I8 )
+                 1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+ESMF_TimeMod.f90:894:18:
+
+       DayOfYear = ( time%basetime%S / 86400_ESMF_KIND_I8 ) + 1
+                  1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   ESMF_AlarmMod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   ESMF_ClockMod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   ESMF_AlarmClockMod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   MeatMod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   ESMF.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   beps_time_manager.f90
+beps_time_manager.f90:812:15:
+
+    get_nstep = step_no
+               1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+beps_time_manager.f90:647:10:
+
+   nstep = step_no
+          1
+Warning: Possible change of value in conversion from INTEGER(8) to INTEGER(4) at (1) [-Wconversion]
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   controlInput_mod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   bepstypeInit.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   PF_run.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   outputMod.f90
+outputMod.f90:793:14:
+
+        nt   = (secs_since_ref/3600+1)/(-nhtfrq)
+              1
+Warning: Possible change of value in conversion from REAL(8) to INTEGER(4) at (1) [-Wconversion]
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   restart.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   beps_cropMod.f90
+beps_cropMod.f90:112:1:
+
+   param%t_opt= 30+273.15
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:114:1:
+
+   param%t_max= 42+273.15
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:116:1:
+
+   param%tt_emr=80+273.15
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:118:1:
+
+   param%crit_pp= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:120:1:
+
+   param%pp_sens= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:122:1:
+
+   param%rt_dir= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:124:1:
+
+   param%alpha1= 13.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:125:1:
+
+   param%alpha2= 12.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:126:1:
+
+   param%alpha3= 13.0
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:127:1:
+
+   param%beta1= -15.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:128:1:
+
+   param%beta2= -12.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:129:1:
+
+   param%beta3= -14.0
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:131:1:
+
+   param%r_gamma= 22.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:132:1:
+
+   param%delta= -0.2587
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:134:1:
+
+   param%remob= 0.35
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:136:1:
+
+   param%cfrac_s= 0.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:138:1:
+
+   param%cfrac_r= 0.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:140:1:
+
+   param%cfrac_l= 0.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:142:1:
+
+   param%allo1= 3.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:143:1:
+
+   param%allo2= 0.4
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:145:1:
+
+   param%croplai_min= 0.001
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:147:1:
+
+   param%cropcanht_min= 0.001
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:149:1:
+
+   param%croprootc_min= 0.001
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:151:1:
+
+   param%cropharvc_min= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:153:1:
+
+   param%cropreservec_min= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:155:1:
+
+   param%dvi_at_sla_min= 2
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:162:1:
+
+   param%mu= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:164:1:
+
+   param%nu= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:166:1:
+
+   param%yield_frac= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:168:1:
+
+   param%initial_carbon= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:170:1:
+
+   param%initial_c_dvi= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:173:1:
+
+   param%sen_dvi= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:175:1:
+
+   param%t_mort= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:178:5:
+
+      param%t_bse= 5+273.15
+     1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:180:1:
+
+    param%t_opt= 27+273.15
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:182:1:
+
+    param%t_max= 40+273.15
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:184:1:
+
+    param%tt_emr= 35
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:186:1:
+
+    param%crit_pp= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:188:1:
+
+    param%pp_sens= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:190:1:
+
+    param%rt_dir= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:192:1:
+
+    param%alpha1= 20
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:193:1:
+
+    param%alpha2= 18.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:194:1:
+
+    param%alpha3= 19.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:195:1:
+
+    param%beta1= -16.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:196:1:
+
+    param%beta2= -14.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:197:1:
+
+    param%beta3= -15.0
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:199:1:
+
+    param%r_gamma= 25.9
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:200:1:
+
+    param%delta= -0.1451
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:202:1:
+
+    param%remob= 0.18
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:204:1:
+
+    param%cfrac_s= 0.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:206:1:
+
+    param%cfrac_r= 0.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:208:1:
+
+    param%cfrac_l= 0.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:210:1:
+
+    param%allo1= 1.6
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:211:1:
+
+    param%allo2= 0.4
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:213:1:
+
+    param%croplai_min= 0.001
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:215:1:
+
+    param%cropcanht_min= 0.001
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:217:1:
+
+    param%croprootc_min= 0.001
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:219:1:
+
+    param%cropharvc_min= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:221:1:
+
+    param%cropreservec_min= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:223:1:
+
+    param%dvi_at_sla_min= 2
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:229:1:
+
+    param%mu= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:231:1:
+
+    param%nu= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:233:1:
+
+    param%yield_frac= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:235:1:
+
+    param%initial_carbon= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:237:1:
+
+    param%initial_c_dvi= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:240:1:
+
+    param%sen_dvi= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:242:1:
+
+    param%t_mort= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:245:5:
+
+      param%t_bse= 0+273.15
+     1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:247:1:
+
+    param%t_opt= 20+273.15
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:249:1:
+
+    param%t_max= 30+273.15
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:251:1:
+
+    param%tt_emr= 35+273.15
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:253:1:
+
+    param%crit_pp= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:255:1:
+
+    param%pp_sens= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:257:1:
+
+    param%rt_dir= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:259:1:
+
+    param%alpha1= 18.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:260:1:
+
+    param%alpha2= 16.0
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:261:1:
+
+    param%alpha3= 18.0
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:262:1:
+
+    param%beta1= -20.0
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:263:1:
+
+    param%beta2= -15.0
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:264:1:
+
+    param%beta3= -18.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:266:1:
+
+    param%r_gamma= 27.3
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:267:1:
+
+    param%delta= -0.0507
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:269:1:
+
+    param%remob= 0.40
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:271:1:
+
+    param%cfrac_s= 0.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:273:1:
+
+    param%cfrac_r= 0.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:275:1:
+
+    param%cfrac_l= 0.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:277:1:
+
+    param%allo1= 1.4
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:278:1:
+
+    param%allo2= 0.4
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:280:1:
+
+    param%croplai_min= 0.001
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:282:1:
+
+    param%cropcanht_min= 0.001
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:284:1:
+
+    param%croprootc_min= 0.001
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:286:1:
+
+    param%cropharvc_min= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:288:1:
+
+    param%cropreservec_min= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:290:1:
+
+    param%dvi_at_sla_min= 2
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:296:1:
+
+    param%mu= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:298:1:
+
+    param%nu= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:300:1:
+
+    param%yield_frac= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:302:1:
+
+    param%initial_carbon= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:304:1:
+
+    param%initial_c_dvi= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:307:1:
+
+    param%sen_dvi= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:309:1:
+
+    param%t_mort= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:314:1:
+
+    param%t_opt= 30+273.15
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:316:1:
+
+    param%t_max= 42+273.15
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:318:1:
+
+    param%tt_emr= 60+273.15
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:320:1:
+
+    param%crit_pp= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:322:1:
+
+    param%pp_sens= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:324:1:
+
+    param%rt_dir= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:326:1:
+
+    param%alpha1= 18.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:327:1:
+
+    param%alpha2= 19.0
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:328:1:
+
+    param%alpha3= 19.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:329:1:
+
+    param%beta1= -19.0
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:330:1:
+
+    param%beta2= -17.0
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:331:1:
+
+    param%beta3= -18.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:333:1:
+
+    param%r_gamma= 20.9
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:334:1:
+
+    param%delta= -0.2724
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:336:1:
+
+    param%remob= 0.25
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:338:1:
+
+    param%cfrac_s= 0.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:340:1:
+
+    param%cfrac_r= 0.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:342:1:
+
+    param%cfrac_l= 0.5
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:344:1:
+
+    param%allo1= 1.4
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:345:1:
+
+    param%allo2= 0.4
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:347:1:
+
+    param%croplai_min= 0.001
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:349:1:
+
+    param%cropcanht_min= 0.001
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:351:1:
+
+    param%croprootc_min= 0.001
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:353:1:
+
+    param%cropharvc_min= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:355:1:
+
+    param%cropreservec_min= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:357:1:
+
+    param%dvi_at_sla_min= 2
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:364:1:
+
+    param%mu= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:366:1:
+
+    param%nu= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:368:1:
+
+    param%yield_frac= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:370:1:
+
+    param%initial_carbon= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:372:1:
+
+    param%initial_c_dvi= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:375:1:
+
+    param%sen_dvi= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:377:1:
+
+    param%t_mort= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:382:1:
+
+      param%t_opt= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:384:1:
+
+      param%t_max= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:386:1:
+
+      param%tt_emr= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:388:1:
+
+      param%crit_pp= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:390:1:
+
+      param%pp_sens= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:392:1:
+
+      param%rt_dir= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:394:1:
+
+      param%alpha1= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:395:1:
+
+      param%alpha2= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:396:1:
+
+      param%alpha3= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:397:1:
+
+      param%beta1= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:398:1:
+
+      param%beta2= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:399:1:
+
+      param%beta3= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:401:1:
+
+      param% r_gamma= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:402:1:
+
+      param%delta= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:404:1:
+
+      param%remob= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:406:1:
+
+      param%cfrac_s= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:408:1:
+
+      param%cfrac_r= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:410:1:
+
+      param%cfrac_l= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:412:1:
+
+      param%allo1= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:413:1:
+
+      param%allo2= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:415:1:
+
+      param%mu= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:417:1:
+
+      param%nu= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:419:1:
+
+      param%yield_frac= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:421:1:
+
+      param%initial_carbon= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:423:1:
+
+      param%initial_c_dvi= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:426:1:
+
+      param%sen_dvi= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:428:1:
+
+      param%t_mort= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:430:1:
+
+      param%croplai_min= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:432:1:
+
+      param%cropcanht_min= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:434:1:
+
+      param%croprootc_min= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:436:1:
+
+      param%cropharvc_min= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:438:1:
+
+      param%cropreservec_min= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:440:1:
+
+      param%dvi_at_sla_min= 0.
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:443:1:
+
+      param%cropstemc_min= 0.  ! minimum value for crop stem carbon
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:444:1:
+
+      param%cropleafc_min= 0.  ! minimum value for crop leaf carbon
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:451:2:
+
+    implicit none
+  1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:452:2:
+
+    type(Phen)         :: phenp
+  1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:454:29:
+
+     phenp%npp_ft_acc = 0.     ! Accumulated NPP (kg m-2).
+                             1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:455:1:
+
+   phenp%gpp_ft_acc = 0.     ! Accumulated GPP (kg m-2).
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:456:1:
+
+   phenp% dvi = 0.            ! crop development index
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:457:1:
+
+   phenp% rootc = 0.          ! root biomass (kg m-2)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:458:1:
+
+   phenp% harvc = 0.          ! crop yield (kg m-2)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:459:1:
+
+   phenp% reservec = 0.       ! stem reserve pool (kg m-2)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:460:1:
+
+   phenp% nonyield_diag = 0.  ! carbon that is leaving the crop model, which is not yield (kg m-2)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:463:1:
+
+   phenp% leafc = 0.        ! leaf carbon pool (kg m-2)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:464:1:
+
+   phenp% stemc = 0.        ! stem carbon pool (kg m-2)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:466:1:
+
+   phenp% f_root = 0.         ! fraction to roots
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:467:1:
+
+   phenp% f_stem = 0.         ! fraction to stem
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:468:1:
+
+   phenp% f_leaf = 0.         ! fraction to leaf
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:469:1:
+
+   phenp% f_harv = 0.         ! fraction to harvested parts
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:470:1:
+
+   phenp% extrac = 0.         ! carbon used to keep pools above their minima (kg m-2)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:471:1:
+
+   phenp% sen_fac = 0.        ! fraction of leafc to move to harvc for senescence
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:473:1:
+
+   phenp%lai = 0.   ! crop leaf area index
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:477:1:
+
+   phenp%teff = 0.  ! effective temperature (K)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:478:1:
+
+   phenp%rpe  = 0.  ! relative photoperiod effect
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:479:1:
+
+   phenp%phot = 0.  ! photoperiod (hours)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:481:1:
+
+   phenp%temp_daily=0.  ! daily mean temperature (K)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:515:1:
+
+  integer, INTENT(IN)    :: i,j
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:522:1:
+
+   phenp%teff = phenp%temp_daily - param%t_bse
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:524:1:
+
+  else if ( phenp%temp_daily > param%t_opt .AND. phenp%temp_daily < param%t_max ) then
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:526:1:
+
+   phenp%teff = param%t_opt - param%t_bse - ( ( phenp%temp_daily - param%t_opt ) &
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:527:1:
+
+                / ( param%t_max - param%t_opt ) ) * ( param%t_opt - param%t_bse )
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:529:1:
+
+  else if ( phenp%temp_daily < param%t_bse .OR. phenp%temp_daily >= param%t_max ) then
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:531:1:
+
+   phenp%teff = 0.0
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:534:1:
+
+  if ( pgdd%phot_type(i,j)==1.0 .AND. phenp%dvi < 1.0 ) then  !! Photo-period effect on development only during first phase
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:536:1:
+
+    phenp%rpe = 1.0 - ( phenp%phot - param%crit_pp ) * param%pp_sens
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:537:1:
+
+    phenp%rpe = min( 1.0, phenp%rpe )
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:538:1:
+
+    phenp%rpe = max( 0.0, phenp%rpe )
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:539:1:
+
+    phenp%dvi = phenp%dvi + phenp%rpe * phenp%teff / pgdd%tt_veg(i,j)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:541:1:
+
+  else  !! No photoperiod effect
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:543:1:
+
+    phenp%dvi = phenp%dvi + phenp%teff / pgdd%tt_rep(i,j)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:592:1:
+
+  call carbon_fraction_from_dvi(param,phenp)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:603:1:
+
+  phenp%rootc    = phenp%rootc + phenp%npp_ft_acc * phenp%f_root
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:605:1:
+
+  phenp%leafc    = phenp%leafc + phenp%npp_ft_acc * phenp%f_leaf
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:607:1:
+
+  phenp%stemc    = phenp%stemc + (phenp%npp_ft_acc * phenp%f_stem * ( 1.0 - param%remob ) )
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:609:1:
+
+  phenp%harvc    = phenp%harvc + phenp%npp_ft_acc * phenp%f_harv
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:611:1:
+
+  phenp%reservec = phenp%reservec + ( phenp%npp_ft_acc * phenp%f_stem * param%remob )
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:623:1:
+
+  if ( phenp%f_stem < 0.01 ) then
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:625:1:
+
+    phenp%harvc    = phenp%harvc + ( 0.1 * phenp%reservec )
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:626:1:
+
+    phenp%reservec = phenp%reservec * 0.9
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:628:1:
+
+  end if
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:634:1:
+
+  if ( phenp%dvi > param%sen_dvi ) then
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:636:1:
+
+    phenp%sen_fac = param%mu * ( phenp%dvi - param%sen_dvi )** param%nu
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:637:1:
+
+    phenp%sen_fac = min(phenp%sen_fac, 1.0)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:639:1:
+
+    phenp%harvc   = phenp%harvc + (phenp%sen_fac * phenp%leafc)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:640:1:
+
+    phenp%leafc   = phenp%leafc * (1.0 - phenp%sen_fac)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:641:1:
+
+  end if
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:643:1:
+
+  if ( phenp%dvi > 1.5 ) then !here use the value of sen_dvi in T.Osborne 2016 directly
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:645:1:
+
+    phenp%harvc   = phenp%harvc + (0.05 * phenp%leafc)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:646:1:
+
+    phenp%leafc   = phenp%leafc * (1.0 - 0.05)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:648:1:
+
+  end if
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:686:1:
+
+  REAL(r8) :: s1
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:693:1:
+
+  s1 = exp( param%alpha1 + ( param%beta1 * phenp%dvi ) )  !root
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:694:1:
+
+  s2 = exp( param%alpha2 + ( param%beta2 * phenp%dvi ) )  !stem
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:695:1:
+
+  s3 = exp( param%alpha3 + ( param%beta3 * phenp%dvi ) )  !leaf
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:697:1:
+
+  denom = s1 + s2 + s3 + 1.0
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:699:1:
+
+  phenp%f_root = s1 / denom
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:700:1:
+
+  phenp%f_stem = s2 / denom
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:701:1:
+
+  phenp%f_leaf = s3 / denom
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:702:1:
+
+  phenp%f_harv =  1.0 / denom
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:727:1:
+
+  if ( phenp%rootc < param%croprootc_min ) then
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:729:1:
+
+    phenp%extrac = phenp%extrac + param%croprootc_min - phenp%rootc
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:730:1:
+
+    phenp%rootc  = param%croprootc_min
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:731:1:
+
+  end if
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:733:1:
+
+  if ( phenp%harvc < param%cropharvc_min ) then
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:735:1:
+
+    phenp%extrac = phenp%extrac + param%cropharvc_min - phenp%harvc
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:736:1:
+
+    phenp%harvc  = param%cropharvc_min
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:737:1:
+
+  end if
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:739:1:
+
+  if ( phenp%reservec < param%cropreservec_min ) then
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:741:1:
+
+    phenp%extrac   = phenp%extrac + param%cropreservec_min - phenp%reservec
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:742:1:
+
+    phenp%reservec = param%cropreservec_min
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:743:1:
+
+  end if
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:745:1:
+
+  call calc_cropleafc_min(param,phenp)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:747:1:
+
+  if ( phenp%leafc < param%cropleafc_min ) then
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:749:1:
+
+    phenp%extrac = phenp%extrac + param%cropleafc_min - phenp%leafc
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:750:1:
+
+    phenp%leafc  = param%cropleafc_min
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:751:1:
+
+  end if
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:753:1:
+
+  call calc_cropstemc_min(param,phenp)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:755:1:
+
+  if ( phenp%stemc < param%cropstemc_min ) then
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:757:1:
+
+    phenp%extrac = phenp%extrac + param%cropstemc_min - phenp%stemc
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:758:1:
+
+    phenp%stemc  = param%cropstemc_min
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:759:1:
+
+  end if
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:783:1:
+
+  call leafc_from_prognostics(param,phenp)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:784:1:
+
+  param%cropleafc_min =  phenp%leafc
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:805:1:
+
+  param%cropstemc_min = phenp%stemc
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:836:1:
+
+    phenp%sla = param%r_gamma * ( phenp%dvi + 0.06 )**param%delta
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:837:1:
+
+    phenp%leafc = ( phenp%lai / phenp%sla ) * param%cfrac_l
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+beps_cropMod.f90:838:1:
+
+  end if
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   driver.f90
+driver.f90:78:43:
+
+ real(r8)             :: temp_gpp,outGPP     !crop module
+                                           1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+driver.f90:79:43:
+
+ real(r8)             :: temp_npp,outNPP     !crop module
+                                           1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+driver.f90:252:1:
+
+      call timemgr_datediff(2001*10000+1*100+1,0,yr*10000+mn*100+dy,tod,&
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+driver.f90:833:67:
+
+                             p_phenp%gpp_ft_acc=temp_accu_gpp/1000.  !crop module GPP(kg m-2 d-1)
+                                                                   1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+driver.f90:835:1:
+
+                    p_phenp%npp_ft_acc=temp_accu_npp/1000.  !crop module NPP(kg m-2 d-1)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+driver.f90:840:1:
+
+                        call beps_crop_Development(i,j,p_param,p_phenp)   !crop module
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+driver.f90:842:1:
+
+                        call beps_crop_pool_alloc(p_param,p_phenp)                !crop module
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+driver.f90:845:50:
+
+                                 temp_accu_temp=0.  !crop module
+                                                  1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+driver.f90:846:1:
+
+                           temp_accu_gpp=0.  !crop module
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+driver.f90:847:1:
+
+                           temp_accu_npp=0.  !crop module
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   aerodynamic_conductance.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   AnGsMod.f90
+AnGsMod.f90:1095:1:
+
+   M1=((wj+wc)+sqrt((wj+wc)*(wj+wc)-4*Theta*wj*wc))/(2*Theta)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1131:8:
+
+         r3q = Rroot / sqrt(Qroot*Qroot*Qroot)
+        1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1133:1:
+
+      if (r3q>1) then
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1134:19:
+
+             r3q=1  !  by G. Mo
+                   1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1136:1:
+
+      if (r3q<-1) then
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1137:20:
+
+             r3q=-1  !  by G. Mo
+                    1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1140:1:
+
+      ang_L = acos(r3q)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1151:1:
+
+     if(root1 <= root2 .and. root1 <= root3) then
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1152:1:
+
+      minroot=root1
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1153:1:
+
+      if (root2 <= root3) then
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1154:1:
+
+       midroot=root2
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1158:1:
+
+       midroot=root3
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1165:1:
+
+      minroot=root2
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1166:1:
+
+      if (root1 <= root3) then
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1167:1:
+
+       midroot=root1
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1170:1:
+
+       midroot=root3
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1177:1:
+
+      minroot=root3
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1179:1:
+
+       midroot=root1
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1182:1:
+
+       midroot=root2
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1187:1:
+
+   aphoto=0
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1198:1:
+
+    goto 500
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1199:1:
+
+   else
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1200:1:
+
+    goto 600
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1205:1:
+
+  Bquad = 2*Beta*RT-M-ca*KT-(KT/g_lb_c+1.6*KT/b_h2o)*(M-RT)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1206:1:
+
+  Cquad = Beta*RT*RT-M*RT+ca*KT*(M-RT)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1212:1:
+
+   aphoto = (-Bquad - sqrt(product)) / (2.0 * Aquad)
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1223:1:
+
+  gs_h2o_mole = (f_soilwater *m_h2o* rh_leaf *aphoto / cs) + b_h2o  ! mol m-2 s-1
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1224:1:
+
+  gs_co2_mole = gs_h2o_mole /1.6
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1226:1:
+
+  ci = cs - aphoto / gs_co2_mole
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+AnGsMod.f90:1228:1:
+
+  Gs_w = gs_h2o_mole * temp_leaf_K * (met%pstat273)  ! m s-1
+ 1
+Warning: Nonconforming tab character at (1) [-Wtabs]
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   cos_plant.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   cos_grnd.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   beps_helper.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   beps_phenology.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   endrun.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   get_CO2.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   get_COS.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   rainsnowMod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   inter_prg.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   netRadiationMod.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   readcoef.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   readparam.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   retrive_soilp.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   s_coszs.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   SensibleHeat.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   wrf_error_fatal.f90
+gfortran -c -Wall -Wno-unused -Wno-unused-parameter -Wno-unused-dummy-argument -fdefault-real-8 -g -O0 -fcheck=all -fbacktrace -finit-integer=-99999 -finit-real=snan  -ffpe-trap=invalid,zero,overflow,underflow -I. -I. -I/usr/include -I/usr/include -I/usr/local/include   wrf_message.f90
+make: /usr/lib64/../bin/nf-config: Command not found
+gfortran -o runbepsorg.x driver.o aerodynamic_conductance.o AnGsMod.o beps_con.o cos_plant.o cos_grnd.o beps_helper.o beps_par.o beps_phenology.o beps_cropMod.o beps_soilMod.o beps_time_manager.o bepstype.o controlInput_mod.o bepstypeInit.o ecoRespMod.o endrun.o ESMF_AlarmClockMod.o ESMF_AlarmMod.o ESMF_BaseMod.o ESMF_BaseTimeMod.o ESMF_CalendarMod.o ESMF_ClockMod.o ESMF.o ESMF_FractionMod.o ESMF_ShrTimeMod.o ESMF_Stubs.o ESMF_TimeIntervalMod.o ESMF_TimeMod.o get_CO2.o get_COS.o inter_prg.o MeatMod.o meteoMod.o mid_results.o netRadiationMod.o outputMod.o PF_run.o rainsnowMod.o readcoef.o readparam.o restart.o retrive_soilp.o s_coszs.o SensibleHeat.o shr_kind_mod.o wrf_error_fatal.o wrf_message.o  -m64 -L/usr/lib64 -L/usr/local/lib -DOPT -DLINUX -DFORTRANUNDERSCORE -I. -I. -I/usr/include -I/usr/include -I/usr/local/include  -lnetcdff -lnetcdf 

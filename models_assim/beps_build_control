@@ -1,0 +1,78 @@
+#!/bin/csh -f
+#Created by J.Wang
+#Email: wangjun@nju.edu.cn
+
+#-- default settings
+set platform =
+set compile_debug = 0
+
+#-- read command line
+@ i=1
+while ( $i <= $#argv )
+  echo "***$argv[$i]***"
+  if ("$argv[$i]" == "-iLab") then
+    set platform = "iLab"
+  else if ("$argv[$i]" == "-debug") then
+    set compile_debug = 1
+  endif
+  @ i++
+end
+
+#-- dump settings
+echo "platform=$platform"
+echo "compile_debug=$compile_debug"
+
+
+set curdir = `pwd`
+set case   = `basename $curdir`
+cp usr_beps/* obj    #copy user modified subroutine into obj file
+
+# enter obj for building
+cd obj
+ls *F90 > Srcfiles
+#make clean
+make PLATFORM=$platform DBG=$compile_debug
+
+cp beps ..
+cd ..
+
+# setting namelists for beps run
+set inputdata = $curdir/../../inputdata
+set outdir    = $curdir/../../out/$case
+#set meteodata = $curdir/../../../../../../../../glade/public/Data_GCAS/beps2000-2015
+cat >! beps.stdin << EOF
+
+&NLS
+   nlat           = 180
+   nlon           = 360
+   nscale         = 1            !! 0 for global simulation, 1 for site simulation
+   calendar       = "GREGORIAN"  !! Valid in "GREGORIAN" and "NO_LEAP"
+   icdate         = 20100101
+   icsec          = 0            !! 0 s
+   sim_type       = 0            !! 0=>"initial",1=>"restart",2=>"branch"
+   sim_duration   = -7           !! >=0 : simulation steps; <0 : days for simulation
+   nhtfrq         = -1          !! <0  : hours for average,=0 : monthly
+   restart_frq    = -7           !! >0  : simulation steps; =0 : monthly ;<0 : days for simulation
+   beps_domain        = "$inputdata/beps_domain.nc"
+   meteo_input        = 1        !! <0 : daily input, >=0 : hourly input
+   meteo_path         = "$inputdata/meteo/beps2000-2015"
+   meteo_flnm_prefix  = "era_interim_beps.1x1_"
+   meteo_site_flnm_prefix  = "Site_meteo_2010_2015_hourly"
+   surface_data_path  = "$inputdata/beps_surface_data.nc"
+   beps_yrdata_path   = "$inputdata/beps_yrdata.nc"
+   n_site             = 2
+   beps_site_path     = "$inputdata/beps_site/"
+   site_bound_prefix  = "Site_boundary_data"
+   lai_input          = 1        !! <0 : lai is simulated, >=0 : lai as forcing
+   beps_lai_path      = "$inputdata/lai/"
+   beps_lai_prefix    = "beps_lai_"
+   beps_lai_site_prefix = "Site_lai_2010_2015_daily"
+   beps_Vcmax_path    = "$inputdata/Vcmax/"
+   beps_Vcmax_site_path = "$inputdata/beps_site/"
+   prior_para_prefix = "BEPS_prior_parameter_58para"
+   beps_cpools        = "$inputdata/cpools/cpools_2010.nc"
+   beps_out_dir       = "$outdir/"
+   beps_rst_dir       = "$outdir/"
+&end
+
+

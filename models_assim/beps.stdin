@@ -1,0 +1,22 @@
+
+&NLS
+   nlat           = 180
+   nlon           = 360
+   calendar       = "GREGORIAN"  !! Valid in "GREGORIAN" and "NO_LEAP"
+   icdate         = 20150701
+   icsec          = 0            !! 0 s
+   sim_type       = 0            !! 0=>"initial",1=>"restart",2=>"branch"
+   sim_duration   = -7           !! >=0 : simulation steps; <0 : days for simulation
+   nhtfrq         = -3           !!  <0 : hours for output; =0: monthly 
+   restart_frq    = -1           !!  <0 : days for restart; =0: monthly
+   beps_domain        = "/share/home/wangjun/models/beps/inputdata/beps_domain.nc"
+   meteo_path         = "/share/home/wangjun/models/beps/inputdata/meteo/"
+   meteo_flnm_prefix  = "era_interim.1x1_"
+   surface_data_path  = "/share/home/wangjun/models/beps/inputdata/beps_surface_data.nc"
+   beps_yrdata_path   = "/share/home/wangjun/models/beps/inputdata/beps_yrdata.nc"
+   beps_lai_path      = "/share/home/wangjun/models/beps/inputdata/lai/"
+   beps_lai_prefix    = "beps_lai_"
+   beps_cpools        = "/share/home/wangjun/models/beps/inputdata/cpools/cpools_2000.nc"
+   beps_out_dir       = "/share/home/wangjun/models/beps/out/"
+&end
+

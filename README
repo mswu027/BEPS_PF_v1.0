@@ -1,0 +1,13 @@
+####################BEPS model run instructions#############################
+#The beps model package includes 5 sub-folders: bld, inputdata, models_assim, out, scripts
+#bld: the Makefile folder, in Makefile, the NETCDF library should be set according to computer where it is located, normally it is located at /usr/local directory. If you run the model in MPI mode, you need also to specify the mpi library, for example, in my computer I use mpich, so I need to specify the mpich directory. In this case, the compiler for Fortran and C is 'mpifort' and 'mpicc', respectively. Otherwise, the compiler needs to be set to 'gfortran' and 'gcc'. If you use intelfortran, you set to 'ifort' and 'icc'.
+#inputdata: it contains the input data for the model. For global simulation, we have files 1)Vcmax, is set as an input data for each month for optimization purpose; when you have the Site_Vcmax_template.nc, you need to copy it to each month for the period you simulate, by using the script file copy_vcmax.csh, 2)Site_boundary_data.nc is a file for storing initial and boundary conditions for simulations, for example, initla soil temperature, soil water, ponding, snow, and initial carbon pools etc, 3)Site_lai_2010_2015_daily.nc is the lai driving force derived from remote sensing, since the BEPS model was designed to take lai as driving data, 4)Site_meteo_2010_2015_hourly.nc is meteo. data for driving the model.
+#models_assim: the source code folder
+#out: the output folder for storing outupts
+#scripts: the working foler, with the script to compile and run the model
+###################Steps to run the BEPS model###########################
+1. set the library for NETCDF and the compiler in Makefile according to the user's computer
+2. under 'scripts' directory, run './create_newcase_assim test001' to copy the code to folder test001
+3. go to 'test001' directory, run './beps_build_control' to compile the model
+4. if no errors appear, you can run the model. But first of all, check the beps.stdin file to change the simulation settings for your purpose, e.g. simulation duration, site or global simulaiton, output resolution etc. Then you can run the model './beps >&beps.out&'
+5. for the output, go to 'out/test001' directory, you will see output for each day is stored in separate files. You can easily combine them in one file with 'cdo mergetime *.nc output.nc' for checking timeseries results.
