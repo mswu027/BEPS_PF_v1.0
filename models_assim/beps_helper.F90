@@ -1,4 +1,4 @@
-MODULE mo_helper
+MODULE beps_helper
   use shr_kind_mod, only: r8 =>shr_kind_r8
 
   IMPLICIT NONE
@@ -145,5 +145,5 @@ CONTAINS
   !*********************************************************
 
 
-END MODULE mo_helper
+END MODULE beps_helper
 

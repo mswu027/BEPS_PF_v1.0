@@ -6,7 +6,7 @@ subroutine beps_phenology(lc,daylen,dt,theta,trans,lai)
 !* simplified phenology model
 !***********************************************************
   use shr_kind_mod, only: r8 =>shr_kind_r8
-  USE mo_helper, ONLY : errf, mins, maxs, minx, maxx, fominef_ss, fomaxef_ss
+  USE beps_helper, ONLY : errf, mins, maxs, minx, maxx, fominef_ss, fomaxef_ss
 
   IMPLICIT NONE
 
