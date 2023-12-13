@@ -56,6 +56,7 @@ type,public:: soil
 !!   ! derived variables
     real(r8)  :: f_ice(0:MAX_LAYERS-1)
     real(r8)  :: psim(0:MAX_LAYERS-1)          ! soil water suction in this layer
+    real(r8)  :: psim_prev(0:MAX_LAYERS-1)
     real(r8)  :: thetab(0:MAX_LAYERS-1)        ! soil water content at the bottom of each layer
     real(r8)  :: psib(0:MAX_LAYERS-1)          ! soil water suction at the bottom this layer
     real(r8)  :: r_waterflow(0:MAX_LAYERS-1)   ! the liquid water flow rates at the soil layer interfaces
@@ -312,6 +313,9 @@ end if
  p%thetam(4)        = 1.15*Ms
  p%thetam(5)        = 1.25*Ms
  p%thetam_prev(0:5) = p%thetam(0:5)
+
+ p%thetam(0:5) = (/0.1,0.1,0.1,0.1,0.1,0.1/)
+ p%psim_prev(0:5) = p%psim(0:5)
 
  do i = 0,p%n_layer     !-1
     if(p%temp_soil_c(i) < -1.0) then
@@ -625,9 +629,9 @@ end subroutine
  real(r8) :: d1
 
  kkstep = 1.*kstep
- do i=0,p%n_layer
-    p%thetam_prev(i) = p%thetam(i)  !save previous thetam
- end do
+ !do i=0,p%n_layer
+ !   p%thetam_prev(i) = p%thetam(i)  !save previous thetam
+ !end do
 
 do i=0,p%n_layer
    if(p%temp_soil_c(i) >0.0) then
@@ -747,7 +751,13 @@ do i=0,p%n_layer
     p%ice_ratio(i) = p%ice_ratio(i)*p%thetam_prev(i)/p%thetam(i)
     p%ice_ratio(i) = min(1.0,p%ice_ratio(i))
  end do
+ do i=0,p%n_layer
+    p%thetam_prev(i) = p%thetam(i)  !save previous thetam
+ end do
 
+ do i=0,p%n_layer
+    p%psim_prev(i) = p%psim(i)  !save previous thetam
+ end do
  return
 end subroutine
 
@@ -829,11 +839,11 @@ end subroutine
  do i = 0,p%n_layer-1
     ! water stress function
     thetaox = p%fei(i) - theta_Amin
-    Sox = (p%thetam(i)-thetaox)/(p%fei(i)-thetaox)
+    Sox = (p%thetam_prev(i)-thetaox)/(p%fei(i)-thetaox)
     Sox = min(1.,Sox)
     Sox = max(Sox,1.e-6)
     ftheta = 10**(-pox*Sox)
-    f_theta(i) = min((fei_c/p%psim(i))**(p1*Source/rho_w+p2),ftheta)
+    f_theta(i) = min((fei_c/p%psim_prev(i))**(p1*Source/rho_w+p2),ftheta)
     !write(*,*), 'i =', i+1
     !write(*,*), 'p%r_root_decay =', p%r_root_decay
     !write(*,*)  "f_theta(i) = ",f_theta(i)
@@ -881,7 +891,7 @@ end subroutine
     !write(*,*)  "z_depth", z_depth(p%n_layer-1)
     ! water uptake as the minimum of three terms
     !q1 = p%f_root(i)*( p%psim(i) - fei_leaf - (Hp+z_depth(p%n_layer-1)) )/(rp(i) + rs(i))
-    q1 = p%f_root(i)*(fei_leaf -p%psim(i) - (Hp+z_depth(p%n_layer-1)) )/(rp(i) + rs(i))
+    q1 = p%f_root(i)*(fei_leaf -p%psim_prev(i) - (Hp+z_depth(p%n_layer-1)) )/(rp(i) + rs(i))
     q1=max(0.,q1)
     !write(* ,*)  "q1 = ",q1
     q2 = p%f_root(i)*Source/rho_w + p_excess*p%f_root(i)
@@ -958,14 +968,14 @@ end subroutine
 
  !! change the rule for updating p%psim @MOUSONG.WU,2018.11
 
- do i = 0,p%n_layer-1
-    p%psim(i) = p%psi_sat(i)*(p%thetam(i)/p%fei(i))**(-p%b(i))
-    p%psim(i) = max(p%psi_sat(i),1.e-6)
- end do
+ !do i = 0,p%n_layer-1
+ !   p%psim(i) = p%psi_sat(i)*(p%thetam(i)/p%fei(i))**(-p%b(i))
+ !   p%psim(i) = max(p%psi_sat(i),1.e-6)
+ !end do
 
  do i = 0,p%n_layer-1
-    if(p%psim(i) > p%psi_min) then
-      fpsisr(i) = 1./(1. + ((p%psim(i) - p%psi_min)/p%psi_min)**p%alpha) !eq. 10 only f(psim) and eq.11 in Ju 2006
+    if(p%psim_prev(i) > p%psi_min) then
+      fpsisr(i) = 1./(1. + ((p%psim_prev(i) - p%psi_min)/p%psi_min)**p%alpha) !eq. 10 only f(psim) and eq.11 in Ju 2006
     else
       fpsisr(i) = 1.
     end if
