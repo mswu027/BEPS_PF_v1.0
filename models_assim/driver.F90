@@ -89,17 +89,23 @@ real(r8)             :: temp_accu_npp  !crop module    accumulate  NPP(kg m-2 d-
 real(r8)             :: temp_accu_temp !crop module    accumulate  temperature(degree d-1)
 logical :: is_end_day
 logical :: is_end_week
+integer :: SoilC_Mod
 !.........................................................................................
-real(8), allocatable :: xx(:)
 ! .. Intrinsic Functions ..
 intrinsic ACOS, COS, SIN, MOD,atan, REAL,int
+SoilC_Mod = 0
+
+sINI%nPar = 27
+
+real(r8) :: xx(1:sINI%nPar)
+
 ! parameters used for calculating VOD,@MOUSONG.WU,2019-11
 !NPP_yr_acc(:,:) = 0.
 !agb2vod = 0.9517
 !D0 = (/0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05/)
 !taweff = (/0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006/)
-sINI%nPar = 27
-Allocate(xx(sINI%nPar))
+
+!Allocate(xx(sINI%nPar))
 xx(1) = 0.3    !sINI % LCI0 = 0.3d0
 xx(2) = 0.1    !sINI % r0 = 0.1d0
 xx(3) = 2.      !sINI%VP1 = 2
@@ -497,15 +503,26 @@ if (run_pf==0) then
 
                     call soil_resp(ppar%p_f_resp(j,i),Ccd,Cssd,Csmd,Cfsd,Cfmd,Csm,Cm,Cs,&
                                  Cp,bfields%nppyr(i,j),coef,bfields%stext(i),soilp,mid_res)
-
+                    ! to update the carbon pool for the next time step, added @MOUSONG.WU, 202312
+                    bfields%Ccd(i,j) = Ccd(0)
+                    bfields%Cssd(i,j) = Cssd(0)
+                    bfields%Csmd(i,j) = Csmd(0)
+                    bfields%Cfsd(i,j) = Cfsd(0)
+                    bfields%Cfmd(i,j) = Cfmd(0)
+                    bfields%Csm(i,j) = Csm(0)
+                    bfields%Cm(i,j) = Cm(0)
+                    bfields%Cm(i,j) = Cs(0)
+                    bfields%Cp(i,j) = Cp(0)               
                     !print *, 'end of soil_resp'
-
-                    sINI%SIN = coef(2)/coef(6)*bfields%nppyr(i,j) ! SOC input, mgC/cm3/h, 8.14
-                    sINI%tmp = soilp%temp_soil_c(1)               ! soil temperature, degree C
-                    sINI%SWP = soilp%psim(1)                      ! soil water potential, MPa??? check
-                    sINI%pH  = 7.0
+                    if (SoilC_Mod > 0) then
+                        sINI%SIN = coef(2)/8760.*bfields%nppyr(i,j)*10**6*0.1*10**6 ! SOC input, mgC/cm3/h, 8.14
+                        sINI%tmp = soilp%temp_soil_c(1)               ! soil temperature, degree C
+                        sINI%SWP = soilp%psim(1)*0.01                      ! soil water potential, MPa??? check
+                        sINI%pH  = 7.0
                     
-                    call subMEND_RUN(xx, sPAR, sINI, sOUT)
+                        call subMEND_RUN(xx, sPAR, sINI, sOUT)
+
+                    end if
 
                     !! for output variables
                     pp%GPPpft(i,j)   = mid_res%GPP*bfields%PCT_PFT(i,j)/100.

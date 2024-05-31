@@ -1,4 +1,4 @@
-MODULE beps_helper
+MODULE mo_helper
   use shr_kind_mod, only: r8 =>shr_kind_r8
 
   IMPLICIT NONE
@@ -86,15 +86,20 @@ CONTAINS
   END FUNCTION minx
 
  real function fominef_ss(p1,p2,tune)
-    real :: p1,p2
-    real :: tune ! tune/2 >= min(p1,p2) - fominef
+    real(r8) :: p1,p2
+    real(r8) :: tune ! tune/2 >= min(p1,p2) - fominef
     fominef_ss = min(p1,p2)-0.5*tune*exp(-abs(p1-p2)/tune)
   end function fominef_ss
 
  real function fomaxef_ss(p1,p2,tune)
-    real :: p1,p2
-    real :: tune ! tune/2 >= fomaxef - max(p1,p2)
-    fomaxef_ss = max(p1,p2)+0.5*tune*exp(-abs(p1-p2)/tune)
+    real(r8) :: p1,p2
+    real(r8) :: tune ! tune/2 >= fomaxef - max(p1,p2)
+    if (abs(p1-p2)/tune > 100.0) then
+        fomaxef_ss = max(p1,p2)
+    else
+        fomaxef_ss = max(p1,p2)+0.5*tune*exp(-abs(p1-p2)/tune)
+    end if
+    !fomaxef_ss = max(p1,p2)+0.5*tune*exp(-abs(p1-p2)/tune)
   end function fomaxef_ss
 
   !*********************************************************
@@ -145,5 +150,5 @@ CONTAINS
   !*********************************************************
 
 
-END MODULE beps_helper
+END MODULE mo_helper
 

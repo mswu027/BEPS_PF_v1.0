@@ -132,6 +132,7 @@ cat <<EOF
    beps_site_path     = "$input_dir/beps_site/"
    site_bound_prefix  = "${site_bound_prefix}"
    lai_input          = 1        !! <0 : lai is simulated, >=0 : lai as forcing
+   SoilC_Mod          = 0        !! 0: default soil carbon model, 1: soil carbon fraction model
    beps_lai_path      = "$input_dir/lai/"
    beps_lai_prefix    = "beps_lai_"
    beps_lai_site_prefix = "${beps_lai_site_prefix}"

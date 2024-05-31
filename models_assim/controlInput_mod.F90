@@ -56,7 +56,7 @@ contains
 
     namelist /NLS/ nlat,nlon,nscale,calendar,icdate,icsec,sim_type,sim_duration,nhtfrq,restart_frq, &
          meteo_input,meteo_path,meteo_flnm_prefix,meteo_site_flnm_prefix,surface_data_path,&
-         beps_yrdata_path,n_site,beps_site_path,site_bound_prefix,lai_input,beps_lai_path,&
+         beps_yrdata_path,n_site,beps_site_path,site_bound_prefix,lai_input,SoilC_Mod,beps_lai_path,&
          beps_lai_prefix,beps_lai_site_prefix,beps_Vcmax_path,beps_Vcmax_site_path,beps_domain,&
          prior_para_prefix,PF_prior_para_prefix,beps_cpools,beps_PF_obs_path,prior_PF_obs_prefix,beps_out_dir,beps_rst_dir
 
