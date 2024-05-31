@@ -87,7 +87,7 @@ SUBROUTINE subMEND_INI(sINI)
     rLig_Cel = (/sINI%LCI0, 1.0 - sINI%LCI0/) !proportion of Lignin and Cellulose in POC
     rQOC = 0.01d0 !proportion of QOC in total MOC
 
-    ifini = 1
+    !ifini = 1
     !ifobs = 2
 !    sRead = trim(sINI%dirinp_case)//trim(sINI%SOIL_INI_file)
 !    open(unit = ifini, file = sRead, status = 'old')
@@ -99,9 +99,11 @@ SUBROUTINE subMEND_INI(sINI)
 !    end do
 !    close(ifini)
     dINI = (/7.98, 0.88, 3.32, 4.65, 0.17, 0.10, 0.0003, 0.0003, 0.0003, 510, 350, 140, 10/)
-
+    ! SOC, TON, POC, MOC, MBC, DOC, EP1, EP2, EM, Sand, Silt, Clay, Depth
+    ! units: clay, sand, silt, 1/1000; SOC, TON, POC, MOC, MBC, mgC/g soil; Depth, cm
     frISO(2) = const_Rstd(1)/(1d0 + const_Rstd(1)) !standard ratio of C14/C12 - 1e-12
     frISO(1) = 1d0 - frISO(2) !e.g., C12 
+    sINI % r0 = 0.1
 
 !! sINP%CPOOL        !carbon pools
     sINI % soilDepth = dINI(13)  !![cm], soil depth
@@ -306,8 +308,8 @@ SUBROUTINE subMEND_RUN(xx, sPAR, sINI, sOUT)
 !    ALLOCATE(dSIM_d(nday,sINI%nVARopt*2)) !!mean & sd
 !    ALLOCATE(dSIM_m(nmon,sINI%nVARopt*2)) !!mean & sd
     
-!    sINI%LCI0       = xx(1) !initial LCI
-!    sINI%r0         = xx(2) !fraction of active biomass
+    sINI%LCI0       = xx(1) !initial LCI
+    sINI%r0         = xx(2) !fraction of active biomass
 !     
 !    call subMEND_INI(sINI) !initialization: initial pool sizes
     
@@ -325,12 +327,11 @@ SUBROUTINE subMEND_RUN(xx, sPAR, sINI, sOUT)
     sINP % CPOOLI = sOUT % CPOOLI
     sINP % CPOOLIFR = sOUT % CPOOLIFR                
                 
-    sINP%SIN = sINI%SIN(k)
-    sINP%tmp = sINI%STP(k)
-    sINP%SWP = sINI%SWP(k)
-    sINP%pH  = sINI%SpH(k)
-    sINI%SIN_other(1,:) = (/0., 0., 0./)
-    sINI%SIN_other(2,:) = (/0., 0., 0./)
+    sINP%SIN = sINI%SIN
+    sINP%tmp = sINI%STP
+    sINP%SWP = sINI%SWP
+    sINP%pH  = sINI%SpH
+
     jbeg = 1
     jend = 86400            
     !!External INPUT: BEGIN

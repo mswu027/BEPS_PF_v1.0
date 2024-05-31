@@ -222,11 +222,11 @@ MODULE MOD_MEND_TYPE
          REAL(8), ALLOCATABLE:: rOBJw(:)                !obj weighting factor
          REAL(8), ALLOCATABLE:: dOBS_opt(:, :)          !date,obs,iVARopt
          REAL(8), ALLOCATABLE:: dSIM_opt(:, :)          !date,sim,sim_sd
-         REAL(8), ALLOCATABLE:: STP(:)                  ![C], soil temperature
-         REAL(8), ALLOCATABLE:: SWC(:)                  ![fraction],soil water content
-         REAL(8), ALLOCATABLE:: SWP(:)                  ![MPa], soil water potential 
-         REAL(8), ALLOCATABLE:: SpH(:)                  !soil pH
-         REAL(8), ALLOCATABLE:: SIN(:)                  ![mgC/cm3/h],SOC input, e.g., litter
+         REAL(8), ALLOCATABLE:: STP                  ![C], soil temperature
+         REAL(8), ALLOCATABLE:: SWC                  ![fraction],soil water content
+         REAL(8), ALLOCATABLE:: SWP                  ![MPa], soil water potential 
+         REAL(8), ALLOCATABLE:: SpH                  !soil pH
+         REAL(8), ALLOCATABLE:: SIN                  ![mgC/cm3/h],SOC input, e.g., litter
          REAL(8) SIN_other(2,3)                         ![mgC/cm3/h | mgC/cm3], other constant inputs to 3 pools, e.g., coarse wood, roots, SIN_other(1,:): between sDate_beg_all & sDate_end_all; SIN_other(2,:): between sDate_beg_inp2 & sDate_end_inp2; 
          REAL(8) SIN_frac(3)                            !fraction of SOC input to 3 pools (POC1, POC2, & DOC)
          REAL(8) SIN_Multiplier                         !multiplier for litter input during post-data period simulation: SIN*SIN_multiplier

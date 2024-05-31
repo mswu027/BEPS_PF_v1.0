@@ -767,7 +767,7 @@ end do       !END kkk iteration
        else
           mid_res%lai_new = mid_res%lai_old
        end if
-          lai = mid_res%lai_new
+       lai = mid_res%lai_new
           !mid_res%fAPAR = 1. - exp(-0.45*lai)    ! calculate fAPAR using the Lambert-Beer law, Benjamin Smith et al., 2008, &
                                                  ! & Forest Ecology and Management, @Mousong.Wu, 201905
 !          write(*,*) 'lai = ', mid_res%lai_old

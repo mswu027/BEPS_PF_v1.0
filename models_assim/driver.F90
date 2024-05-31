@@ -11,6 +11,7 @@ use beps_time_manager
 use bepstype
 use bepstypeInit
 use ecoRespMod
+use MOD_MEND
 use mid_results
 !use mpi_mod
 use beps_soilMod
@@ -18,9 +19,17 @@ use beps_cropMod
 use beps_par
 use outputMod
 use PF_run
+use MOD_MEND_TYPE
+use MOD_USRFS
 use restart
 use esmf
 implicit none
+
+TYPE(sMEND_PAR) sPAR
+TYPE(sMEND_INP) sINP
+TYPE(sMEND_OUT) sOUT
+TYPE(sMEND_INI) sINI
+TYPE(sSCE_PAR) sSCE
 
 type(climatedata)    :: meteo
 type(results)        :: mid_res
@@ -81,7 +90,7 @@ real(r8)             :: temp_accu_temp !crop module    accumulate  temperature(d
 logical :: is_end_day
 logical :: is_end_week
 !.........................................................................................
-
+real(8), allocatable :: xx(:)
 ! .. Intrinsic Functions ..
 intrinsic ACOS, COS, SIN, MOD,atan, REAL,int
 ! parameters used for calculating VOD,@MOUSONG.WU,2019-11
@@ -89,10 +98,50 @@ intrinsic ACOS, COS, SIN, MOD,atan, REAL,int
 !agb2vod = 0.9517
 !D0 = (/0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05/)
 !taweff = (/0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006/)
+sINI%nPar = 27
+Allocate(xx(sINI%nPar))
+xx(1) = 0.3    !sINI % LCI0 = 0.3d0
+xx(2) = 0.1    !sINI % r0 = 0.1d0
+xx(3) = 2.      !sINI%VP1 = 2
+xx(4) = 2.      !sINI % VP2 = 2
+xx(5) = 2.      !sINI % VM = 2
+xx(6) = 58.     !sINI % KP1 = 58
+xx(7) = 6.      !sINI % KP2 = 6
+xx(8) = 500.    !sINI % KM = 500
+xx(9) = 1.7    !sINI % Qmax = 1.7
+xx(10) = 6.0    !sINI % Kba = 6.0
+xx(11) = 0.    !sINI % Kdes = 0.000
+xx(12) = 0.003    !sINI % rE = 0.003
+xx(13) = 0.01    !sINI % pEP = 0.01
+xx(14) = 1.0    !sINI % fpEM = 1.0
+xx(15) = 0.87    !sINI % fD = 0.87
+xx(16) = 0.38    !sINI % gD = 0.38
+xx(17) = 0.01    !sINI % Vg = 0.01
+xx(18) = 0.2    !sINI % alpha = 0.2
+xx(19) = 0.26    !sINI % KD = 0.26
+xx(20) = 0.30    !sINI % Yg = 0.30
+xx(21) = 0.01    !sINI % Ygsl = 0.01
+xx(22) = 1.2    !sINI % wdie = 1.2
+xx(23) = 1.0    !sINI % gamma = 1.0
+xx(24) = 0.001    !sINI % beta = 0.001
+xx(25) = 0.4    !sINI % WPA2D = 0.4
+xx(26) = 0.25    !sINI % tau = 0.25
+xx(27) = 4.0    !sINI % wdorm = 4.0
+
+! Assign initial parameter values
+sINI%SIN_C12_C14 = 0.33
+sINI%SIN_other(1,:) = (/0., 0., 0./)
+sINI%SIN_other(2,:) = (/0., 0., 0./)
+sINI%iKinetics = 0
+!sINI%iKinetics = 0-Michaelis-Menten, 1-First Order, 2-Second Order
+sINI%BIOME = 'MGC'  
+!!'ASM' = arid|semiarid|mediterranean; 'MGC'=mesic grassland & cropland; 'MDF'=Mesic Deciduous Forest; 'MCF'=MEsic Conifer Forest; used by fSWP()
+sINI%SOM = 'SOL'
+!!'SOD' = disturbed soil; 'SOL'=intact soil; 'LIT'=litter; used by fSWP()
 
 !! setting up MPI enviroments with the namelists
 !   call Initmpi()
-
+   
 call rdnamelist()
 if(nscale == 1) then
   nlp = n_site
@@ -450,6 +499,13 @@ if (run_pf==0) then
                                  Cp,bfields%nppyr(i,j),coef,bfields%stext(i),soilp,mid_res)
 
                     !print *, 'end of soil_resp'
+
+                    sINI%SIN = coef(2)/coef(6)*bfields%nppyr(i,j) ! SOC input, mgC/cm3/h, 8.14
+                    sINI%tmp = soilp%temp_soil_c(1)               ! soil temperature, degree C
+                    sINI%SWP = soilp%psim(1)                      ! soil water potential, MPa??? check
+                    sINI%pH  = 7.0
+                    
+                    call subMEND_RUN(xx, sPAR, sINI, sOUT)
 
                     !! for output variables
                     pp%GPPpft(i,j)   = mid_res%GPP*bfields%PCT_PFT(i,j)/100.
