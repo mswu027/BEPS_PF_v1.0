@@ -243,11 +243,11 @@ subroutine timemgr_init( )
 
   if ( start_ymd == uninit_int ) then
      write(iulog,*)sub,': start_ymd must be specified '
-     call endrun
+     call endrun(sub//': start_ymd must be specified ')
   end if
   if ( start_tod == uninit_int ) then
      write(iulog,*)sub,': start_tod must be specified '
-     call endrun
+     call endrun(sub//': start_tod must be specified ')
   end if
   start_date = TimeSetymd( start_ymd, start_tod, "start_date" )
 
@@ -291,7 +291,7 @@ subroutine timemgr_init( )
      write(iulog,*) ' Start date (yr, mon, day, tod): ', yr, mon, day, tod
      call ESMF_TimeGet( stop_date, yy=yr, mm=mon, dd=day, s=tod )
      write(iulog,*) ' Stop date  (yr, mon, day, tod): ', yr, mon, day, tod
-     call endrun
+     call endrun(sub//' Stop date before start date')
   end if
   if ( curr_date >= stop_date ) then
      write(iulog,*)sub, ': stop date must be specified later than current date: '
@@ -299,7 +299,7 @@ subroutine timemgr_init( )
      write(iulog,*) ' Current date (yr, mon, day, tod): ', yr, mon, day, tod
      call ESMF_TimeGet( stop_date, yy=yr, mm=mon, dd=day, s=tod )
      write(iulog,*) ' Stop date    (yr, mon, day, tod): ', yr, mon, day, tod
-     call endrun
+     call endrun(sub//': stop date must be specified later than current date: ')
   end if
 
   ! Initalize reference date for time coordinate.
@@ -391,7 +391,7 @@ function TimeSetymd( ymd, tod, desc )
   if ( (ymd < 0) .or. (tod < 0) .or. (tod > isecspday) )then
      write(iulog,*) sub//': error yymmdd is a negative number or time-of-day out of bounds', &
           ymd, tod
-     call endrun
+     call endrun(sub//': error yymmdd is a negative number or time-of-day out of bounds')
   end if
   yr  = ymd / 10000
   mon = (ymd - yr*10000) / 100
@@ -423,7 +423,7 @@ integer function TimeGetymd( date, tod )
   end if
   if ( yr < 0 )then
      write(iulog,*) sub//': error year is less than zero', yr
-     call endrun
+     call endrun(sub//': error year is less than zero')
   end if
 end function TimeGetymd
 
@@ -503,7 +503,7 @@ subroutine timemgr_restart( )
      write(iulog,*) ' Start date (yr, mon, day, tod): ', yr, mon, day, tod
      call ESMF_TimeGet( stop_date, yy=yr, mm=mon, dd=day, s=tod )
      write(iulog,*) ' Stop date  (yr, mon, day, tod): ', yr, mon, day, tod
-     call endrun
+     call endrun(sub//': stop date must be specified later than start date: ')
   end if
   if ( curr_date >= stop_date ) then
      write(iulog,*)sub, ': stop date must be specified later than current date: '
@@ -511,7 +511,7 @@ subroutine timemgr_restart( )
      write(iulog,*) ' Current date (yr, mon, day, tod): ', yr, mon, day, tod
      call ESMF_TimeGet( stop_date, yy=yr, mm=mon, dd=day, s=tod )
      write(iulog,*) ' Stop date    (yr, mon, day, tod): ', yr, mon, day, tod
-     call endrun
+     call endrun(sub//': stop date must be specified later than current date: ')
   end if
 
   ! Initialize nstep_rad_prev from restart info
@@ -597,7 +597,7 @@ subroutine init_calendar( )
      cal_type = ESMF_CALKIND_GREGORIAN
   else
      write(iulog,*)sub,': unrecognized calendar specified: ',calendar
-     call endrun
+     call endrun(sub//': unrecognized calendar specified: ')
   end if
   tm_cal = ESMF_CalendarCreate( name=caltmp, calkindflag=cal_type, rc=rc )
   call chkrc(rc, sub//': error return from ESMF_CalendarSet')

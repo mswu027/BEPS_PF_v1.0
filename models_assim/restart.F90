@@ -19,7 +19,8 @@ character(len=*) :: flag
 !-- iLab::yy,mm,dd,tod turned to input arguments
 !         (can be omitted when in  flag=='read')
 integer, intent(in), optional :: yy,mm,dd,tod
-
+!--iLab::added flag, original log message below only on activated flag
+logical :: log_flag
 real(r8)         :: v2last1(nlp,0:40,PFT)
 
 integer          :: i,j,ierr
@@ -27,6 +28,7 @@ character(len=255) :: fln1,fln2
 ! integer          :: yy,mm,dd,tod
 character(len=8) :: datestr
 
+log_flag = .false.
 if(trim(flag) == "write") then
    if( .not.present(yy) ) then
       write(*, '(a)') ' FATAL::restart_io::yy must be given in write mode!'
@@ -53,8 +55,9 @@ if(trim(flag) == "write") then
   
    ! call get_curr_date(yy,mm,dd,tod)
    write(datestr,'(i8)') yy*10000+mm*100+dd
-!   if(myid ==0) 
-write(*,*) "restart file on ",yy,mm,dd,tod
+   !   if(myid ==0)
+   !--iLab::log message only on activated flag
+   if( log_flag ) write(*,*) "restart file on ",tod
    
 !   if(myid ==0) then
       fln1 = trim(beps_rst_dir)//"beps.restart."//trim(datestr)

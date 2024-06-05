@@ -5,9 +5,8 @@
 module bepstypeInit
   use shr_kind_mod,only: r8=>shr_kind_r8
   !--iLab::added further entities (as module bepstype does no longer use beps_par)
-  use beps_par,only:npoints,PFT,max_layers,texture,nparameters
+  use beps_par,only:npoints,PFT,max_layers,texture
   use bepstype
-  use controlInput_mod
   implicit none
   !--iLab::can avoid 'save' here since no variables are declared,
   !        use-associated entities should already have the attribute
@@ -21,10 +20,6 @@ module bepstypeInit
   private :: InitSurf
   private :: InitOuput
   private :: InitAssim
-  private :: InitPF
-  public  :: InitPF_obs
-  private :: InitPF_resample
-  private :: Initparam_gdd
 contains
 
   subroutine Initbepstype()
@@ -45,14 +40,6 @@ contains
     call InitOuput()
 
     call InitAssim()
-
-    call InitPF()
-
-    call InitPF_obs()
-
-    call InitPF_resample()
-
-    call Initparam_gdd()
 
     return
   end subroutine Initbepstype
@@ -281,227 +268,71 @@ contains
     ! type(para),pointer  ::p
     ! p => assim
 
-    allocate(assim%p_Vcmax(PFT,npoints))
-    allocate(assim%p_q10(PFT,npoints))
-    allocate(assim%p_VJ_slope(PFT,npoints))
-    allocate(assim%p_N_leaf(PFT,npoints))
-    allocate(assim%p_r_decay(PFT,npoints))
-    allocate(assim%p_b_h2o(PFT,npoints))
-    allocate(assim%p_sif_alpha(PFT,npoints))
-    allocate(assim%p_sif_beta(PFT,npoints))
-    allocate(assim%p_taweff(PFT,npoints))
-    allocate(assim%p_D0(PFT,npoints))
-    allocate(assim%p_Ksat_scalar(texture,npoints))
-    allocate(assim%p_b_scalar(texture,npoints))
-    allocate(assim%p_m_h2o(PFT,npoints))
-    allocate(assim%p_f_leaf(PFT,npoints))
-    allocate(assim%p_kc25(PFT,npoints))
-    allocate(assim%p_ko25(PFT,npoints))
-    allocate(assim%p_tau25(PFT,npoints))
+    allocate(assim%p_Vcmax(PFT))
+    allocate(assim%p_q10(PFT))
+    allocate(assim%p_VJ_slope(PFT))
+    allocate(assim%p_sif_alpha(PFT))
+    allocate(assim%p_sif_beta(PFT))
+    allocate(assim%p_taweff(PFT))
+    allocate(assim%p_D0(PFT))
+    allocate(assim%p_Ksat_scalar(texture))
+    allocate(assim%p_b_scalar(texture))
+    allocate(assim%p_f_leaf)
+    allocate(assim%p_kc25)
+    allocate(assim%p_ko25)
+    allocate(assim%p_tau25)
     !allocate(assim%p_f_lr)
+    allocate(assim%p_agb2vod)
 
-    ! allocate(assim%p_agb2vod(PFT,npoints)) not using the agb to vod code
-
-    ! 2023/06/30
-    allocate(assim%p_f_resp(PFT,npoints))
-    allocate(assim%p_VN_slope(PFT,npoints))
-    allocate(assim%p_f_decay(PFT,npoints))
-    allocate(assim%p_bwb(PFT,npoints))
-    allocate(assim%p_a(PFT,npoints))
-    allocate(assim%p_b(PFT,npoints))
-    allocate(assim%p_c(PFT,npoints))
-
-    allocate(assim%u_Vcmax(PFT,npoints))
-    allocate(assim%u_q10(PFT,npoints))
-    allocate(assim%u_VJ_slope(PFT,npoints))
-    allocate(assim%u_N_leaf(PFT,npoints))
-    allocate(assim%u_r_decay(PFT,npoints))
-    allocate(assim%u_b_h2o(PFT,npoints))
-    allocate(assim%u_sif_alpha(PFT,npoints))
-    allocate(assim%u_sif_beta(PFT,npoints))
-    allocate(assim%u_taweff(PFT,npoints))
-    allocate(assim%u_D0(PFT,npoints))
-    allocate(assim%u_Ksat_scalar(texture,npoints))
-    allocate(assim%u_b_scalar(texture,npoints))
-    allocate(assim%u_m_h2o(PFT,npoints))
-    allocate(assim%u_f_leaf(PFT,npoints))
-    allocate(assim%u_kc25(PFT,npoints))
-    allocate(assim%u_ko25(PFT,npoints))
-    allocate(assim%u_tau25(PFT,npoints))
+    allocate(assim%u_Vcmax(PFT))
+    allocate(assim%u_q10(PFT))
+    allocate(assim%u_VJ_slope(PFT))
+    allocate(assim%u_sif_alpha(PFT))
+    allocate(assim%u_sif_beta(PFT))
+    allocate(assim%u_taweff(PFT))
+    allocate(assim%u_D0(PFT))
+    allocate(assim%u_Ksat_scalar(texture))
+    allocate(assim%u_b_scalar(texture))
+    allocate(assim%u_f_leaf)
+    allocate(assim%u_kc25)
+    allocate(assim%u_ko25)
+    allocate(assim%u_tau25)
     !allocate(assim%u_f_lr)
-
-    ! allocate(assim%u_agb2vod(PFT,npoints))
-
-    ! 2023/06/30
-    allocate(assim%u_f_resp(PFT,npoints))
-    allocate(assim%u_VN_slope(PFT,npoints))
-    allocate(assim%u_f_decay(PFT,npoints))
-    allocate(assim%u_bwb(PFT,npoints))
-    allocate(assim%u_a(PFT,npoints))
-    allocate(assim%u_b(PFT,npoints))
-    allocate(assim%u_c(PFT,npoints))
-
+    allocate(assim%u_agb2vod)
 
     assim%p_Vcmax   = 0.
     assim%p_q10     = 0.
     assim%p_VJ_slope   = 0.
-    assim%p_N_leaf=0.
-    assim%p_r_decay=0.
-    assim%p_b_h2o=0.
     assim%p_sif_alpha   = 0.
     assim%p_sif_beta   = 0.
     assim%p_taweff   = 0.
     assim%p_D0   = 0.
     assim%p_Ksat_scalar   = 0.
     assim%p_b_scalar  = 0.
-    assim%p_m_h2o=0.
     assim%p_f_leaf   = 0.
     assim%p_kc25   = 0.
     assim%p_ko25   = 0.
     assim%p_tau25   = 0.
-
     !assim%p_f_lr   = 0.
-    ! assim%p_agb2vod   = 0.
-
-    ! 2023/06/30
-    assim%p_f_resp   = 0.
-    assim%p_VN_slope   = 0.
-    assim%p_f_decay   = 0.
-    assim%p_bwb   = 0.
-    assim%p_a   = 0.
-    assim%p_b   = 0.
-    assim%p_c   = 0.
-
+    assim%p_agb2vod   = 0.
+    
     assim%u_Vcmax   = 0.
     assim%u_q10     = 0.
     assim%u_VJ_slope   = 0.
-    assim%u_N_leaf=0.
-    assim%u_r_decay=0.
-    assim%u_b_h2o=0.
     assim%u_sif_alpha   = 0.
     assim%u_sif_beta   = 0.
     assim%u_taweff   = 0.
     assim%u_D0   = 0.
     assim%u_Ksat_scalar   = 0.
     assim%u_b_scalar  = 0.
-    assim%u_m_h2o=0.
     assim%u_f_leaf   = 0.
     assim%u_kc25   = 0.
     assim%u_ko25   = 0.
     assim%u_tau25   = 0.
-
     !assim%u_f_lr   = 0.
-    ! assim%u_agb2vod   = 0.
-
-	! 2023/06/30
-    assim%u_f_resp   = 0.
-    assim%u_VN_slope   = 0.
-    assim%u_f_decay   = 0.
-    assim%u_bwb   = 0.
-    assim%u_a   = 0.
-    assim%u_b   = 0.
-    assim%u_c   = 0.
-
+    assim%u_agb2vod   = 0.
 
   end subroutine InitAssim
-
-  subroutine InitPF()
-    implicit none
-    !--iLab::avoid pointer
-    ! type(para),pointer  ::p
-    ! p => assim
-
-    allocate(PF%Vcmax(parloop,npoints))
-    allocate(PF%q10(parloop,npoints))
-    allocate(PF%VJ_slope(parloop,npoints))
-    allocate(PF%N_leaf(parloop,npoints))
-    allocate(PF%r_decay(parloop,npoints))
-    allocate(PF%b_h2o(parloop,npoints))
-    allocate(PF%sif_alpha(parloop,npoints))
-    allocate(PF%sif_beta(parloop,npoints))
-    allocate(PF%taweff(parloop,npoints))
-    allocate(PF%D0(parloop,npoints))
-    allocate(PF%Ksat_scalar(parloop,npoints))
-    allocate(PF%b_scalar(parloop,npoints))
-    allocate(PF%m_h2o(parloop,npoints))
-    allocate(PF%f_leaf(parloop,npoints))
-    allocate(PF%kc25(parloop,npoints))
-    allocate(PF%ko25(parloop,npoints))
-    allocate(PF%tau25(parloop,npoints))
-
-    !allocate(assim%p_f_lr)
-    ! allocate(PF%agb2vod(parloop,npoints))
-
-    allocate(PF%pfweight(parloop,npoints))
-    allocate(PF%pfweightupdate(parloop,npoints))
-
-	! 2023/06/30
-    allocate(PF%f_resp(parloop,npoints))
-    allocate(PF%VN_slope(parloop,npoints))
-    allocate(PF%f_decay(parloop,npoints))
-    allocate(PF%bwb(parloop,npoints))
-    allocate(PF%a(parloop,npoints))
-    allocate(PF%b(parloop,npoints))
-    allocate(PF%c(parloop,npoints))
-
-    PF%Vcmax   = 0.
-    PF%q10     = 0.
-    PF%VJ_slope   = 0.
-    PF%N_leaf=0.
-    PF%r_decay=0.
-    PF%b_h2o=0.
-    PF%sif_alpha   = 0.
-    PF%sif_beta   = 0.
-    PF%taweff   = 0.
-    PF%D0   = 0.
-    PF%Ksat_scalar   = 0.
-    PF%b_scalar  = 0.
-    PF%m_h2o=0.
-    PF%f_leaf   = 0.
-    PF%kc25   = 0.
-    PF%ko25   = 0.
-    PF%tau25   = 0.
-
-    !assim%p_f_lr   = 0.
-    !PF%agb2vod   = 0.
-
-    PF%pfweight   = 0.
-    PF%pfweightupdate   = 0.
-
-    ! 2023/06/30
-    PF%f_resp = 0.
-    PF%VN_slope = 0.
-    PF%f_decay = 0.
-    PF%bwb = 0.
-    PF%a = 0.
-    PF%b = 0.
-    PF%c = 0.
-
-  end subroutine InitPF
-
-  subroutine InitPF_obs()
-    implicit none
-
-    ! allocate(PF_obs%obs_GPP(npoints))
-    allocate(PF_obs%obs_VOD(npoints)) ! changed to VOD from obs_GPP
-
-     ! PF_obs%obs_GPP   = 0.
-     PF_obs%obs_VOD   = 0.
-
-  end subroutine InitPF_obs
-
-  subroutine InitPF_resample()
-    implicit none
-
-    allocate(PF_resample%outparticles(parloop,20)) ! 19 pamameters and one for pf_weight
-    allocate(PF_resample%resample_weight(parloop))
-    allocate(PF_resample%resample_weight_update(parloop))
-
-    PF_resample%outparticles   = 0.
-    PF_resample%resample_weight=0.
-    PF_resample%resample_weight_update=0.
-
-  end subroutine InitPF_resample
 
   subroutine InitSoilstat()
     implicit none
@@ -547,8 +378,6 @@ contains
     allocate(soilstat%lambda(npoints,0:max_layers-1,PFT))
     allocate(soilstat%Ett(npoints,0:max_layers-1,PFT))
     allocate(soilstat%G(npoints,0:max_layers-1,PFT))
-    ! 2023/06/30
-    allocate(soilstat%Sp(npoints,PFT))
 
     soilstat%n_layer(:)           = 0
     soilstat%Zp(:,:)              = 0.
@@ -559,8 +388,6 @@ contains
     soilstat%psi_min(:,:)         = 0.
     soilstat%alpha(:,:)           = 0.
     soilstat%f_soilwater(:,:)     = 0.
-    ! 2023/06/30
-    soilstat%Sp(:,:)              = 0.
 
     soilstat%d_soil(:,:)          = 0.
     soilstat%f_root(:,:,:)        = 0.
@@ -593,25 +420,7 @@ contains
     soilstat%G(:,:,:)             = 0.
 
   end subroutine InitSoilstat
-  !******************************************for C4 crop Xiuli**************************
 
-  subroutine Initparam_gdd()
-    implicit none
-    allocate(pgdd%tt_veg(npoints,PFT))
-    allocate(pgdd%tt_rep(npoints,PFT))
-    allocate(pgdd%phot_type(npoints,PFT))
-    allocate(pgdd%emer_doy(npoints,PFT))
-    allocate(pgdd%har_doy(npoints,PFT))
-
-    pgdd%tt_veg(:,:)      = 0.
-    pgdd%tt_rep(:,:)     = 0.
-    pgdd%phot_type(:,:)   = 0.
-    pgdd%emer_doy(:,:)  = 0.
-    pgdd%har_doy(:,:) = 0.
-
-  end subroutine Initparam_gdd
-
-  !******************************************for C4 crop Xiuli**************************
   subroutine InitOuput()
     implicit none
     !--iLab::avoid pointer
@@ -644,19 +453,11 @@ contains
     allocate(output%Thetam(npoints))
     allocate(output%fAPARpft(npoints,PFT))
     allocate(output%fAPAR(npoints))
-    allocate(output%VODpft(npoints,PFT))  !!! why?
+    allocate(output%VODpft(npoints,PFT))
     allocate(output%VOD(npoints))
     allocate(output%COS_fluxpft(npoints,PFT))
     allocate(output%COS_flux(npoints))
     allocate(output%NPP_yr_acc(npoints,PFT))
-
-    ! 2023/06/30
-    allocate(output%PWS(npoints))
-    allocate(output%ETa(npoints))
-    allocate(output%PWSpft(npoints,pft))
-    allocate(output%ETapft(npoints,pft))
-    allocate(output%fei_leaf(npoints))
-    allocate(output%fei_leafpft(npoints,PFT))
 
     output%GPPpft(:,:)  = 0.
     output%SIFpft(:,:)  = 0.
@@ -675,10 +476,6 @@ contains
     output%COS_fluxpft(:,:)  = 0.
     output%NPP_yr_acc(:,:)  = 0.
 
-    ! 2023/06/30
-    output%PWSpft(:,:)      = 0.
-    output%ETapft(:,:)      = 0.
-
     output%GPP(:)       = 0.
     output%SIF(:)       = 0.
     output%SIF_sat(:)   = 0.
@@ -694,13 +491,6 @@ contains
     output%fAPAR(:)    = 0.
     output%COS_flux(:) = 0.
     output%VOD(:)      = 0.
-
-    ! 2023/06/30
-    output%PWS(:)      = 0.
-    output%ETa(:)      = 0.
-    output%fei_leaf(:)      = 0.
-    output%fei_leafpft(:,:)      = 0.
-
   end subroutine InitOuput
 
 end module bepstypeInit

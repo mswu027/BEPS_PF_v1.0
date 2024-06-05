@@ -208,7 +208,7 @@ mid_res%npp_u = gpp_r - rg  !kgC/m2/s
 !mid_res%npp_u  = gpp_u*0.45  !kgC/m2/s
 
 mid_res%NPP   = mid_res%npp_u + mid_res%npp_o
-mid_res%Ra = respir_leaf_o + respir_stem_o + respir_root_o + respir_leaf_u + respir_stem_u + respir_root_u !kgC/m2/s
+!mid_res%Ra = respir_leaf_o + respir_stem_o + respir_root_o + respir_leaf_u + respir_stem_u + respir_root_u !kgC/m2/s
 end subroutine
 
 
@@ -375,7 +375,8 @@ return
 
 end subroutine
 
-subroutine DALEC2_resp(lc, lai_yr, lai, temp_soil, CosZs, temp_air,pars, POOLS, T_Step, FLUXES, soilp, mid_res)
+subroutine DALEC2_resp(isfirst_step, days, lc, soiltype, lai_yr, lai, temp_soil, &
+                       CosZs, temp_air, pars, POOLS, T_Step, soilp, mid_res)
 ! in the model, we need to change the pars to the parameters we want to optimize
 ! we also need to change the POOLS to the initial conditions of the pools, to be optimized
     ! The Data Assimilation Linked Ecosystem Carbon - Combined Deciduous
@@ -395,8 +396,9 @@ subroutine DALEC2_resp(lc, lai_yr, lai, temp_soil, CosZs, temp_air,pars, POOLS, 
                           !,nofluxes & ! number of model fluxes
                           !,nopools  & ! number of model pools
                           !,nodays     ! number of days in simulation
-
-    !double precision, intent(in) :: met(nomet,nodays) & ! met drivers
+    integer, parameter :: nopars = 23
+    integer, parameter :: nopools = 6
+    real(r8), intent(in) :: pars(nopars)!met(nomet,nodays) & ! met drivers
     !                     ,deltat(nodays)    & ! time step in decimal days
     !                     ,pars(nopars)      & ! number of parameters
     !                     ,lat                 ! site latitude (degrees)
@@ -405,28 +407,31 @@ subroutine DALEC2_resp(lc, lai_yr, lai, temp_soil, CosZs, temp_air,pars, POOLS, 
     !                                           ,GPP & ! Gross primary productivity
     !                                           ,NEE   ! net ecosystem exchange of CO2
 
-    !double precision, dimension(nopools), intent(inout) :: POOLS ! vector of ecosystem pools
-    real(r8) :: lambda(0:layer),lambda_t(0:layer),lambda_w(0:layer)
-    real(r8) :: lam_u,lam_d
-    integer  :: ii
+    real(r8), intent(inout) :: POOLS(nopools) ! vector of ecosystem pools
 
-    double precision, dimension(nofluxes), intent(inout) :: FLUXES ! vector of ecosystem fluxes
-    real(r8),intent(in)  :: temp_air, pars, POOLS, T_Step ! POOLS, pars need to be changed to the parameters we want to optimize
+    integer,intent(in)  ::  soiltype
+    real(r8), intent(in) :: days
+    
+    logical, INTENT(IN) :: isfirst_step
+    !real(r8), dimension(nofluxes), intent(inout) :: FLUXES ! vector of ecosystem fluxes
+    
+    real(r8),intent(in)  :: temp_air, T_Step !pars, POOLS, T_Step ! POOLS, pars need to be changed to the parameters we want to optimize
     type(results),intent(inout) :: mid_res   
     type(soil),intent(in)  :: soilp                                 
-    ! declare local variables
-    double precision :: !gpppars(12)            & ! ACM inputs (LAI+met)
-             !,constants(10)          & ! parameters for ACM
-             wf,wl,ff,fl,osf,osl,sf & ! phenological controls
-             ,pi,ml,NEE
-
-    integer :: p,f,nxp,n
-
+  
     integer,intent(in)   :: lc
     !type(results),intent(inout)  :: mid_res
     real(r8),intent(in)  :: lai_yr  ! f_q10,! f_q10 is the q10 value for the respiration, can be put with the pars
     real(r8),intent(in)  :: lai, temp_soil,CosZs
-
+    
+    ! declare local variables
+    real(r8) :: lambda(0:layer),lambda_t(0:layer),lambda_w(0:layer)
+    real(r8) :: lam_u,lam_d
+    real(r8) :: FLUXES(16)
+    
+    real(r8) :: wf,wl,ff,fl,osf,osl,sf, ml,NEE ! phenological controls     
+    integer :: p,f,nxp,n
+    integer  :: ii
     real(r8) :: temp_opt25  = 25.0
     real(r8) :: biomass,biomass_leaf_o,biomass_stem_o,biomass_root_o,biomass_leaf_u,biomass_stem_u,biomass_root_u
     real(r8) :: respir_croot_o,respir_root_o,respir_stem_o,respir_leaf_o
@@ -436,7 +441,7 @@ subroutine DALEC2_resp(lc, lai_yr, lai, temp_soil, CosZs, temp_air,pars, POOLS, 
     real(r8) :: lai_u,lai_max_o,lai_max_u
     real(r8) :: ra
     real(r8) ::coef_leaf_respir,coef_stem_respir,coef_root_respir,coef_fineroot_respir
-    real(r8) :: gpp_o,gpp_u,gpp_r,rg,ratio_froot
+    real(r8) :: gpp_o,gpp_u,gpp_r,rg,ratio_froot, resp_auto
 
     ! met drivers are:
     ! 1st run day
@@ -494,7 +499,7 @@ subroutine DALEC2_resp(lc, lai_yr, lai, temp_soil, CosZs, temp_air,pars, POOLS, 
     ! p(17) = LMA
 
     ! set constants
-    pi = 3.1415927
+    !pi = 3.1415927
 
     ! load some values
     !gpppars(4) = 1 ! foliar N
@@ -525,7 +530,7 @@ subroutine DALEC2_resp(lc, lai_yr, lai, temp_soil, CosZs, temp_air,pars, POOLS, 
     !   POOLS(1,6)=pars(23) ! som
     !endif
 
-    if (is_first_step()) then
+    if (isfirst_step) then
          ! assign initial conditions
          POOLS(1)=pars(18) ! labile
          POOLS(2)=pars(19) ! foliar
@@ -552,7 +557,7 @@ subroutine DALEC2_resp(lc, lai_yr, lai, temp_soil, CosZs, temp_air,pars, POOLS, 
     osl=ospolynomial(ml,wl)
 
     ! scaling to biyearly sine curve
-    sf=365.25/pi
+    sf=365.25/PI
 
     ! 
     ! Begin looping through each time step
@@ -602,7 +607,7 @@ subroutine DALEC2_resp(lc, lai_yr, lai, temp_soil, CosZs, temp_air,pars, POOLS, 
         ra  = 1.0
       end if
 
-      q10  = 3.22 - f_q10*temp_air      ! f_q10 default value 0.046
+      q10  = 3.22 - 0.046*temp_air      ! f_q10 default value 0.046
 
       if(lc >=1 .and. lc <= 5) then
                 !/*  calculating aboveground biomass based on LAI  J. Liu 2002 */
@@ -771,13 +776,13 @@ subroutine DALEC2_resp(lc, lai_yr, lai, temp_soil, CosZs, temp_air,pars, POOLS, 
       !mid_res%npp_u  = gpp_u*0.45  !kgC/m2/s
 
       mid_res%NPP   = mid_res%npp_u + mid_res%npp_o !kgC/m2/s
-      mid_res%Ra = respir_leaf_o + respir_stem_o + respir_root_o + respir_leaf_u + respir_stem_u + respir_root_u !kgC/m2/s
+      resp_auto = respir_leaf_o + respir_stem_o + respir_root_o + respir_leaf_u + respir_stem_u + respir_root_u !kgC/m2/s
 
     !do n = start, finish ! we do not need this since we have the loop in driver.f90
   
       ! calculate LAI value
       !lai(n)=POOLS(n,2)/pars(17)
-      mid_res%lai_sim = POOLS(2)/pars(17) ! we can keep this here, for a diagnosis of LAI, for potential extension of the model in the next step with the phenology module
+      !mid_res%lai_sim = POOLS(2)/pars(17) ! we can keep this here, for a diagnosis of LAI, for potential extension of the model in the next step with the phenology module
       ! load next met / lai values for ACM
       !gpppars(1)=lai(n)
       !gpppars(2)=met(3,n) ! max temp
@@ -788,37 +793,37 @@ subroutine DALEC2_resp(lc, lai_yr, lai, temp_soil, CosZs, temp_air,pars, POOLS, 
 
       ! GPP (gC.m-2.day-1)
       !FLUXES(n,1) = acm(gpppars,constants)
-      FLUXES_1 = (mid_res%gpp_u_sunlit + mid_res%gpp_u_shaded + mid_res%gpp_o_sunlit + mid_res%gpp_o_shaded)*1000.*86400.  ! we need to convert to gC.m-2.day-1
+      FLUXES(1) = (mid_res%gpp_u_sunlit + mid_res%gpp_u_shaded + mid_res%gpp_o_sunlit + mid_res%gpp_o_shaded)*1000.*86400.  ! we need to convert to gC.m-2.day-1
       ! replace GPP to BEPS gpp
       ! temprate (i.e. temperature modified rate of metabolic activity))
       !FLUXES(n,2) = exp(pars(10)*0.5*(met(3,n)+met(2,n)))
-      FLUXES_2 = exp(pars(10)*temp_air)
+      FLUXES(2) = exp(pars(10)*temp_air)
       ! replace temprature to BEPS temprature
       ! autotrophic respiration (gC.m-2.day-1)
       !FLUXES(n,3) = pars(2)*FLUXES(n,1)
       !FLUXES_3 = pars(2)*FLUXES_1
-      FLUXES_3 = mid_res%Ra*1000.*86400.  ! we need to convert to gC.m-2.day-1
+      FLUXES(3) = resp_auto*1000.*86400.  ! we need to convert to gC.m-2.day-1
       ! we use autotrophic respiration here as it is a function of GPP, we can also use auto respiration from BEPS plant_respiration module,
       ! this can be an option later to check the difference in model structures, since we need to call plant_resp here, we need to define it as a function
       ! leaf production rate (gC.m-2.day-1)
       !FLUXES(n,4) = (FLUXES(n,1)-FLUXES(n,3))*pars(3)
-      FLUXES_4 = (FLUXES_1-FLUXES_3)*pars(3)
+      FLUXES(4) = (FLUXES(1)-FLUXES(3))*pars(3)
       ! labile production (gC.m-2.day-1)
       !FLUXES(n,5) = (FLUXES(n,1)-FLUXES(n,3)-FLUXES(n,4))*pars(13)
-      FLUXES_5 = (FLUXES_1-FLUXES_3-FLUXES_4)*pars(13)
+      FLUXES(5) = (FLUXES(1)-FLUXES(3)-FLUXES(4))*pars(13)
       ! root production (gC.m-2.day-1)
       !FLUXES(n,6) = (FLUXES(n,1)-FLUXES(n,3)-FLUXES(n,4)-FLUXES(n,5))*pars(4)
-      FLUXES_6 = (FLUXES_1-FLUXES_3-FLUXES_4-FLUXES_5)*pars(4)
+      FLUXES(6) = (FLUXES(1)-FLUXES(3)-FLUXES(4)-FLUXES(5))*pars(4)
       ! wood production 
       !FLUXES(n,7) = FLUXES(n,1)-FLUXES(n,3)-FLUXES(n,4)-FLUXES(n,5)-FLUXES(n,6)
-      FLUXES_7 = FLUXES_1-FLUXES_3-FLUXES_4-FLUXES_5-FLUXES_6
+      FLUXES(7) = FLUXES(1)-FLUXES(3)-FLUXES(4)-FLUXES(5)-FLUXES(6)
 
       ! Labile release and leaffall factors
       !FLUXES(n,9) = (2./(pi**0.5))*(ff/wf)*exp(-((sin((met(1,n)-pars(15)+osf)/sf)*sf/wf)**2.))
       !FLUXES(n,16) = (2./(pi**0.5))*(fl/wl)*exp(-((sin((met(1,n)-pars(12)+osl)/sf)*sf/wl)**2.))
 
-      FLUXES_9 = (2./(pi**0.5))*(ff/wf)*exp(-((sin((days-pars(15)+osf)/sf)*sf/wf)**2.))
-      FLUXES_16 = (2./(pi**0.5))*(fl/wl)*exp(-((sin((days-pars(12)+osl)/sf)*sf/wl)**2.))
+      FLUXES(9) = (2./(PI**0.5))*(ff/wf)*exp(-((sin((days-pars(15)+osf)/sf)*sf/wf)**2.))
+      FLUXES(16) = (2./(PI**0.5))*(fl/wl)*exp(-((sin((days-pars(12)+osl)/sf)*sf/wl)**2.))
       ! met(1,n) is the days for simulation, we need to define it as a variable in the driver.f90, we can use the days variable that can be defined in the driver.f90.
  
       ! 
@@ -827,20 +832,20 @@ subroutine DALEC2_resp(lc, lai_yr, lai, temp_soil, CosZs, temp_air,pars, POOLS, 
 
       ! total labile release
       !FLUXES(n,8) = POOLS(n,1)*(1.-(1.-FLUXES(n,16))**deltat(n))/deltat(n)
-      FLUXES_8 = POOLS(1)*(1.-(1.-FLUXES_16)**T_Step)/T_Step
+      FLUXES(8) = POOLS(1)*(1.-(1.-FLUXES(16))**T_Step)/T_Step
       ! replace deltat(n) with time step, since we have step in seconds in BEPS, we need to convert to day here.
 
       ! total leaf litter production
       !FLUXES(n,10) = POOLS(n,2)*(1.-(1.-FLUXES(n,9))**deltat(n))/deltat(n)
-      FLUXES_10 = POOLS(2)*(1.-(1.-FLUXES_9)**T_Step)/T_Step
+      FLUXES(10) = POOLS(2)*(1.-(1.-FLUXES(9))**T_Step)/T_Step
 
       ! total wood production
       !FLUXES(n,11) = POOLS(n,4)*(1.-(1.-pars(6))**deltat(n))/deltat(n)
-      FLUXES_11 = POOLS(4)*(1.-(1.-pars(6))**T_Step)/T_Step
+      FLUXES(11) = POOLS(4)*(1.-(1.-pars(6))**T_Step)/T_Step
 
       ! total root litter production
       !FLUXES(n,12) = POOLS(n,3)*(1.-(1.-pars(7))**deltat(n))/deltat(n)
-      FLUXES_12 = POOLS(3)*(1.-(1.-pars(7))**T_Step)/T_Step
+      FLUXES(12) = POOLS(3)*(1.-(1.-pars(7))**T_Step)/T_Step
 
       ! 
       ! those with temperature AND time dependancies
@@ -848,19 +853,19 @@ subroutine DALEC2_resp(lc, lai_yr, lai, temp_soil, CosZs, temp_air,pars, POOLS, 
 
       ! respiration heterotrophic litter
       !FLUXES(n,13) = POOLS(n,5)*(1.-(1.-FLUXES(n,2)*pars(8))**deltat(n))/deltat(n)
-      FLUXES_13 = lam_d*POOLS(5)*(1.-(1.-FLUXES_2*pars(8))**T_Step)/T_Step
+      FLUXES(13) = lam_d*POOLS(5)*(1.-(1.-FLUXES(2)*pars(8))**T_Step)/T_Step
 
       ! respiration heterotrophic som
       !FLUXES(n,14) = POOLS(n,6)*(1.-(1.-FLUXES(n,2)*pars(9))**deltat(n))/deltat(n)
-      FLUXES_14 = lam_d*POOLS(6)*(1.-(1.-FLUXES_2*pars(9))**T_Step)/T_Step
+      FLUXES(14) = lam_d*POOLS(6)*(1.-(1.-FLUXES(2)*pars(9))**T_Step)/T_Step
 
       ! litter to som
       !FLUXES(n,15) = POOLS(n,5)*(1.-(1.-pars(1)*FLUXES(n,2))**deltat(n))/deltat(n)
-      FLUXES_15 = lam_d*POOLS(5)*(1.-(1.-pars(1)*FLUXES_2)**T_Step)/T_Step
+      FLUXES(15) = lam_d*POOLS(5)*(1.-(1.-pars(1)*FLUXES(2))**T_Step)/T_Step
 
       ! calculate the NEE 
       !NEE(n) = (-FLUXES(n,1)+FLUXES(n,3)+FLUXES(n,13)+FLUXES(n,14))
-      NEE = (-FLUXES_1+FLUXES_3+FLUXES_13+FLUXES_14)
+      NEE = (-FLUXES(1)+FLUXES(3)+FLUXES(13)+FLUXES(14))
       mid_res%NEP = -NEE/86400.0/1000. ! kgC/m2/s
       ! the flux unit in DELAC2 is gC.m-2.day-1, we need to convert it to kgC/m2/s, we need to divide by 86400 to convert it to seconds.
       ! load GPP
@@ -872,29 +877,29 @@ subroutine DALEC2_resp(lc, lai_yr, lai, temp_soil, CosZs, temp_air,pars, POOLS, 
 
       ! labile pool
       !POOLS(n+1,1) = POOLS(n,1) + (FLUXES(n,5)-FLUXES(n,8))*deltat(n)
-      POOLS(1) = POOLS(1) + (FLUXES_5-FLUXES_8)*T_Step
+      POOLS(1) = POOLS(1) + (FLUXES(5)-FLUXES(8))*T_Step
       ! foliar pool
       !POOLS(n+1,2) = POOLS(n,2) + (FLUXES(n,4)-FLUXES(n,10) + FLUXES(n,8))*deltat(n)
-      POOLS(2) = POOLS(2) + (FLUXES_4-FLUXES_10 + FLUXES_8)*T_Step
+      POOLS(2) = POOLS(2) + (FLUXES(4)-FLUXES(10) + FLUXES(8))*T_Step
       ! wood pool
       !POOLS(n+1,4) = POOLS(n,4) + (FLUXES(n,7)-FLUXES(n,11))*deltat(n)
-      POOLS(4) = POOLS(4) + (FLUXES_7-FLUXES_11)*T_Step
+      POOLS(4) = POOLS(4) + (FLUXES(7)-FLUXES(11))*T_Step
       ! root pool
       !POOLS(n+1,3) = POOLS(n,3) + (FLUXES(n,6) - FLUXES(n,12))*deltat(n)
-      POOLS(3) = POOLS(3) + (FLUXES_6 - FLUXES_12)*T_Step
+      POOLS(3) = POOLS(3) + (FLUXES(6) - FLUXES(12))*T_Step
       ! litter pool
       !POOLS(n+1,5) = POOLS(n,5) + (FLUXES(n,10)+FLUXES(n,12)-FLUXES(n,13)-FLUXES(n,15))*deltat(n)
-      POOLS(5) = POOLS(5) + (FLUXES_10+FLUXES_12-FLUXES_13-FLUXES_15)*T_Step
+      POOLS(5) = POOLS(5) + (FLUXES(10)+FLUXES(12)-FLUXES(13)-FLUXES(15))*T_Step
       ! som pool
       !POOLS(n+1,6) = POOLS(n,6) + (FLUXES(n,15)-FLUXES(n,14)+FLUXES(n,11))*deltat(n)
-      POOLS(6) = POOLS(6) + (FLUXES_15-FLUXES_14+FLUXES_11)*T_Step
+      POOLS(6) = POOLS(6) + (FLUXES(15)-FLUXES(14)+FLUXES(11))*T_Step
 
     !end do ! nodays loop
 
 end subroutine DALEC2_resp
   !------------------------------------------
   !
-  double precision function ospolynomial(L,w)
+  real(r8) function ospolynomial(L,w)
 
     ! Function calculates the day offset for Labile release and leaf turnover
     ! functions
@@ -902,10 +907,10 @@ end subroutine DALEC2_resp
     implicit none
 
     ! declare input variables
-    double precision, intent(in) ::  L, w ! polynomial coefficients and scaling factor
+    real(r8), intent(in) ::  L, w ! polynomial coefficients and scaling factor
 
     ! declare local variables
-    double precision ::  LLog, mxc(7) ! polynomial coefficients and scaling factor
+    real(r8) ::  LLog, mxc(7) ! polynomial coefficients and scaling factor
 
     ! assign polynomial terms
     mxc(1)=(0.000023599784710)

@@ -10,20 +10,20 @@ MODULE MOD_MEND
     use shr_kind_mod, only: r8=>shr_kind_r8
     IMPLICIT NONE
 
-    PRIVATE:: subMEND_INI
-    PRIVATE:: subMEND_output
-    PRIVATE:: subMEND_output_rate
-    PRIVATE:: subMEND_RUN
-    PRIVATE:: subMEND
-    PRIVATE:: subMEND_PAR
-    PRIVATE:: sOUT_OPT_h
+    !PRIVATE:: subMEND_INI
+    !PRIVATE:: subMEND_output
+    !PRIVATE:: subMEND_output_rate
+    !PRIVATE:: subMEND_RUN
+    !PRIVATE:: subMEND
+    !PRIVATE:: subMEND_PAR
+    !PRIVATE:: sOUT_OPT_h
     
-    PUBLIC :: sINP_Read
-    PUBLIC :: sOUT_Day2Mon
-    PUBLIC :: sOUT_OPT
-    PUBLIC :: sOUT_ALL_tscale
+    !PUBLIC :: sINP_Read
+    !PUBLIC :: sOUT_Day2Mon
+    !PUBLIC :: sOUT_OPT
+    !PUBLIC :: sOUT_ALL_tscale
     
-    PUBLIC:: fMEND_OBJ
+    !PUBLIC:: fMEND_OBJ
     PUBLIC:: fV_MM     !!Michaelis-Menten Kinetics
     PUBLIC:: fAds      !!adsorption-desorption
     
@@ -76,30 +76,18 @@ SUBROUTINE subMEND_INI(sINI)
     !INTEGER nObs_time, nObs_var, nObs_col != nSoil*nSubstrate*nObs_var  !# of columns in observation data file
 
     INTEGER i, j, k!, lp
-    INTEGER ifini!, ifobs  
+    !INTEGER ifini!, ifobs  
     REAL(r8) frISO(const_nISO), frISOadd(const_nISO)
     REAL(r8) rLig_Cel(2) !proportion of Lignin and Cellulose in POC
     REAL(r8) rQOC !proportion of QOC in total MOC
 
-    CHARACTER(len = 100) sRead!!propName(nProp) !name of 10 properties 
-    INTEGER iRead  !!iTemp
-    REAL(r8) rRead  !!rTemp
+    !CHARACTER(len = 100) sRead!!propName(nProp) !name of 10 properties 
+    !INTEGER iRead  !!iTemp
+    !REAL(r8) rRead  !!rTemp
     
     rLig_Cel = (/sINI%LCI0, 1.0 - sINI%LCI0/) !proportion of Lignin and Cellulose in POC
     rQOC = 0.01 !proportion of QOC in total MOC
-
-    !ifini = 1
-    !ifobs = 2
-!    sRead = trim(sINI%dirinp_case)//trim(sINI%SOIL_INI_file)
-!    open(unit = ifini, file = sRead, status = 'old')
-!    do i = 1, 3
-!        read(ifini, *) sRead !head: !!ID	Property	 Value
-!    end do
-!    do j = 1, nProp
-!        read(ifini, *) iRead, sRead, dINI(j)
-!    end do
-!    close(ifini)
-    dINI = (/7.98, 0.88, 3.32, 4.65, 0.17, 0.10, 0.0003, 0.0003, 0.0003, 510, 350, 140, 10/)
+    dINI = (/7.98, 0.88, 3.32, 4.65, 0.17, 0.10, 0.0003, 0.0003, 0.0003, 510., 350., 140., 10./)
     ! SOC, TON, POC, MOC, MBC, DOC, EP1, EP2, EM, Sand, Silt, Clay, Depth
     ! units: clay, sand, silt, 1/1000; SOC, TON, POC, MOC, MBC, mgC/g soil; Depth, cm
     frISO(2) = const_Rstd(1)/(1.0 + const_Rstd(1)) !standard ratio of C14/C12 - 1e-12
@@ -123,14 +111,9 @@ SUBROUTINE subMEND_INI(sINI)
     do j = 1, const_nPOC
         sINP % CPOOLIFR % POC(j) = frISO
         sINP % CPOOLIFR % ENZP(j) = frISO
-
         sINP % CPOOLI % POC(j) = sINP % CPOOLIFR % POC(j) * sINP % CPOOL % POC(j)
         sINP % CPOOLI % ENZP(j) = sINP % CPOOLIFR % ENZP(j) * sINP % CPOOL % ENZP(j)
-
-!!        sINP % CADDI % POCadd(j) = sINP % CADD % POCadd(j) * frISOadd
     end do
-
-!!    sINP % CADDI % DOCadd = sINP % CADD % DOCadd * frISOadd
 
     sINP % CPOOLIFR % MOC = frISO
     sINP % CPOOLIFR % ENZM = frISO
@@ -140,9 +123,6 @@ SUBROUTINE subMEND_INI(sINI)
     sINP % CPOOLIFR % MBCA = frISO
     sINP % CPOOLIFR % MBCD = frISO
     sINP % CPOOLIFR % CO2 = frISO
-
-    !     print*, "C12 added = ",sINP%CADDI(1)
-    !     print*, "C14 added = ",sINP%CADDI(2) 
 
     sINP % CPOOLI % MOC = sINP % CPOOLIFR % MOC * sINP % CPOOL % MOC
     sINP % CPOOLI % ENZM = sINP % CPOOLIFR % ENZM * sINP % CPOOL % ENZM
@@ -178,42 +158,12 @@ SUBROUTINE subMEND_INI(sINI)
         sINP % CPOOLI_SIG(j) % SOC = fPermil(0, const_Rstd(j), sINP % CPOOLI(1) % SOC, sINP % CPOOLI(j + 1) % SOC)
     end do !j = 1, const_nISO - 1
 
-!    if (sINI % iModel .eq. 0) then !output results for model simulation
-!        write(sINI%iFout_VAR_hour, '(i10,13e20.3,13e20.3,13e20.3)') &
-!                    0, sINP % CPOOL,sINP % CPOOLI(1),sINP % CPOOLI(2)
-!    end if
-
     sINI % sINP = sINP
 
 END SUBROUTINE subMEND_INI
 
 !-----------------------------------------------------------------------------
-SUBROUTINE subMEND_output(sDate,ihr, sPAR, sINI, sOUT)
-!    USE MOD_MEND
-!!Hourly output for all state variables and fluxes
-    !!ARGUMENTS:
-    TYPE(sMEND_PAR), intent(in) :: sPAR
-    TYPE(sMEND_INI), intent(in) :: sINI
-    TYPE(sMEND_OUT), intent(in) :: sOUT
-    CHARACTER(LEN=8),intent(in) :: sDate
-    INTEGER,         intent(in) :: ihr
-    
-    !!LOCAL VARIABLES:
-    CHARACTER(LEN=2)  str2
-    CHARACTER(LEN=10) sDateHr
-    
-    call sInt2Str(ihr,2,str2)
-    sDateHr = sDate//str2
-!    if (sINI%iModel .eq. 0) then
-    write(sINI%iFout_VAR_hour, '(A10,13e20.3,13e20.3,13e20.3)') &
-        sDateHr, sOUT % CPOOL,sOUT % CPOOLI(1),sOUT % CPOOLI(2)
-    write(sINI%iFout_FLX_hour, '(A10,50e20.3)') sDateHr, sOUT % CFLUX
-    write(sINI%iFout_PAR_hour, '(A10,50e20.3)') sDateHr, sPAR
-!    end if
-END SUBROUTINE subMEND_output
-
-!-----------------------------------------------------------------------------
-SUBROUTINE subMEND_output_rate(sDate,ihr, sINI, sPAR, sINP, sOUT)
+SUBROUTINE subMEND_output_rate(sINI, sPAR, sINP, sOUT)
 !    USE MOD_MEND
 !!Hourly output for derived parameters
 !!"Hour","kPOC1","kPOC2","kMOC","kDOC","kMBC","phi","rMBA"
@@ -222,8 +172,8 @@ SUBROUTINE subMEND_output_rate(sDate,ihr, sINI, sPAR, sINP, sOUT)
     TYPE(sMEND_PAR), intent(in) :: sPAR
     TYPE(sMEND_INP), intent(in) :: sINP
     TYPE(sMEND_OUT), intent(in) :: sOUT   
-    CHARACTER(LEN=8),intent(in) :: sDate
-    INTEGER,         intent(in) :: ihr
+    !CHARACTER(LEN=8),intent(in) :: sDate
+    !INTEGER,         intent(in) :: ihr
     
     !!LOCAL VARIABLES 
     REAL(r8) kPOC1           !!Equivalent 1st-order decomposition rate; k=Vd*ENZP/(POC + Ks)
@@ -239,12 +189,6 @@ SUBROUTINE subMEND_output_rate(sDate,ihr, sINI, sPAR, sINP, sOUT)
     REAL(r8) phi             !!DOC saturation level; phi=DOC/(DOC+Ks)
     REAL(r8) rMBa            !!Active Fraction of Microbes, r=MBCA/MBC
     REAL(r8) CUE             !!Apparent Microbial Carbon Use Efficiency, CUE=[DOM_to_MBA - CO2_gmo - death]/DOM_to_MBA
-    
-!    CHARACTER(LEN=2)  str2
-!    CHARACTER(LEN=10) sDateHr
-    
- !   call sInt2Str(ihr,2,str2)
- !   sDateHr = sDate//str2
     
     phi = sINP%CPOOL%DOC/(sPAR%KsDOC+sINP%CPOOL%DOC)
     rMBa = sINP%CPOOL%MBCA/sINP%CPOOL%MBC
@@ -264,11 +208,7 @@ SUBROUTINE subMEND_output_rate(sDate,ihr, sINI, sPAR, sINP, sOUT)
     else
         CUE = 0.
     end if
-!    if (sINI%iModel .eq. 0) then
-!    write(sINI%iFout_rate_hour, '(A10,30e20.3)') &
-!            sDateHr, kPOC1,kPOC2,kMOC,kDOC,kMBa,kMBa_in,kMBd,kMBd_in,kMB,kMB_in,phi,rMBa,CUE, &
-!            sOUT%RE,sOUT%TOCbeg,sOUT%TOCend,sOUT%TOCinp,sOUT%TOCout
-!    end if
+
 END SUBROUTINE subMEND_output_rate
 !-----------------------------------------------------------------------------
 SUBROUTINE subMEND_RUN(xx, sPAR, sINI, sOUT)
@@ -279,7 +219,8 @@ SUBROUTINE subMEND_RUN(xx, sPAR, sINI, sOUT)
     REAL(r8)        , intent(in)    :: xx(sINI%nPar)
     
     !!LOCAL VARIABLES:
-    TYPE(sMEND_INP) sINP  
+    TYPE(sMEND_INP) sINP
+    INTEGER j  
 !!    INTEGER*4 i, k 
  !   INTEGER j, lp, jbeg,jend, tstep, ibeg, iend, iday
  !   INTEGER iFunc, iObs_time, iHour
@@ -311,8 +252,6 @@ SUBROUTINE subMEND_RUN(xx, sPAR, sINI, sOUT)
     
     sINI%LCI0       = xx(1) !initial LCI
     sINI%r0         = xx(2) !fraction of active biomass
-!     
-!    call subMEND_INI(sINI) !initialization: initial pool sizes
     
     frISOadd(2) = 1.0/(1.0 + sINI%SIN_C12_C14) !C14
     frISOadd(1) = 1.0 - frISOadd(2)            !C12
@@ -333,18 +272,18 @@ SUBROUTINE subMEND_RUN(xx, sPAR, sINI, sOUT)
     sINP%SWP = sINI%SWP
     sINP%pH  = sINI%SpH
 
-    jbeg = 1
-    jend = 86400            
+    !jbeg = 1
+    !jend = 86400            
     !!External INPUT: BEGIN
-    sINP % CADD % POCadd(1) = sINP%SIN * sINI%SIN_frac(1) + sINI%SIN_other(1,1)  !![mg POC/g soil/h], inputs to POC
-    sINP % CADD % POCadd(2) = sINP%SIN * sINI%SIN_frac(2) + sINI%SIN_other(1,2)
-    sINP % CADD % DOCadd    = sINP%SIN * sINI%SIN_frac(3) + sINI%SIN_other(1,3)  !![mg DOC/g soil/h], inputs to DOC
+    sINP % CADD % POCadd(1) = sINP%SIN * sINI%SIN_frac(1) !+ sINI%SIN_other(1,1)  !![mg POC/g soil/h], inputs to POC
+    sINP % CADD % POCadd(2) = sINP%SIN * sINI%SIN_frac(2) !+ sINI%SIN_other(1,2)
+    sINP % CADD % DOCadd    = sINP%SIN * sINI%SIN_frac(3) !+ sINI%SIN_other(1,3)  !![mg DOC/g soil/h], inputs to DOC
 
-    if(i.ge.jbeg.and.i.le.jend) then
-        sINP%CADD%POCadd(1) = sINP%CADD%POCadd(1)+sINI%SIN_other(2,1)/DBLE(jend-jbeg+1)
-        sINP%CADD%POCadd(2) = sINP%CADD%POCadd(2)+sINI%SIN_other(2,2)/DBLE(jend-jbeg+1)
-        sINP%CADD%DOCadd    = sINP%CADD%DOCadd   +sINI%SIN_other(2,3)/DBLE(jend-jbeg+1)
-    end if
+    !if(i.ge.jbeg.and.i.le.jend) then
+    !    sINP%CADD%POCadd(1) = sINP%CADD%POCadd(1)+sINI%SIN_other(2,1)/DBLE(jend-jbeg+1)
+    !    sINP%CADD%POCadd(2) = sINP%CADD%POCadd(2)+sINI%SIN_other(2,2)/DBLE(jend-jbeg+1)
+    !    sINP%CADD%DOCadd    = sINP%CADD%DOCadd   +sINI%SIN_other(2,3)/DBLE(jend-jbeg+1)
+    !end if
     !        write(*,*)i,sINP % CADD % POCadd(1:2),sINP % CADD % DOCadd
 
     do j = 1, const_nPOC
@@ -357,8 +296,7 @@ SUBROUTINE subMEND_RUN(xx, sPAR, sINI, sOUT)
     call subMEND_PAR(xx, sPAR, sINI)   !!modify parameter values by soil temperature, water potential, pH
     call subMEND(sPAR, sINI, sOUT) !!MEND model 
     !output results for model simulation
-!    call subMEND_output_rate(sDate,lp, sINI, sPAR, sINP, sOUT)
-!    call subMEND_output(sDate,lp, sPAR, sINI, sOUT)
+    call subMEND_output_rate(sINI, sPAR, sINP, sOUT)
 
 END SUBROUTINE subMEND_RUN
 !-----------------------------------------------------------------------------
@@ -634,9 +572,9 @@ SUBROUTINE subMEND(sPAR, sINI, sOUT)
         stop
     end if
     
-    if(dabs(sOUT % RE).gt.1.e-8) then
+    if(abs(sOUT % RE).gt.1.e-8) then
         print*,"Balance Check ERROR: sOUT%RE=",sOUT % RE
-    else
+    !else
 !        print*,"Balance Check: ",sOUT % RE
     end if
     
@@ -996,7 +934,7 @@ REAL(r8) function fSWP2SWC(SWP,SWP_units,SWCres,SWCsat,alpha,n)
     else if (trim(SWP_units).eq."mm") then
         SWP_cm = SWP*0.1
     else if (trim(SWP_units).eq."m") then
-        SWP_cm = SWP*100
+        SWP_cm = SWP*100.
     end if
     
     m = 1.0-1.0/n
@@ -1156,7 +1094,7 @@ REAL(r8) FUNCTION fSWP_Death(SWP,SWPmin,w)
 !    fSWP_Death = 1.d0 - fSWP(SWP,BIOME,SOM)
     
     return
-END FUNCTION fSWP_MicrobeMortality
+END FUNCTION fSWP_Death
 !------------------------------------------------------------------
 REAL(r8) function fSWP_OPT(SWP)
     !SWP Scalar for SOM (lignin) decomposition

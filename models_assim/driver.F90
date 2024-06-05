@@ -29,14 +29,15 @@ TYPE(sMEND_PAR) sPAR
 TYPE(sMEND_INP) sINP
 TYPE(sMEND_OUT) sOUT
 TYPE(sMEND_INI) sINI
-TYPE(sSCE_PAR) sSCE
+!TYPE(sSCE_PAR) sSCE
 
 type(climatedata)    :: meteo
 type(results)        :: mid_res
 real(r8)             :: CosZs,hr_loc,hr_arc             !! solar zenith angle, local time, local time arc
 integer              :: i,j,k,llll,jj,ii,kk
 type(soil)           :: soilp                !! at single point
-real(r8)             :: Ccd(0:4),Cssd(0:4),Csmd(0:4),Cfsd(0:4),Cfmd(0:4),Csm(0:4),Cm(0:4),Cs(0:4),Cp(0:4)
+!real(r8)             :: Ccd(0:4),Cssd(0:4),Csmd(0:4),Cfsd(0:4),Cfmd(0:4),Csm(0:4),Cm(0:4),Cs(0:4),Cp(0:4)
+real(r8), dimension(:), allocatable :: Ccd, Cssd, Csmd, Cfsd, Cfmd, Csm, Cm, Cs, Cp
 real(r8)             :: param(0:49),var_o(0:40),var_n(0:40),coef(0:49)
 real(r8)             :: inparticles(200,20) ! 19 parameters for optimization, 20th is the pf weight
 real(r8)             :: pfweightnormalize(200)
@@ -68,7 +69,7 @@ real(r8)             :: daylen
 !-- iLab::for revised interface to 'av_output'
 character(len=len('YYYY-MM-DDTHH:MM:SS')), save :: ref_date = ''
 integer :: yr_ref, mn_ref, dy_ref, tod_ref
-real(r8)             :: secs_elapsed,secs_meteo,days_lai, secs_vod_pf ! secs_gpp_pf
+real(r8)             :: secs_elapsed,secs_meteo,days_lai, days, secs_vod_pf ! secs_gpp_pf
 ! .. Parameters for model-internal use
 real(r8)             :: pio180 = PI/180.
 ! variables for daily input, used in climin and getmonth
@@ -80,24 +81,42 @@ real(r8)             :: r
 real(r8)             :: rdaymid, delta, arg, h0, h1, sd, sd1, dhour, tmin, tmp1
 real(r8)             :: a, b, sunset_arc
 integer              :: nd                   !! for counting the time-step number, i.e. ith step
+!-- iLab::introduced reference time values for metforcing and LAI ("seconds/days" since)
+!         for site-level multi-point setup
+integer :: met_ryr, met_rmn, met_rdy, lai_ryr, lai_rmn, lai_rdy
 
 ! ..................... related to crop module .........................................................
-real(r8)             :: temp_gpp,outGPP   		!crop module
-real(r8)             :: temp_npp,outNPP   		!crop module
+real(r8)             :: temp_gpp,outGPP   !crop module
+real(r8)             :: temp_npp,outNPP    !crop module
 real(r8)             :: temp_accu_gpp  !crop module    accumulate  GPP(kg m-2 d-1)
 real(r8)             :: temp_accu_npp  !crop module    accumulate  NPP(kg m-2 d-1)
 real(r8)             :: temp_accu_temp !crop module    accumulate  temperature(degree d-1)
 logical :: is_end_day
 logical :: is_end_week
-integer :: SoilC_Mod
+logical :: isfirst_step
+
+!integer :: SoilC_Mod
 !.........................................................................................
 ! .. Intrinsic Functions ..
 intrinsic ACOS, COS, SIN, MOD,atan, REAL,int
-SoilC_Mod = 0
+integer, parameter :: nopars = 23
+integer, parameter ::  nopools = 6
 
+real(r8) :: t_step
+real(r8) :: pars(nopars), pools(nopools)
+real(r8), allocatable :: xx(:)
+
+pars = (/1.e-3, 0.5, 0.2, 0.2, 150., 1.e-4, 1.e-3, 1.e-3, 1.e-5, &
+        0.03, 50., 100., 0.5, 50., 200., 100., 100., 1000., 1000., &
+        1000., 1000., 50000., 100000./)
+
+t_step = step/86400.0 ! convert seconds to days
+
+!SoilC_Mod = 0
+
+!integer, parameter :: ncpar = 27
 sINI%nPar = 27
-
-real(r8) :: xx(1:sINI%nPar)
+allocate(xx(sINI%nPar))
 
 ! parameters used for calculating VOD,@MOUSONG.WU,2019-11
 !NPP_yr_acc(:,:) = 0.
@@ -135,6 +154,8 @@ xx(26) = 0.25    !sINI % tau = 0.25
 xx(27) = 4.0    !sINI % wdorm = 4.0
 
 ! Assign initial parameter values
+sINI%LCI0 = xx(1)
+sINI%r0 = xx(2)
 sINI%SIN_C12_C14 = 0.33
 sINI%SIN_other(1,:) = (/0., 0., 0./)
 sINI%SIN_other(2,:) = (/0., 0., 0./)
@@ -199,7 +220,11 @@ if (nscale == 0) then     ! nscale = 0 for global simulation, 1 for site simulat
 else
     print *, 'BEPS run at site scale!'
     call read_boundary_site()   ! read site data, including yrdata, boundary data, and carbon pools
-    print *, 'read boundary site successfully!'
+    !-- iLab::read reference times for metforcing and LAI data (currently site-scale or multi-point)
+    call read_meteo_site_reftime(met_ryr, met_rmn, met_rdy)
+    call read_lai_site_reftime(lai_ryr, lai_rmn, lai_rdy)
+    ! print*, 'iLab-debug::met_ryr/met_rmn/met_rdy = ', met_ryr, met_rmn, met_rdy
+    ! print*, 'iLab-debug::lai_ryr/lai_rmn/lai_rdy = ', lai_ryr, lai_rmn, lai_rdy
 end if
 
 bfields  => bound
@@ -213,7 +238,7 @@ PF_resa  => PF_resample
 p_pgdd   => pgdd
 
 ! 0 for forwar model; 1 for praticle filter
-run_pf=1
+run_pf=0
 PFweightupdatesum=0.
 PFweightupdatesum_resample=0.
 
@@ -286,40 +311,45 @@ if (run_pf==0) then
     call get_COS_concentration(yr,COS_air)
     !! change hourly input into daily input for further using model for long-term simulations, @MOUSONG.WU, 201905
     if (meteo_input >= 0) then  ! call hourly meteo. input
-      if (nscale == 0) then
-          call read_meteo_hourly(yr, mn, dy, tod)
-      else
-          call timemgr_diff_secs(2001*10000+1*100+1,0,yr*10000+mn*100+dy,tod,&
-            secs_meteo)
-          n_meteo = int(secs_meteo/3600 + 1)
-          call read_meteo_site(n_meteo)
-          print *, 'read site meteo successfully!'
-      end if
+        if (nscale == 0) then
+            call read_meteo_hourly(yr, mn, dy, tod)
+        else
+            !-- iLab::no longer hard coded to year 2010, instead
+            !         use information from NetCDF file
+            ! call timemgr_diff_secs(2010*10000+1*100+1,0,yr*10000+mn*100+dy,tod,&
+            !      secs_meteo)
+            call timemgr_diff_secs(met_ryr*10000+met_rmn*100+met_rdy,0,yr*10000+mn*100+dy,tod,&
+                secs_meteo)
+            n_meteo = int(secs_meteo/3600 + 1)
+            call read_meteo_site(n_meteo)
+        end if
     else
-      if(is_first_step() .or. is_end_curr_day()) then
-        call read_meteo_daily(yr, mn, dy, tod)
-      end if
+        if(is_first_step() .or. is_end_curr_day()) then
+            call read_meteo_daily(yr, mn, dy, tod)
+        end if
     end if
+    call timemgr_datediff(2001*10000+1*100+1,0,yr*10000+mn*100+dy,tod,&
+            days)
+    write(*,*) 'days = ', days
 
     if (lai_input >=0) then
-	    call timemgr_datediff(2001*10000+1*100+1,0,yr*10000+mn*100+dy,tod,&
-            days_lai)
-        n_lai = int(days_lai)
+        call timemgr_datediff(lai_ryr*10000+100*lai_rmn+lai_rdy,0,yr*10000+mn*100+dy,tod,&             
+                days_lai)                                                                                   
+        n_lai = int(days_lai)                                                                            
         if (is_first_step()) print *, 'lai is input!'
         if (is_first_step() .or. is_end_curr_day()) then
-          if (nscale == 0) then
-             call read_lai(yr, mn, dy, tod, n_lai)
-          else
-             call read_lai_site(n_lai)
-             print *, 'read site lai successfully!'
-          end if
+            if (nscale == 0) then
+                call read_lai(yr, mn, dy, tod, caldy)
+            else
+                call read_lai_site(n_lai)
+            end if
         end if
     else
         if (is_first_step()) then
-           print *, 'lai is simulated with phenology scheme!'
+            print *, 'lai is simulated with phenology scheme!'
         end if
     end if
-
+    isfirst_step = is_first_step() 
     !call mpi_barrier(mpi_comm_world,ierr)
 
        do i = 1,npoints    !! spatial iteration
@@ -489,6 +519,7 @@ if (run_pf==0) then
                     !USE p_q10 here to adjust q10,p_q10 is read from initial para. NC file, for
                     !optimization purpose,@MOUSONG.WU,2019-11
                     !!! simulating Rh
+                    allocate(Ccd(0:4), Cssd(0:4), Csmd(0:4), Cfsd(0:4), Cfmd(0:4), Csm(0:4), Cm(0:4), Cs(0:4), Cp(0:4))
                     Ccd(0)       = bfields%Ccd(i,j)
                     Cssd(0)      = bfields%Cssd(i,j)
                     Csmd(0)      = bfields%Csmd(i,j)
@@ -501,7 +532,7 @@ if (run_pf==0) then
                     ! to get soil texture for this point,@MOUSONG.WU,2019-11
                     jj = bfields%stext(i)
 
-                    call soil_resp(ppar%p_f_resp(j,i),Ccd,Cssd,Csmd,Cfsd,Cfmd,Csm,Cm,Cs,&
+                    call soil_resp(Ccd,Cssd,Csmd,Cfsd,Cfmd,Csm,Cm,Cs,&
                                  Cp,bfields%nppyr(i,j),coef,bfields%stext(i),soilp,mid_res)
                     ! to update the carbon pool for the next time step, added @MOUSONG.WU, 202312
                     bfields%Ccd(i,j) = Ccd(0)
@@ -512,17 +543,28 @@ if (run_pf==0) then
                     bfields%Csm(i,j) = Csm(0)
                     bfields%Cm(i,j) = Cm(0)
                     bfields%Cm(i,j) = Cs(0)
-                    bfields%Cp(i,j) = Cp(0)               
+                    bfields%Cp(i,j) = Cp(0)
+                    ! Deallocate arrays
+                    deallocate(Ccd, Cssd, Csmd, Cfsd, Cfmd, Csm, Cm, Cs, Cp)              
                     !print *, 'end of soil_resp'
+                    if (DALEC2 > 0) then
+                        call DALEC2_resp(isfirst_step, days, bfields%lcno(i,j),bfields%stext(i),&
+                                         bfields%laiyr(i,j),lai,soilp%temp_soil_c(1),CosZs,meteo%temp,&
+                                         pars, pools, t_step, soilp, mid_res)
+                    end if
+
                     if (SoilC_Mod > 0) then
                         sINI%SIN = coef(2)/8760.*bfields%nppyr(i,j)*10**6*0.1*10**6 ! SOC input, mgC/cm3/h, 8.14
-                        sINI%tmp = soilp%temp_soil_c(1)               ! soil temperature, degree C
+                        sINI%STP = soilp%temp_soil_c(1)               ! soil temperature, degree C
                         sINI%SWP = soilp%psim(1)*0.01                      ! soil water potential, MPa??? check
-                        sINI%pH  = 7.0
-                    
-                        call subMEND_RUN(xx, sPAR, sINI, sOUT)
+                        sINI%SpH  = 7.0
 
+                        call subMEND_INI(sINI) !initialization: initial pool sizes
+                        call subMEND_RUN(xx, sPAR, sINI, sOUT)  ! run MEND model
+                        
+                        deallocate(xx)
                     end if
+
 
                     !! for output variables
                     pp%GPPpft(i,j)   = mid_res%GPP*bfields%PCT_PFT(i,j)/100.
@@ -624,6 +666,7 @@ else if (run_pf==1) then
     !write(*,*) "dy=" , dy
     !write(*,*) "tod=" , tod
     !write(*,*) "caldy=" , caldy
+    isfirst_step = (nd == 1)  
     is_end_day = ((yr>yr_ref .or. mn>mn_ref .or. dy>dy_ref) .and. (tod == 0)) !--iLab: taken from BEPS time manager
     is_end_week = ((yr>yr_ref .or. mn>mn_ref .or. dy>dy_ref) .and. (MOD((dy-dy_ref+1),7)==0) .and. (tod == 82800))
     !-- iLab::determine seconds elapsed since reference time
@@ -852,6 +895,7 @@ else if (run_pf==1) then
                     !USE p_q10 here to adjust q10,p_q10 is read from initial para. NC file, for
                     !optimization purpose,@MOUSONG.WU,2019-11
                     !!! simulating Rh
+                    allocate(Ccd(0:4), Cssd(0:4), Csmd(0:4), Cfsd(0:4), Cfmd(0:4), Csm(0:4), Cm(0:4), Cs(0:4), Cp(0:4))
                     Ccd(0)       = bfields%Ccd(i,j)
                     Cssd(0)      = bfields%Cssd(i,j)
                     Csmd(0)      = bfields%Csmd(i,j)
@@ -864,10 +908,18 @@ else if (run_pf==1) then
                     ! to get soil texture for this point,@MOUSONG.WU,2019-11
                     jj = bfields%stext(i)
 
-                    call soil_resp(PF_ppar%f_resp(p1,i),Ccd,Cssd,Csmd,Cfsd,Cfmd,Csm,Cm,Cs,&
+                    call soil_resp(Ccd,Cssd,Csmd,Cfsd,Cfmd,Csm,Cm,Cs,&
                                  Cp,bfields%nppyr(i,j),coef,bfields%stext(i),soilp,mid_res)
                     !print *, 'end of soil_resp'
+                    bfields%Ccd(i,j) = Ccd(0)
+                    bfields%Cssd(i,j) = Cssd(0)
+                    bfields%Csmd(i,j) = Csmd(0)
+                    bfields%Cfsd(i,j) = Cfsd(0)
+                    bfields%Cfmd(i,j) = Cfmd(0)
+                    bfields%Csm(i,j) = Csm(0)
 
+                    ! Deallocate arrays
+                    deallocate(Ccd, Cssd, Csmd, Cfsd, Cfmd, Csm, Cm, Cs, Cp)
                     if (j>10) then
                         if (mid_res%GPP*1000.*3600. >=4) then
                             outGPP=temp_gpp

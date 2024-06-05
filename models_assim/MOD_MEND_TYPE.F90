@@ -21,9 +21,9 @@ MODULE MOD_MEND_TYPE
     
     real(r8), PARAMETER:: const_Tref = 20.                         ![degree c],reference temperature
     real(r8), PARAMETER:: const_SWPmin = -3.0e4                        ![MPa], lowest SWP
-    real(r8), PARAMETER:: const_FillValue = -999                   !filled value
+    !real(r8), PARAMETER:: const_FillValue = -999                   !filled value
     
-    character, PARAMETER :: cBackspace = char(13)
+    !character, PARAMETER :: cBackspace = char(13)
       
 !-----------------------------------------------------------------------------!   
 !Adsorption and Desorption of DOC
@@ -169,72 +169,71 @@ MODULE MOD_MEND_TYPE
 !-----------------------------------------------------------------------------! 
        TYPE sMEND_INI
          INTEGER nCase                                  !# of cases, e.g., # of treatments combined together for calibration
-         INTEGER iFout_SIM_obs_cases                    !file unit for response variables matching observations for all cases
-         INTEGER nVARopt_cases                          !# of observed response variables for optimization
-         REAL(r8) VARobjw_cases(10)                      !VAR objective function weighting factor (any number, will be normalized)
-         CHARACTER(len=4) VARobj_cases(10)              !VAR objective function, e.g.,  "NSEC", "MARE"
-         REAL(r8) rOBJ_cases(10)                         !Nash-Sutcliffe Efficency Coefficient, rNSE(1): mean NSEC, rNSE(2:nObs_var+1): individual NSEC for nObs_var 
-         REAL(r8) rOBJw_cases(10)                        !obj weighting factor
-         CHARACTER(len=20),ALLOCATABLE:: CASEname(:)    !case names  
+         !INTEGER iFout_SIM_obs_cases                    !file unit for response variables matching observations for all cases
+         !INTEGER nVARopt_cases                          !# of observed response variables for optimization
+         !REAL(r8) VARobjw_cases(10)                      !VAR objective function weighting factor (any number, will be normalized)
+         !CHARACTER(len=4) VARobj_cases(10)              !VAR objective function, e.g.,  "NSEC", "MARE"
+         !REAL(r8) rOBJ_cases(10)                         !Nash-Sutcliffe Efficency Coefficient, rNSE(1): mean NSEC, rNSE(2:nObs_var+1): individual NSEC for nObs_var 
+         !REAL(r8) rOBJw_cases(10)                        !obj weighting factor
+         !CHARACTER(len=20),ALLOCATABLE:: CASEname(:)    !case names  
 !         INTEGER, ALLOCATABLE:: VARopt_int_cases(:, :)  !nrow = nVARopt, ncol = 2 (index of the VAR for opt, no. of data, tstep); 
                  
          TYPE(sMEND_INP) sINP                           !INPUT
          CHARACTER(len=10) SITE                         !!Site Name, used for prefix of output files
          CHARACTER(len=3) BIOME                         !!'ASM' = arid/semiarid/mediterranean; 'MGC'=mesic grassland & cropland; 'MDF'=Mesic Deciduous Forest; 'MCF'=MEsic Conifer Forest
          CHARACTER(len=3) SOM                           !!'SOD' = disturbed soil; 'SOL'=intact soil; 'LIT'=litter
-         CHARACTER(len=100) dirinp                      !!input dir
-         CHARACTER(len=100) dirout                      !!output dir
-         CHARACTER(len=100) dirinp_case                 !!input dir for a case
-         character(len=8) sDate_beg_all                 !!"yyyymmdd": available input data: begin date for optimizaton
-         character(len=8) sDate_end_all                 !!"yyyymmdd": available input data: end date for optimizaton
-         character(len=8) sDate_beg_sim                 !!"yyyymmdd": simulation: begin date 
-         character(len=8) sDate_end_sim                 !!"yyyymmdd": simulation: end date 
-         character(len=8) sDate_beg_inp2                !!"yyyymmdd": begin date for available constant input data 
-         character(len=8) sDate_end_inp2                !!"yyyymmdd": end date for available constant input data 
-         CHARACTER(len=20) SOIL_INI_file               !soil initialization file
-         CHARACTER(len=20),ALLOCATABLE:: VARfile(:)     !VAR data file
-         CHARACTER(len=4), ALLOCATABLE:: VARobj(:)      !VAR objective function type (NSEC or MARE)  
+         !CHARACTER(len=100) dirinp                      !!input dir
+         !CHARACTER(len=100) dirout                      !!output dir
+         !CHARACTER(len=100) dirinp_case                 !!input dir for a case
+         !character(len=8) sDate_beg_all                 !!"yyyymmdd": available input data: begin date for optimizaton
+         !character(len=8) sDate_end_all                 !!"yyyymmdd": available input data: end date for optimizaton
+         !character(len=8) sDate_beg_sim                 !!"yyyymmdd": simulation: begin date 
+         !character(len=8) sDate_end_sim                 !!"yyyymmdd": simulation: end date 
+         !character(len=8) sDate_beg_inp2                !!"yyyymmdd": begin date for available constant input data 
+         !character(len=8) sDate_end_inp2                !!"yyyymmdd": end date for available constant input data 
+         !CHARACTER(len=20) SOIL_INI_file               !soil initialization file
+         !CHARACTER(len=20),ALLOCATABLE:: VARfile(:)     !VAR data file
+         !CHARACTER(len=4), ALLOCATABLE:: VARobj(:)      !VAR objective function type (NSEC or MARE)  
          INTEGER iModel                                 !0: run model; 1: run model optimization; 2: sensitivity        
          INTEGER nPar                                   !# of parameters to be optimized
          INTEGER iKinetics                              !decomposition kinetics: 0-Michaelis-Menten, 1-First Order, 2-Second Order
-         INTEGER nVARopt                                !# of observed response variables for optimization
-         INTEGER nOBS_tot                               !total # of observations for those output variables, = sum(VARopt_int(:, 2) )
-         INTEGER nYear                                  !simulation years (no-use) 
-         INTEGER nHour                                  !available input data period length
-         INTEGER nHour_sim                              !simulation period length
-         INTEGER nOutStep                               !output time interval (step)        
-         INTEGER iFout_SIM_obs                          !file unit for response variables matching observations
-         INTEGER iFout_SIM_day                          !file unit for response variables, mean daily output
-         INTEGER iFout_SIM_mon                          !file unit for response variables, mean monthly output
-         INTEGER iFout_VAR_hour                          !file unit for all response variables, user-defined output time-step
-         INTEGER iFout_FLX_hour                          !file unit for all flux variables, user-defined output time-step
-         INTEGER iFout_RATE_hour                        !file unit for derived rates, e.g., 1st-order decomposition rate, active fraction, phi
-         INTEGER iFout_ITW_hour                         !file unit for Input (e.g., litter), Temperature, Water content & potential 
-         INTEGER iFout_PAR_hour                         !file unit for hourly parameters modified by Temperature, Water potential, and other factors 
+         !INTEGER nVARopt                                !# of observed response variables for optimization
+         !INTEGER nOBS_tot                               !total # of observations for those output variables, = sum(VARopt_int(:, 2) )
+         !INTEGER nYear                                  !simulation years (no-use) 
+         !INTEGER nHour                                  !available input data period length
+         !INTEGER nHour_sim                              !simulation period length
+         !INTEGER nOutStep                               !output time interval (step)        
+         !INTEGER iFout_SIM_obs                          !file unit for response variables matching observations
+         !INTEGER iFout_SIM_day                          !file unit for response variables, mean daily output
+         !INTEGER iFout_SIM_mon                          !file unit for response variables, mean monthly output
+         !INTEGER iFout_VAR_hour                          !file unit for all response variables, user-defined output time-step
+         !INTEGER iFout_FLX_hour                          !file unit for all flux variables, user-defined output time-step
+         !INTEGER iFout_RATE_hour                        !file unit for derived rates, e.g., 1st-order decomposition rate, active fraction, phi
+         !INTEGER iFout_ITW_hour                         !file unit for Input (e.g., litter), Temperature, Water content & potential 
+         !INTEGER iFout_PAR_hour                         !file unit for hourly parameters modified by Temperature, Water potential, and other factors 
          
-         INTEGER iFout_UQvar                            !file unit for response variables in COFI uncertainty
-         
+         !INTEGER iFout_UQvar                            !file unit for response variables in COFI uncertainty
          REAL(r8) r0                                     !initial active-microbe fraction
          REAL(r8) LCI0                                   !initial lignocellulose index = Lignin/(Lignin+Cellulose)!file unit for output
          REAL(r8) soilDepth                              ![cm],soil depth
          REAL(r8) SIN_C12_C14                            !ratio of C12 to C14 in SOC input
-         REAL(r8), ALLOCATABLE:: rOBJ(:)                 !Nash-Sutcliffe Efficency Coefficient, rNSE(1): mean NSEC, rNSE(2:nObs_var+1): individual NSEC for nObs_var 
-         REAL(r8), ALLOCATABLE:: rOBJw(:)                !obj weighting factor
-         REAL(r8), ALLOCATABLE:: dOBS_opt(:, :)          !date,obs,iVARopt
-         REAL(r8), ALLOCATABLE:: dSIM_opt(:, :)          !date,sim,sim_sd
-         REAL(r8), ALLOCATABLE:: STP                  ![C], soil temperature
-         REAL(r8), ALLOCATABLE:: SWC                  ![fraction],soil water content
-         REAL(r8), ALLOCATABLE:: SWP                  ![MPa], soil water potential 
-         REAL(r8), ALLOCATABLE:: SpH                  !soil pH
-         REAL(r8), ALLOCATABLE:: SIN                  ![mgC/cm3/h],SOC input, e.g., litter
+         !REAL(r8), ALLOCATABLE:: rOBJ(:)                 !Nash-Sutcliffe Efficency Coefficient, rNSE(1): mean NSEC, rNSE(2:nObs_var+1): individual NSEC for nObs_var 
+         !REAL(r8), ALLOCATABLE:: rOBJw(:)                !obj weighting factor
+         !REAL(r8), ALLOCATABLE:: dOBS_opt(:, :)          !date,obs,iVARopt
+         !REAL(r8), ALLOCATABLE:: dSIM_opt(:, :)          !date,sim,sim_sd
+         REAL(r8) :: STP                  ![C], soil temperature
+         REAL(r8) :: SWC                  ![fraction],soil water content
+         REAL(r8) :: SWP                  ![MPa], soil water potential 
+         REAL(r8) :: SpH                  !soil pH
+         REAL(r8) :: SIN                  ![mgC/cm3/h],SOC input, e.g., litter
          REAL(r8) SIN_other(2,3)                         ![mgC/cm3/h | mgC/cm3], other constant inputs to 3 pools, e.g., coarse wood, roots, SIN_other(1,:): between sDate_beg_all & sDate_end_all; SIN_other(2,:): between sDate_beg_inp2 & sDate_end_inp2; 
          REAL(r8) SIN_frac(3)                            !fraction of SOC input to 3 pools (POC1, POC2, & DOC)
          REAL(r8) SIN_Multiplier                         !multiplier for litter input during post-data period simulation: SIN*SIN_multiplier
-         REAL(r8), ALLOCATABLE:: VARobjw(:)              !VAR objective function weighting factor (any number, will be normalized) 
-         INTEGER, ALLOCATABLE:: VARopt(:)               !if use observed VAR to calibrate model, see MEND.ini
-         INTEGER, ALLOCATABLE:: VARstep(:)              !time-step, 0(hourly),1(daily),2(monthly),3(yearly)
-         INTEGER, ALLOCATABLE:: VARcol(:)               !VAR data in which column of input file
-         INTEGER, ALLOCATABLE:: VARopt_int(:, :)        !nrow = nVARopt, ncol = 3 (index of the VAR for opt, no. of data, tstep); tstep = 0(hourly),1(daily),2(monthly),3(yearly)
+         !REAL(r8), ALLOCATABLE:: VARobjw(:)              !VAR objective function weighting factor (any number, will be normalized) 
+         !INTEGER, ALLOCATABLE:: VARopt(:)               !if use observed VAR to calibrate model, see MEND.ini
+         !INTEGER, ALLOCATABLE:: VARstep(:)              !time-step, 0(hourly),1(daily),2(monthly),3(yearly)
+         !INTEGER, ALLOCATABLE:: VARcol(:)               !VAR data in which column of input file
+         !INTEGER, ALLOCATABLE:: VARopt_int(:, :)        !nrow = nVARopt, ncol = 3 (index of the VAR for opt, no. of data, tstep); tstep = 0(hourly),1(daily),2(monthly),3(yearly)
       END TYPE sMEND_INI
 
 !-----------------------------------------------------------------------------! 

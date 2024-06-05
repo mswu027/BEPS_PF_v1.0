@@ -90,11 +90,11 @@ public :: Init_crop_parameters,  &       ! initial
           beps_crop_pool_alloc,  &
           no_carbon_pools_below_minimum
           
-private :: carbon_fraction_from_dvi, &
-           calc_cropleafc_min, &
-           calc_cropstemc_min,  &
-           leafc_from_prognostics, &
-           stemc_from_prognostics
+!private :: carbon_fraction_from_dvi, &
+!           calc_cropleafc_min, &
+!           calc_cropstemc_min,  &
+!           leafc_from_prognostics, &
+!           stemc_from_prognostics
 
 contains
 ! Initialization process
@@ -442,7 +442,7 @@ contains
 	    param%cropleafc_min= 0.  ! minimum value for crop leaf carbon  
  end select
  return
- end subroutine
+ end subroutine Init_crop_parameters
 
 
  subroutine Init_Phen_parameters(phenp)     
@@ -478,7 +478,7 @@ contains
 	
 		phenp%temp_daily=0.  ! daily mean temperature (K)
  return
- end subroutine
+ end subroutine Init_Phen_parameters
 
  subroutine beps_crop_Development(i,j,param,phenp)
 	
@@ -543,7 +543,7 @@ contains
   end if
 
  return
- end subroutine
+ end subroutine beps_crop_Development
 
 ! !------------------------------------------------------------------------------------------------
 !!                                 Function calculate photoperiod
@@ -655,7 +655,7 @@ contains
 	!phenp%nonyield_diag = phenp%nonyield_diag - phenp%extrac 
 
  return
- end subroutine
+ end subroutine beps_crop_pool_alloc
 
 
  subroutine carbon_fraction_from_dvi(param,phenp)
@@ -700,7 +700,7 @@ contains
 	phenp%f_harv =  1.0 / denom 
 
  return
- end subroutine
+ end subroutine carbon_fraction_from_dvi
 
  subroutine no_carbon_pools_below_minimum(param,phenp)
 
@@ -757,7 +757,7 @@ contains
 	end if 
 
  return
- end subroutine
+ end subroutine no_carbon_pools_below_minimum
 
  subroutine calc_cropleafc_min(param,phenp)
 
@@ -782,7 +782,7 @@ contains
 	param%cropleafc_min =  phenp%leafc
 
  return
- end subroutine
+ end subroutine calc_cropleafc_min
 
  subroutine calc_cropstemc_min(param,phenp)
  
@@ -803,7 +803,7 @@ contains
 	param%cropstemc_min = phenp%stemc
 
  return
- end subroutine
+ end subroutine calc_cropstemc_min
 
  subroutine leafc_from_prognostics(param,phenp)
  
@@ -839,7 +839,7 @@ contains
 		!}
 
  return
- end subroutine
+ end subroutine leafc_from_prognostics
 
 
  subroutine stemc_from_prognostics(param,phenp)
@@ -867,6 +867,6 @@ contains
   phenp%stemc = param%cfrac_s * ( ( phenp%canht / param%allo1 )**(1.0 / param%allo2)) 
 
  return
- end subroutine
+ end subroutine stemc_from_prognostics
 
-end module
+end module beps_cropMod
