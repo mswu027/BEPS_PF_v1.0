@@ -59,28 +59,28 @@ FC         := gfortran
 CC         := gcc
 ifeq ($(PLATFORM),iLab)
   ifeq ($(FC),gfortran)
-    LIB_NETCDF := /public1/soft/netcdf/4.4.1-gcc-szf
-    INC_NETCDF := /public1/soft/netcdf/4.4.1-gcc-szf/include
-    MOD_NETCDF := /public1/soft/netcdf/4.4.1-gcc-szf/include
+    LIB_NETCDF := /public1/home/sc30439/soft/new-netcdf/install/
+    INC_NETCDF := /public1/home/sc30439/soft/new-netcdf/install//include
+    MOD_NETCDF := /public1/home/sc30439/soft/new-netcdf/install/include
     LDFLAGS     = $(shell $(LIB_NETCDF)/bin/nf-config --flibs)
     LDFLAGS     = $(LIB_NETCDF)/lib64/libnetcdff.a -lnetcdff -lnetcdf -ldl -lm
   else ifeq ($(findstring ifort,$(FC)),ifort)
-    LIB_NETCDF := /public1/soft/netcdf/4.4.1-gcc-szf
-    INC_NETCDF := /public1/soft/netcdf/4.4.1-gcc-szf/include
-    MOD_NETCDF := /public1/soft/netcdf/4.4.1-gcc-szf/include
+    LIB_NETCDF := /public1/home/sc30439/soft/new-netcdf/install/
+    INC_NETCDF := /public1/home/sc30439/soft/new-netcdf/install//include
+    MOD_NETCDF := /public1/home/sc30439/soft/new-netcdf/install//include
     LDFLAGS     = $(shell $(LIB_NETCDF)/bin/nf-config --flibs)
     LDFLAGS     = $(LIB_NETCDF)/lib/libnetcdff.a -lnetcdff -lnetcdf -ldl -lm
   endif
-  MPIDIR     := /public1/soft/mpich/1.2.1/
+  MPIDIR     := /public1/soft/intel/2017/compilers_and_libraries_2017.7.259/linux/mpi
   INC_MPI    := $(MPIDIR)/include
   LIB_MPI    := $(MPIDIR)/lib
 else
-  LIB_NETCDF := /public1/soft/netcdf/4.4.1-gcc-szf
-  INC_NETCDF := /public1/soft/netcdf/4.4.1-gcc-szf/include
-  MOD_NETCDF := /public1/soft/netcdf/4.4.1-gcc-szf/include
-  MPIDIR     := /public1/soft/mpich/1.2.1
-  INC_MPI    := $(MPIDIR)/include
-  LIB_MPI    := $(MPIDIR)/lib
+  LIB_NETCDF := /public1/home/sc30439/NUCAS_source/new/netcdf-install
+  INC_NETCDF := /public1/home/sc30439/NUCAS_source/new/netcdf-install/include
+  MOD_NETCDF := /public1/home/sc30439/NUCAS_source/new/netcdf-install/include
+  MPIDIR     := /public1/soft/intel/2017/compilers_and_libraries_2017.7.259/linux/mpi
+  INC_MPI    := $(MPIDIR)/intel64/include/
+  LIB_MPI    := $(MPIDIR)/intel64/lib
   LDFLAGS     = $(shell $(LIB_NETCDF)/../bin/nf-config --flibs)
 
 ##  FC         := mpiifort

@@ -42,6 +42,54 @@ module outputMod
   real(r8),allocatable :: fAPAR9(:)
   real(r8),allocatable :: VOD9(:)
   real(r8),allocatable :: COS_flux9(:)
+  ! 2023/07/19
+  real(r8),allocatable :: fei_leaf9(:)
+  real(r8),allocatable :: ETa9(:)
+  real(r8),allocatable :: PWS9(:)
+  real(r8),allocatable :: fei_leafpft9(:,:)
+  real(r8),allocatable :: laipft9(:,:)
+  real(r8),allocatable :: Qupt9(:)
+
+  !2023/10/30
+  real(r8),allocatable :: Thetam2_9(:)
+  real(r8),allocatable :: Thetam3_9(:)
+  real(r8),allocatable :: Thetam4_9(:)
+  real(r8),allocatable :: Thetam5_9(:)
+  real(r8),allocatable :: SWP1_9(:)
+  real(r8),allocatable :: SWP2_9(:)
+  real(r8),allocatable :: SWP3_9(:)
+  real(r8),allocatable :: SWP4_9(:)
+  real(r8),allocatable :: SWP5_9(:)
+
+  real(r8),allocatable :: TS1_9(:)
+  real(r8),allocatable :: TS2_9(:)
+  real(r8),allocatable :: TS3_9(:)
+  real(r8),allocatable :: TS4_9(:)
+  real(r8),allocatable :: TS5_9(:)
+  real(r8),allocatable :: PondWater_9(:)
+  real(r8),allocatable :: Rain_g_9(:)
+  real(r8),allocatable :: f_soilwater9(:)
+  real(r8),allocatable :: f_feileaf9(:)
+  !real(r8),allocatable :: f_Tleaf9(:)
+
+  real(r8),allocatable :: LHa9(:)
+  ! 2024/03/30
+  real(r8),allocatable :: GPP_o_sunlit9(:)
+  real(r8),allocatable :: GPP_o_shaded9(:)
+  real(r8),allocatable :: GPP_u_sunlit9(:)
+  real(r8),allocatable :: GPP_u_shaded9(:)
+
+  real(r8),allocatable :: TR_o_sunlit9(:)
+  real(r8),allocatable :: TR_o_shaded9(:)
+  real(r8),allocatable :: TR_u_sunlit9(:)
+  real(r8),allocatable :: TR_u_shaded9(:)
+
+  real(r8),allocatable :: Eil9(:)
+  real(r8),allocatable :: Evap_soil9(:)
+  real(r8),allocatable :: Evap_SW9(:)
+  real(r8),allocatable :: EiS9(:)
+  real(r8),allocatable :: Evap_SS9(:)
+
 
   integer :: nst     = 0    ! for counting the simulation steps for monthly output
 
@@ -82,6 +130,89 @@ contains
     allocate(fAPAR9(npoints))
     allocate(VOD9(npoints))
     allocate(COS_flux9(npoints))
+    ! 2023/07/19
+    allocate(fei_leaf9(npoints))
+    allocate(fei_leafpft9(npoints,PFT))
+    allocate(ETa9(npoints))
+    allocate(PWS9(npoints))
+    allocate(laipft9(npoints,PFT))
+    allocate(Qupt9(npoints))
+
+    allocate(Thetam2_9(npoints))
+    allocate(Thetam3_9(npoints))
+    allocate(Thetam4_9(npoints))
+    allocate(Thetam5_9(npoints))
+    allocate(SWP1_9(npoints))
+    allocate(SWP2_9(npoints))
+    allocate(SWP3_9(npoints))
+    allocate(SWP4_9(npoints))
+    allocate(SWP5_9(npoints))
+
+    allocate(TS1_9(npoints))
+    allocate(TS2_9(npoints))
+    allocate(TS3_9(npoints))
+    allocate(TS4_9(npoints))
+    allocate(TS5_9(npoints))
+    allocate(PondWater_9(npoints))
+    allocate(Rain_g_9(npoints))
+
+    allocate(f_soilwater9(npoints))
+    allocate(f_feileaf9(npoints))
+    !allocate(f_Tleaf9(npoints))
+
+    ! 2024/03/12
+    allocate(LHa9(npoints))
+
+    ! 2024/30/30
+    allocate(GPP_o_sunlit9(npoints))
+    allocate(GPP_o_shaded9(npoints))
+    allocate(GPP_u_sunlit9(npoints))
+    allocate(GPP_u_shaded9(npoints))
+
+    allocate(TR_o_sunlit9(npoints))
+    allocate(TR_o_shaded9(npoints))
+    allocate(TR_u_sunlit9(npoints))
+    allocate(TR_u_shaded9(npoints))
+
+    allocate(Eil9(npoints))
+    allocate(Evap_soil9(npoints))
+    allocate(Evap_SW9(npoints))
+    allocate(EiS9(npoints))
+    allocate(Evap_SS9(npoints))
+
+    Eil9(:) = 0.
+    Evap_soil9(:) = 0.
+    Evap_SW9(:) = 0.
+    EiS9(:) = 0.
+    Evap_SS9(:) = 0.
+
+    GPP_o_sunlit9(:)=0.
+    GPP_o_shaded9(:)=0.
+    GPP_u_sunlit9(:)=0.
+    GPP_u_shaded9(:)=0.
+
+    TR_o_sunlit9(:)=0.
+    TR_o_shaded9(:)=0.
+    TR_u_sunlit9(:)=0.
+    TR_u_shaded9(:)=0.
+
+    Thetam2_9(:)=0.
+    Thetam3_9(:)=0.
+    Thetam4_9(:)=0.
+    Thetam5_9(:)=0.
+    SWP1_9(:)=0.
+    SWP2_9(:)=0.
+    SWP3_9(:)=0.
+    SWP4_9(:)=0.
+    SWP5_9(:)=0.
+
+    TS1_9(:)=0.
+    TS2_9(:)=0.
+    TS3_9(:)=0.
+    TS4_9(:)=0.
+    TS5_9(:)=0.
+    PondWater_9(:)=0.
+    Rain_g_9(:)=0.
 
     NEP9(:)   = 0.0
     GPP9(:)   = 0.
@@ -115,6 +246,18 @@ contains
     fAPAR9(:)     = 0.
     VOD9(:)      = 0.
     COS_flux9(:)    = 0.
+    fei_leaf9(:) = 0. ! 2023/07/19
+    fei_leafpft9(:,:) = 0.
+    laipft9(:,:) = 0.
+    ETa9(:) = 0.
+    Qupt9(:) = 0.
+    PWS9(:) = 0.
+    f_soilwater9(:)=0.
+    f_feileaf9(:)=0.
+    !f_Tleaf9(:)=0.
+    !2024/03/12
+    LHa9(:) = 0.
+
   end subroutine Init_output
 
   !! average variables according to user's definition
@@ -168,6 +311,57 @@ contains
     fAPAR9     = fAPAR9+pp%fAPAR
     VOD9      = VOD9+pp%VOD
     COS_flux9 = COS_flux9+pp%COS_flux
+    ! 2023/07/19
+    fei_leaf9 = fei_leaf9+pp%fei_leaf
+    fei_leafpft9 = fei_leafpft9+pp%fei_leafpft
+    laipft9 = laipft9+pp%LAIpft
+    ETa9 = ETa9+pp%ETa
+    Qupt9 = Qupt9+pp%Qupt
+    PWS9 = PWS9+pp%PWS
+
+    ! 2023/10/30
+    Thetam2_9=Thetam2_9+pp%Thetam_layer2
+    Thetam3_9=Thetam3_9+pp%Thetam_layer3
+    Thetam4_9=Thetam4_9+pp%Thetam_layer4
+    Thetam5_9=Thetam5_9+pp%Thetam_layer5
+    SWP1_9=SWP1_9+pp%SWP_layer1
+    SWP2_9=SWP2_9+pp%SWP_layer2
+    SWP3_9=SWP3_9+pp%SWP_layer3
+    SWP4_9=SWP4_9+pp%SWP_layer4
+    SWP5_9=SWP5_9+pp%SWP_layer5
+
+    TS1_9=TS1_9+pp%TS_layer1
+    TS2_9=TS2_9+pp%TS_layer2
+    TS3_9=TS3_9+pp%TS_layer3
+    TS4_9=TS4_9+pp%TS_layer4
+    TS5_9=TS5_9+pp%TS_layer5
+    PondWater_9=PondWater_9+pp%PondWater
+    Rain_g_9=Rain_g_9+pp%Rain_g
+
+    f_soilwater9=f_soilwater9+pp%f_soilwater
+    f_feileaf9 = f_feileaf9+pp%f_feileaf
+    !f_Tleaf9 = f_Tleaf9+pp%f_Tleaf
+
+    LHa9 = LHa9 + pp%LHa
+
+    ! 2024/03/30
+    GPP_o_sunlit9 = GPP_o_sunlit9 + pp%GPP_o_sunlit
+    GPP_o_shaded9 = GPP_o_shaded9 + pp%GPP_o_shaded
+    GPP_u_sunlit9 = GPP_u_sunlit9 + pp%GPP_u_sunlit
+    GPP_u_shaded9 = GPP_u_shaded9 + pp%GPP_u_shaded
+
+    TR_o_sunlit9 = TR_o_sunlit9 + pp%TR_o_sunlit
+    TR_o_shaded9 = TR_o_shaded9 + pp%TR_o_shaded
+    TR_u_sunlit9 = TR_u_sunlit9 + pp%TR_u_sunlit
+    TR_u_shaded9 = TR_u_shaded9 + pp%TR_u_shaded
+
+    Eil9 = Eil9 + pp%Eil
+    Evap_soil9 = Evap_soil9 + pp%Evap_soil
+    Evap_SW9 = Evap_SW9 + pp%Evap_SW
+    EiS9 = EiS9 + pp%EiS
+    Evap_SS9 = Evap_SS9 + pp%Evap_SS
+
+
     !! currently I did not include the satellite SIF when nhtfrq < 0 @J.Wang
     if(nhtfrq < 0) then
        ! kount  = get_nstep()
@@ -213,6 +407,54 @@ contains
           fAPAR9    = fAPAR9/nstpd
           VOD9      = VOD9/nstpd
           COS_flux9  = COS_flux9/nstpd
+          fei_leaf9 = fei_leaf9/nstpd ! 2023/07/19
+          fei_leafpft9 = fei_leafpft9/nstpd
+          laipft9 = laipft9/nstpd
+          ETa9 = ETa9/nstpd
+          Qupt9 = Qupt9/nstpd
+          PWS9 = PWS9/nstpd
+
+          ! 2023/10/30
+          Thetam2_9=Thetam2_9/nstpd
+          Thetam3_9=Thetam3_9/nstpd
+          Thetam4_9=Thetam4_9/nstpd
+          Thetam5_9=Thetam5_9/nstpd
+          SWP1_9=SWP1_9/nstpd
+          SWP2_9=SWP2_9/nstpd
+          SWP3_9=SWP3_9/nstpd
+          SWP4_9=SWP4_9/nstpd
+          SWP5_9=SWP5_9/nstpd
+
+          TS1_9=TS1_9/nstpd
+          TS2_9=TS2_9/nstpd
+          TS3_9=TS3_9/nstpd
+          TS4_9=TS4_9/nstpd
+          TS5_9=TS5_9/nstpd
+          PondWater_9=PondWater_9/nstpd
+          Rain_g_9=Rain_g_9/nstpd
+
+          f_soilwater9=f_soilwater9/nstpd
+          f_feileaf9=f_feileaf9/nstpd
+          !f_Tleaf9=f_Tleaf9/nstpd
+
+          LHa9 = LHa9/nstpd
+
+          GPP_o_sunlit9 = GPP_o_sunlit9/nstpd
+          GPP_o_shaded9 = GPP_o_shaded9/nstpd
+          GPP_u_sunlit9 = GPP_u_sunlit9/nstpd
+          GPP_u_shaded9 = GPP_u_shaded9/nstpd
+
+          TR_o_sunlit9 = TR_o_sunlit9/nstpd
+          TR_o_shaded9 = TR_o_shaded9/nstpd
+          TR_u_sunlit9 = TR_u_sunlit9/nstpd
+          TR_u_shaded9 = TR_u_shaded9/nstpd
+
+          Eil9 = Eil9/nstpd
+          Evap_soil9 = Evap_soil9/nstpd
+          Evap_SW9 = Evap_SW9/nstpd
+          EiS9 = EiS9/nstpd
+          Evap_SS9 = Evap_SS9/nstpd
+
 
           if (nscale == 0) then
              call write_output_global(yr, mon, day, tod)
@@ -253,6 +495,54 @@ contains
           fAPAR9   = 0.
           VOD9     = 0.
           COS_flux9  = 0.
+          fei_leaf9 = 0. ! 2023/07/19
+          fei_leafpft9 = 0.
+          laipft9 = 0.
+          ETa9=0.
+          Qupt9=0.
+          PWS9 = 0.
+         ! 2023/10/30
+          Thetam2_9=0.
+          Thetam3_9=0.
+          Thetam4_9=0.
+          Thetam5_9=0.
+          SWP1_9=0.
+          SWP2_9=0.
+          SWP3_9=0.
+          SWP4_9=0.
+          SWP5_9=0.
+
+          TS1_9=0.
+          TS2_9=0.
+          TS3_9=0.
+          TS4_9=0.
+          TS5_9=0.
+          PondWater_9=0.
+          Rain_g_9=0.
+
+          f_soilwater9=0.
+          f_feileaf9=0.
+          !f_Tleaf9=0.
+
+          LHa9 = 0.
+
+          GPP_o_sunlit9 = 0.
+          GPP_o_shaded9 = 0.
+          GPP_u_sunlit9 = 0.
+          GPP_u_shaded9 = 0.
+
+          TR_o_sunlit9 = 0.
+          TR_o_shaded9 = 0.
+          TR_u_sunlit9 = 0.
+          TR_u_shaded9 = 0.
+
+          Eil9 = 0.
+          Evap_soil9 = 0.
+          Evap_SW9 = 0.
+          EiS9 = 0.
+          Evap_SS9 = 0.
+
+
        end if
     else if(nhtfrq ==0) then   !!monthly output
        nst      = nst +1
@@ -288,11 +578,60 @@ contains
           fAPAR9      = fAPAR9/nst
           VOD9        = VOD9/nst
           COS_flux9   = COS_flux9/nst
+          fei_leaf9 = fei_leaf9/nst ! 2023/07/19
+          fei_leafpft9 = fei_leafpft9/nst
+          laipft9 = laipft9/nst
+
+          ETa9 = ETa9/nst
+          Qupt9 = Qupt9/nst
+          PWS9 = PWS9/nst
+
           !--iLab::yr,mon,day,tod now provided as arguments
           ! call get_prev_date(yr, mon, day, tod)
           !!              write(*,*) "write out data on ",yr,mon,day
           SIFpft9_sat   = SIFpft9_sat/day
           SIF9_sat      = SIF9_sat/day
+
+          ! 2023/10/30
+          Thetam2_9=Thetam2_9/nst
+          Thetam3_9=Thetam3_9/nst
+          Thetam4_9=Thetam4_9/nst
+          Thetam5_9=Thetam5_9/nst
+          SWP1_9=SWP1_9/nst
+          SWP2_9=SWP2_9/nst
+          SWP3_9=SWP3_9/nst
+          SWP4_9=SWP4_9/nst
+          SWP5_9=SWP5_9/nst
+
+          TS1_9=TS1_9/nst
+          TS2_9=TS2_9/nst
+          TS3_9=TS3_9/nst
+          TS4_9=TS4_9/nst
+          TS5_9=TS5_9/nst
+          PondWater_9=PondWater_9/nst
+          Rain_g_9=Rain_g_9/nst
+
+          f_soilwater9=f_soilwater9/nst
+          f_feileaf9=f_feileaf9/nst
+          !f_Tleaf9=f_Tleaf9/nst
+
+          LHa9 = LHa9/nst
+
+          GPP_o_sunlit9 = GPP_o_sunlit9/nst
+          GPP_o_shaded9 = GPP_o_shaded9/nst
+          GPP_u_sunlit9 = GPP_u_sunlit9/nst
+          GPP_u_shaded9 = GPP_u_shaded9/nst
+
+          TR_o_sunlit9 = TR_o_sunlit9/nst
+          TR_o_shaded9 = TR_o_shaded9/nst
+          TR_u_sunlit9 = TR_u_sunlit9/nst
+          TR_u_shaded9 = TR_u_shaded9/nst
+
+          Eil9 = Eil9/nst
+          Evap_soil9 = Evap_soil9/nst
+          Evap_SW9 = Evap_SW9/nst
+          EiS9 = EiS9/nst
+          Evap_SS9 = Evap_SS9/nst
 
           if (nscale == 0) then
              call write_output_global(yr,mon,day,tod)
@@ -334,6 +673,54 @@ contains
           VOD9     = 0.
           COS_flux9 = 0.
           nst      = 0
+          fei_leaf9 = 0. ! 2023/07/19
+          fei_leafpft9 = 0.
+          laipft9 = 0.
+          ETa9 = 0.
+          Qupt9 = 0.
+          PWS9 = 0.
+
+        ! 2023/10/30
+          Thetam2_9=0.
+          Thetam3_9=0.
+          Thetam4_9=0.
+          Thetam5_9=0.
+          SWP1_9=0.
+          SWP2_9=0.
+          SWP3_9=0.
+          SWP4_9=0.
+          SWP5_9=0.
+
+          TS1_9=0.
+          TS2_9=0.
+          TS3_9=0.
+          TS4_9=0.
+          TS5_9=0.
+          PondWater_9=0.
+          Rain_g_9=0.
+
+          f_soilwater9=0.
+          f_feileaf9=0.
+          !f_Tleaf9=0.
+
+          LHa9 = 0.
+
+          GPP_o_sunlit9 = 0.
+          GPP_o_shaded9 = 0.
+          GPP_u_sunlit9 = 0.
+          GPP_u_shaded9 = 0.
+
+          TR_o_sunlit9 = 0.
+          TR_o_shaded9 = 0.
+          TR_u_sunlit9 = 0.
+          TR_u_shaded9 = 0.
+
+          Eil9 = 0.
+          Evap_soil9 = 0.
+          Evap_SW9 = 0.
+          EiS9 = 0.
+          Evap_SS9 = 0.
+
        end if
     end if
 
@@ -357,21 +744,24 @@ contains
     !deallocate(Thetam9)
 
   end subroutine av_output
-
+! write global need to be checked! @Lu HU
   subroutine write_output_global(yy,mm,dd,tod)
     use netcdf
     implicit none
     !--iLab::yy,mm,dd,tod turned to arguments
     integer, intent(in) :: yy,mm,dd,tod
     real(r8),dimension(nlp)        :: NEP1,GPP1,SIF1,SIF_sat1,NPP1,temp1,Wind1,Rh1,Rain1,Snow1,Swdr1,Swdf1,lai1,LH1,SH1, &
-         Trans1,Evap1,Thetam1,fAPAR1,VOD1,COS_flux1
+         Trans1,Evap1,Thetam1,fAPAR1,VOD1,COS_flux1, fei_leaf1  ! add fei_leaf 2023/07/20
     real(r8),dimension(nlon*nlat)  :: NEP2,GPP2,SIF2,SIF_sat2,NPP2,temp2,Wind2,Rh2,Rain2,Snow2,Swdr2,Swdf2,lai2,LH2,SH2, &
-         Trans2,Evap2,Thetam2,fAPAR2,VOD2,COS_flux2
+         Trans2,Evap2,Thetam2,fAPAR2,VOD2,COS_flux2, fei_leaf2
     real(r8),dimension(nlon,nlat)  :: NEP3,GPP3,SIF3,SIF_sat3,NPP3,temp3,Wind3,Rh3,Rain3,Snow3,Swdr3,Swdf3,lai3,LH3,SH3, &
-         Trans3,Evap3,Thetam3,fAPAR3,VOD3,COS_flux3
-    real(r8),dimension(nlp,PFT)           :: GPPpft1,LHpft1,SHpft1,Transpft1,Evappft1,Thetampft1,fAPARpft1,VODpft1,COS_fluxpft1
-    real(r8),dimension(nlon*nlat,PFT)     :: GPPpft2,LHpft2,SHpft2,Transpft2,Evappft2,Thetampft2,fAPARpft2,VODpft2,COS_fluxpft2
-    real(r8),dimension(nlon,nlat,PFT)     :: GPPpft3,LHpft3,SHpft3,Transpft3,Evappft3,Thetampft3,fAPARpft3,VODpft3,COS_fluxpft3
+         Trans3,Evap3,Thetam3,fAPAR3,VOD3,COS_flux3, fei_leaf3
+    real(r8),dimension(nlp,PFT)           :: GPPpft1,LHpft1,SHpft1,Transpft1,Evappft1,Thetampft1, &
+         fAPARpft1,VODpft1,COS_fluxpft1, fei_leafpft1, laipft1
+    real(r8),dimension(nlon*nlat,PFT)     :: GPPpft2,LHpft2,SHpft2,Transpft2,Evappft2,Thetampft2,&
+         fAPARpft2,VODpft2,COS_fluxpft2, fei_leafpft2, laipft2
+    real(r8),dimension(nlon,nlat,PFT)     :: GPPpft3,LHpft3,SHpft3,Transpft3,Evappft3,Thetampft3, &
+         fAPARpft3,VODpft3,COS_fluxpft3,fei_leafpft3, laipft3
 
     real(r8) :: lon(nlon),lat(nlat)
 
@@ -442,6 +832,9 @@ contains
     fAPARpft1 = fAPARpft9
     VODpft1 = VODpft9
     COS_fluxpft1 = COS_fluxpft9
+    fei_leaf1 = fei_leaf9 ! 2023/07/20
+    fei_leafpft1 = fei_leafpft9
+    laipft1 =laipft9
     !if(myid ==0) then
     NEP2   = 0.
     GPP2   = 0.
@@ -474,6 +867,9 @@ contains
     fAPAR2    = 0.
     VOD2      = 0.
     COS_flux2 = 0.
+    fei_leaf2 = 0. ! 2023/07/20
+    fei_leafpft2 = 0.
+    laipft2 = 0.
 
     SIF2(mapping)  = SIF1
     SIF_sat2(mapping) = SIF_sat1
@@ -506,6 +902,10 @@ contains
     fAPAR2(mapping)     = fAPAR1
     VOD2(mapping)       = VOD1
     COS_flux2(mapping)  = COS_flux1
+    ! 2023/07/20
+    fei_leaf2(mapping) = fei_leaf1
+    fei_leafpft2(mapping,:) = fei_leafpft1
+    laipft2(mapping,:) = laipft1
 
     NEP3    = reshape(NEP2,(/nlon,nlat/))
     GPP3    = reshape(GPP2,(/nlon,nlat/))
@@ -539,7 +939,14 @@ contains
     fAPAR3    = reshape(fAPAR2,(/nlon,nlat/))
     VOD3    = reshape(VOD2,(/nlon,nlat/))
     COS_flux3    = reshape(COS_flux2,(/nlon,nlat/))
-
+    ! 2023/07/20
+    fei_leaf3 = reshape(fei_leaf2, (/nlon,nlat/))
+    fei_leafpft3 = reshape(fei_leafpft2, (/nlon,nlat,PFT/))
+    laipft3 = reshape(laipft2, (/nlon,nlat,PFT/))
+    ! LWP is usually negative 2023/10/23
+    ! 1 m H2o = 0.0098 MPa or 1/101 MPa
+    fei_leaf3 = fei_leaf3/101. * (-1.)
+    fei_leafpft3 = fei_leafpft3/101. * (-1.)
     !--iLab::yy,mm,dd,tod are arguments now
     ! call get_prev_date(yy,mm,dd,tod)
     if(nhtfrq <0) then
@@ -636,6 +1043,18 @@ contains
        call check(nf90_def_var(ncid,"Thetampft",nf90_double,(/dimid_lon,dimid_lat,dimid_PFT,dimid_time/),varid))
        call check(nf90_put_att(ncid,varid,"units","m3/m3"))
        call check(nf90_put_att(ncid,varid,"name","Surface soil moisture"))
+       ! 2023/07/20
+       call check(nf90_def_var(ncid,"fei_leaf",nf90_double,(/dimid_lon,dimid_lat,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","MPa"))
+       call check(nf90_put_att(ncid,varid,"name","Leaf water potential"))
+
+       call check(nf90_def_var(ncid,"LAI",nf90_double,(/dimid_lon,dimid_lat,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","m2/m2"))
+       call check(nf90_put_att(ncid,varid,"name","Leaf area index"))
+
+       call check(nf90_def_var(ncid,"fei_leafpft",nf90_double,(/dimid_lon,dimid_lat,dimid_PFT,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","MPa"))
+       call check(nf90_put_att(ncid,varid,"name","Leaf water potential"))
 
        call check(nf90_enddef(ncid))
     end if
@@ -685,6 +1104,13 @@ contains
     call check(nf90_put_var(ncid,varid,Thetampft3,start=(/1,1,1,nt/),count=(/nlon,nlat,PFT,1/)))
     call check(nf90_inq_varid(ncid,"Evappft",varid))
     call check(nf90_put_var(ncid,varid,Evappft3,start=(/1,1,1,nt/),count=(/nlon,nlat,PFT,1/)))
+    ! 2023/07/20
+    call check(nf90_inq_varid(ncid,"fei_leaf",varid))
+    call check(nf90_put_var(ncid,varid,fei_leaf3,start=(/1,1,nt/),count=(/nlon,nlat,1/)))
+    call check(nf90_inq_varid(ncid,"LAI",varid))
+    call check(nf90_put_var(ncid,varid,lai3,start=(/1,1,nt/),count=(/nlon,nlat,1/)))
+    call check(nf90_inq_varid(ncid,"fei_leafpft",varid))
+    call check(nf90_put_var(ncid,varid,fei_leafpft3,start=(/1,1,1,nt/),count=(/nlon,nlat,PFT,1/)))
     call check(nf90_close(ncid))
     !end if
     !call mpi_barrier(mpi_comm_world,ierr)
@@ -703,8 +1129,20 @@ contains
     real(r8), intent(in) :: secs_since_ref
     character(len=*), parameter :: sub = 'write_output_site'
     real(r8),dimension(nlp)        :: NEP1,GPP1,SIF1,SIF_sat1,NPP1,temp1,Wind1,Rh1,Rain1,Snow1,Swdr1,Swdf1,lai1,LH1,SH1, &
-         Trans1,Evap1,Thetam1,fAPAR1,VOD1,COS_flux1
-    real(r8),dimension(nlp,PFT)    :: GPPpft1,LHpft1,SHpft1,Transpft1,Evappft1,Thetampft1,fAPARpft1,VODpft1,COS_fluxpft1
+         Trans1,Evap1,Thetam1,fAPAR1,VOD1,COS_flux1, fei_leaf1, ETa1,Qupt1, PWS1
+    real(r8),dimension(nlp,PFT)    :: GPPpft1,LHpft1,SHpft1,Transpft1,Evappft1,Thetampft1,fAPARpft1,VODpft1,COS_fluxpft1, &
+         fei_leafpft1,laipft1
+     ! 2023/10/30
+    real(r8),dimension(nlp)  :: Thetam2,Thetam3,Thetam4,Thetam5, SWP1,SWP2,SWP3,SWP4,SWP5
+    real(r8),dimension(nlp)  :: TS1,TS2,TS3,TS4,TS5
+    real(r8),dimension(nlp)  :: pond,rain_g
+    ! 2024/01/08
+    real(r8),dimension(nlp)  :: f_soilwater1, f_feileaf1, f_Tleaf1
+    real(r8),dimension(nlp)  :: LHa1
+    ! 2024/03/30
+    real(r8),dimension(nlp)  :: GPP_o_sunlit1,GPP_o_shaded1,GPP_u_sunlit1,GPP_u_shaded1
+    real(r8),dimension(nlp)  :: TR_o_sunlit1,TR_o_shaded1,TR_u_sunlit1,TR_u_shaded1
+    real(r8),dimension(nlp)  :: Eil1,Evap_soil1,Evap_SW1,EiS1,Evap_SS1
 
     integer   :: ierr
     integer   :: ncid,dimid_site,dimid_time,dimid_PFT,varid
@@ -718,7 +1156,7 @@ contains
     logical :: ldebug = .False.
     !-- iLab::added for consistent initialisation of NetCDF variables
     real(r8), parameter :: fill_value = -99999._r8
-    
+
     !call mpi_barrier(mpi_comm_world,ierr)
     !call mpi_gatherv(NEP9(1),npoints,mpi_real8,NEP1(1),dp,sp,mpi_real8,0,mpi_comm_world,ierr)
     !call mpi_gatherv(GPP9(1),npoints,mpi_real8,GPP1(1),dp,sp,mpi_real8,0,mpi_comm_world,ierr)
@@ -779,13 +1217,66 @@ contains
     fAPARpft1 = fAPARpft9
     VODpft1 = VODpft9
     COS_fluxpft1 = COS_fluxpft9
-
+    ! 2023/07/20
+    fei_leaf1 = fei_leaf9
+    fei_leafpft1 = fei_leafpft9
+    laipft1 = laipft9
+    ! LWP is usually negative
+    ! 1 m H2o = 0.0098 MPa or 1/101 MPa
+    fei_leaf1 = fei_leaf1/101. * (-1.)
+    fei_leafpft1 = fei_leafpft1/101. * (-1.)
+    ETa1 = ETa9
+    Qupt1 = Qupt9
+    PWS1 = PWS9
     !if(myid ==0) then
+    ! 2023/10/30
+    Thetam2=Thetam2_9
+    Thetam3=Thetam3_9
+    Thetam4=Thetam4_9
+    Thetam5=Thetam5_9
+    SWP1=SWP1_9/101.*(-1.)
+    SWP2=SWP2_9/101.*(-1.)
+    SWP3=SWP3_9/101.*(-1.)
+    SWP4=SWP4_9/101.*(-1.)
+    SWP5=SWP5_9/101.*(-1.)
+
+    TS1=TS1_9
+    TS2=TS2_9
+    TS3=TS3_9
+    TS4=TS4_9
+    TS5=TS5_9
+    !pond=PondWater_9
+    !rain_g=Rain_g_9
+    f_soilwater1 = f_soilwater9
+    f_feileaf1 = f_feileaf9
+    !f_Tleaf1 = f_Tleaf9
+
+    ! 2024/03/12
+    LHa1 = LHa9
+
+    !2024/03/30
+    GPP_o_sunlit1 = GPP_o_sunlit9
+    GPP_o_shaded1 = GPP_o_shaded9
+    GPP_u_sunlit1 = GPP_u_sunlit9
+    GPP_u_shaded1 = GPP_u_shaded9
+
+    TR_o_sunlit1 = TR_o_sunlit9
+    TR_o_shaded1 = TR_o_shaded9
+    TR_u_sunlit1 = TR_u_sunlit9
+    TR_u_shaded1 = TR_u_shaded9
+
+    Eil1 = Eil9
+    Evap_soil1 = Evap_soil9
+    Evap_SW1 = Evap_SW9
+    EiS1 = EiS9
+    Evap_SS1 = Evap_SS9
+    !write (*,*),'EiS1 =',EiS1
 
     !--iLab::yy,mm,dd,tod are arguments now
     ! call get_prev_date(yy,mm,dd,tod)
     if(nhtfrq <0) then
-       datestr="US_Ne1"
+       !datestr="US_Ne1"
+       datestr='US-MOz' ! site name as output NC file
        !write(datestr,"(i8)") yy
        !write(datestr,"(i8)") yy*10000+mm*100+dd
        nt   = (secs_since_ref/3600+1)/(-nhtfrq)
@@ -817,7 +1308,8 @@ contains
        call check(nf90_put_att(ncid, varid, "long_name", "time"))
        !-- iLab::added for proper time-variable (hourly output only)
        if( nhtfrq<0 ) then
-          call check(nf90_put_att(ncid, varid, "units", "seconds since "//ref_date))
+           call check(nf90_put_att(ncid, varid, "units", "seconds since "//ref_date))
+          !call check(nf90_put_att(ncid, varid, "units", "hours since "//ref_date))
        endif
        call check(nf90_put_att(ncid,varid,"calendar","Gregorian"))
 
@@ -829,60 +1321,66 @@ contains
        call check(nf90_put_att(ncid,varid,"long_name","site_number"))
        call check(nf90_put_att(ncid,varid,"axis","X"))
 
-       call check(nf90_def_var(ncid,"NEP",nf90_double,(/dimid_site,dimid_time/),varid))
-       ! call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
-       call check(nf90_put_att(ncid,varid,"units","kg/m2/s"))
+       call check(nf90_def_var(ncid,"Net_Rad",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
        call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
-       call check(nf90_put_att(ncid,varid,"name","Net Ecosystem Productivity"))
+       call check(nf90_put_att(ncid,varid,"units","W/m2"))
+       call check(nf90_put_att(ncid,varid,"name","Net Radiation"))
+
+       !call check(nf90_def_var(ncid,"NEP",nf90_double,(/dimid_site,dimid_time/),varid))
+       ! call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       !call check(nf90_put_att(ncid,varid,"units","kg/m2/s"))
+       !call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       !call check(nf90_put_att(ncid,varid,"name","Net Ecosystem Productivity"))
 
        call check(nf90_def_var(ncid,"GPP",nf90_double,(/dimid_site,dimid_time/),varid))
-       ! call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
        call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
        call check(nf90_put_att(ncid,varid,"units","kg/m2/s"))
        call check(nf90_put_att(ncid,varid,"name","Gross Primary Productivity"))
 
-       call check(nf90_def_var(ncid,"VOD",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var(ncid,"VOD",nf90_double,(/dimid_site,dimid_time/),varid))
        ! call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
-       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
-       call check(nf90_put_att(ncid,varid,"units","-"))
-       call check(nf90_put_att(ncid,varid,"name","Vegetation Optical Depth"))
+       !call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       !call check(nf90_put_att(ncid,varid,"units","-"))
+       !call check(nf90_put_att(ncid,varid,"name","Vegetation Optical Depth"))
 
-       call check(nf90_def_var(ncid,"fAPAR",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var(ncid,"fAPAR",nf90_double,(/dimid_site,dimid_time/),varid))
        ! call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
-       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
-       call check(nf90_put_att(ncid,varid,"units","-"))
-       call check(nf90_put_att(ncid,varid,"name","Fraction of Absorbed Photosynthetically Active Radiation"))
+       !call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       !call check(nf90_put_att(ncid,varid,"units","-"))
+       !call check(nf90_put_att(ncid,varid,"name","Fraction of Absorbed Photosynthetically Active Radiation"))
 
-       call check(nf90_def_var(ncid,"COS_flux",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var(ncid,"COS_flux",nf90_double,(/dimid_site,dimid_time/),varid))
        ! call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
-       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
-       call check(nf90_put_att(ncid,varid,"units","pmol/m2/s"))
-       call check(nf90_put_att(ncid,varid,"name","COS flux for soil and plant"))
+       !call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       !call check(nf90_put_att(ncid,varid,"units","pmol/m2/s"))
+       !call check(nf90_put_att(ncid,varid,"name","COS flux for soil and plant"))
 
        !   call check(nf90_def_var(ncid,"SIF_sat",nf90_double,(/dimid_site,dimid_time/),varid))
        !   call check(nf90_put_att(ncid,varid,"units","mW/m2/nm/sr"))
        !   call check(nf90_put_att(ncid,varid,"name","solar-induced SIF over the OCO2 pass-time"))
 
-       call check(nf90_def_var(ncid,"SIF",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var(ncid,"SIF",nf90_double,(/dimid_site,dimid_time/),varid))
        ! call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
-       call check(nf90_put_att(ncid,varid,"units","mW/m2/nm/sr"))
-       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
-       call check(nf90_put_att(ncid,varid,"name","solar-induced SIF"))
+       !call check(nf90_put_att(ncid,varid,"units","mW/m2/nm/sr"))
+       !call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       !call check(nf90_put_att(ncid,varid,"name","solar-induced SIF"))
 
-       call check(nf90_def_var(ncid,"GPPpft",nf90_double,(/dimid_site,dimid_PFT,dimid_time/),varid))
+       !call check(nf90_def_var(ncid,"GPPpft",nf90_double,(/dimid_site,dimid_PFT,dimid_time/),varid))
        ! call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
-       call check(nf90_put_att(ncid,varid,"units","kg/m2/s"))
-       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
-       call check(nf90_put_att(ncid,varid,"name","Gross Primary Productivity"))
+       !call check(nf90_put_att(ncid,varid,"units","kg/m2/s"))
+       !call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       !call check(nf90_put_att(ncid,varid,"name","Gross Primary Productivity"))
 
        call check(nf90_put_att(ncid,NF90_GLOBAL,"model","Beps runs"))
        call check(nf90_put_att(ncid,NF90_GLOBAL,"institution","Nanjing University"))
 
-       call check(nf90_def_var(ncid,"Thetam",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_def_var(ncid,"Thetam1",nf90_double,(/dimid_site,dimid_time/),varid))
        ! call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
        call check(nf90_put_att(ncid,varid,"units","m3/m3"))
        call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
-       call check(nf90_put_att(ncid,varid,"name","Surface soil moisture"))
+       call check(nf90_put_att(ncid,varid,"name","Soil moisture in layer 1 (5 cm)"))
 
        call check(nf90_def_var(ncid,"LH",nf90_double,(/dimid_site,dimid_time/),varid))
        ! call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
@@ -901,24 +1399,231 @@ contains
        call check(nf90_put_att(ncid,varid,"units","m/s"))
        call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
        call check(nf90_put_att(ncid,varid,"name","Transpiration"))
+       ! 2023/10/31
+       call check(nf90_def_var(ncid,"ETa",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","m/s"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Transpiration from SPAC"))
+
+       call check(nf90_def_var(ncid,"PWS",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","m"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","plant water storage"))
+
+       call check(nf90_def_var(ncid,"Qupt",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","m/s"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Uptake soil water from SPAC"))
 
        call check(nf90_def_var(ncid,"Evap",nf90_double,(/dimid_site,dimid_time/),varid))
        ! call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
        call check(nf90_put_att(ncid,varid,"units","m/s"))
        call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
-       call check(nf90_put_att(ncid,varid,"name","Evaporation"))
+       call check(nf90_put_att(ncid,varid,"name","Evaporation from original Beps"))
 
-       call check(nf90_def_var(ncid,"Evappft",nf90_double,(/dimid_site,dimid_PFT,dimid_time/),varid))
+       !call check(nf90_def_var(ncid,"Evappft",nf90_double,(/dimid_site,dimid_PFT,dimid_time/),varid))
        ! call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
-       call check(nf90_put_att(ncid,varid,"units","m/s"))
+       !call check(nf90_put_att(ncid,varid,"units","m/s"))
+       !call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       !call check(nf90_put_att(ncid,varid,"name","Evaporation"))
+
+       !call check(nf90_def_var(ncid,"Thetampft",nf90_double,(/dimid_site,dimid_PFT,dimid_time/),varid))
+       ! call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       !call check(nf90_put_att(ncid,varid,"units","m3/m3"))
+       !call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       !call check(nf90_put_att(ncid,varid,"name","Surface soil moisture"))
+       ! 2023/07/20
+       call check(nf90_def_var(ncid,"fei_leaf",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","Mpa"))
        call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
-       call check(nf90_put_att(ncid,varid,"name","Evaporation"))
+       call check(nf90_put_att(ncid,varid,"name","Leaf water potential"))
 
-       call check(nf90_def_var(ncid,"Thetampft",nf90_double,(/dimid_site,dimid_PFT,dimid_time/),varid))
-       ! call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       !call check(nf90_def_var(ncid,"LAI",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_put_att(ncid,varid,"units","m2/m2"))
+       !call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       !call check(nf90_put_att(ncid,varid,"name","Leaf area index"))
+
+       !call check(nf90_def_var(ncid,"fei_leafpft",nf90_double,(/dimid_site,dimid_PFT,dimid_time/),varid))
+       !call check(nf90_put_att(ncid,varid,"units","MPa"))
+       !call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       !call check(nf90_put_att(ncid,varid,"name","Leaf water potential"))
+
+       !
+       call check(nf90_def_var(ncid,"Thetam2",nf90_double,(/dimid_site,dimid_time/),varid))
        call check(nf90_put_att(ncid,varid,"units","m3/m3"))
        call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
-       call check(nf90_put_att(ncid,varid,"name","Surface soil moisture"))
+       call check(nf90_put_att(ncid,varid,"name","Soil moisture in layer 2 (15 cm) "))
+
+       call check(nf90_def_var(ncid,"Thetam3",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","m3/m3"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Soil moisture in layer 3 (35 cm) "))
+
+       call check(nf90_def_var(ncid,"Thetam4",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","m3/m3"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Soil moisture in layer 4 (75 cm) "))
+
+       call check(nf90_def_var(ncid,"Thetam5",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","m3/m3"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Soil moisture in layer 5 (200 cm) "))
+
+       call check(nf90_def_var(ncid,"SWP1",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","Mpa"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Soil water potential in layer 1 (5 cm)"))
+
+       call check(nf90_def_var(ncid,"SWP2",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","Mpa"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Soil water potential in layer 2 (15 cm)"))
+
+       call check(nf90_def_var(ncid,"SWP3",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","Mpa"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Soil water potential in layer 3 (35 cm)"))
+
+       call check(nf90_def_var(ncid,"SWP4",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","Mpa"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Soil water potential in layer 4 (75 cm)"))
+
+       call check(nf90_def_var(ncid,"SWP5",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","Mpa"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Soil water potential in layer 5 (200 cm)"))
+
+       call check(nf90_def_var(ncid,"TS1",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","C"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Soil temperature in layer 1 (5 cm)"))
+
+       call check(nf90_def_var(ncid,"TS2",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","C"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Soil temperature in layer 2 (15 cm)"))
+
+       call check(nf90_def_var(ncid,"TS3",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","C"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Soil temperature in layer 3 (35 cm)"))
+
+       call check(nf90_def_var(ncid,"TS4",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","C"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Soil temperature in layer 4 (75 cm)"))
+
+       call check(nf90_def_var(ncid,"TS5",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","C"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Soil temperature in layer 5 (200 cm)"))
+
+       !call check(nf90_def_var(ncid,"PondWater",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_put_att(ncid,varid,"units","m"))
+       !call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+
+       !call check(nf90_def_var(ncid,"Rain_g",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_put_att(ncid,varid,"units","m/s"))
+       !call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+
+       call check(nf90_def_var(ncid,"f_soilwater",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","dimensionless, [0-1]"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","water stress from soil moisture"))
+
+       call check(nf90_def_var(ncid,"f_feileaf",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","dimensionless, [0-1]"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","water stress from leaf water potential"))
+
+       !call check(nf90_def_var(ncid,"f_Tleaf",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_put_att(ncid,varid,"units","dimensionless, [0-1]"))
+       !call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       !call check(nf90_put_att(ncid,varid,"name","temperature stress from leaf"))
+
+       call check(nf90_def_var(ncid,"LHa",nf90_double,(/dimid_site,dimid_time/),varid))
+       call check(nf90_put_att(ncid,varid,"units","W/m2"))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"name","Actual Latent heat flux when considering plant hydraulics"))
+
+       call check(nf90_def_var(ncid,"GPP_o_sunlit",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"units","kg/m2/s"))
+       call check(nf90_put_att(ncid,varid,"name","Gross Primary Productivity of overstory sunlit leaf"))
+
+       call check(nf90_def_var(ncid,"GPP_o_shaded",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"units","kg/m2/s"))
+       call check(nf90_put_att(ncid,varid,"name","Gross Primary Productivity of overstory shaded leaf"))
+
+       call check(nf90_def_var(ncid,"GPP_u_sunlit",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"units","kg/m2/s"))
+       call check(nf90_put_att(ncid,varid,"name","Gross Primary Productivity of understory sunlit leaf"))
+
+       call check(nf90_def_var(ncid,"GPP_u_shaded",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"units","kg/m2/s"))
+       call check(nf90_put_att(ncid,varid,"name","Gross Primary Productivity of understory shaded leaf"))
+
+       call check(nf90_def_var(ncid,"TR_o_sunlit",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"units","m/s"))
+       call check(nf90_put_att(ncid,varid,"name","Transpiration of overstory sunlit leaf"))
+
+       call check(nf90_def_var(ncid,"TR_o_shaded",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"units","m/s"))
+       call check(nf90_put_att(ncid,varid,"name","Transpiration of overstory shaded leaf"))
+
+       call check(nf90_def_var(ncid,"TR_u_sunlit",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"units","m/s"))
+       call check(nf90_put_att(ncid,varid,"name","Transpiration of understory sunlit leaf"))
+
+       call check(nf90_def_var(ncid,"TR_u_shaded",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"units","m/s"))
+       call check(nf90_put_att(ncid,varid,"name","Transpiration of understory shaded leaf"))
+
+       call check(nf90_def_var(ncid,"Eil",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"units","m/s"))
+       call check(nf90_put_att(ncid,varid,"name","Interception of liquid water"))
+
+       call check(nf90_def_var(ncid,"Evap_soil",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"units","m/s"))
+       call check(nf90_put_att(ncid,varid,"name","Evaporation of surface soil"))
+
+       call check(nf90_def_var(ncid,"Evap_SW",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"units","m/s"))
+       call check(nf90_put_att(ncid,varid,"name","Evaporation of surface pond water"))
+
+        call check(nf90_def_var(ncid,"EiS",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"units","m/s"))
+       call check(nf90_put_att(ncid,varid,"name","Evaporation of solid water (snow)"))
+
+       call check(nf90_def_var(ncid,"Evap_SS",nf90_double,(/dimid_site,dimid_time/),varid))
+       !call check(nf90_def_var_fill(ncid, varid,  NF90_FILL, fill_value))
+       call check(nf90_put_att(ncid,varid,"missing_value",fill_value))
+       call check(nf90_put_att(ncid,varid,"units","m/s"))
+       call check(nf90_put_att(ncid,varid,"name","Evaporation of surface snow"))
 
        call check(nf90_enddef(ncid))
     end if
@@ -938,23 +1643,26 @@ contains
     !    call check(nf90_inq_varid(ncid,"time",varid))
     !    call check(nf90_put_var(ncid,varid,nt,start=(/nt/),count=(/1/)))
 
-    call check(nf90_inq_varid(ncid,"NEP",varid))
-    call check(nf90_put_var(ncid,varid,NEP1,start=(/1,nt/),count=(/nlp,1/)))
+    !call check(nf90_inq_varid(ncid,"NEP",varid))
+    !call check(nf90_put_var(ncid,varid,NEP1,start=(/1,nt/),count=(/nlp,1/)))
     call check(nf90_inq_varid(ncid,"GPP",varid))
     call check(nf90_put_var(ncid,varid,GPP1,start=(/1,nt/),count=(/nlp,1/)))
-    call check(nf90_inq_varid(ncid,"VOD",varid))
-    call check(nf90_put_var(ncid,varid,VOD1,start=(/1,nt/),count=(/nlp,1/)))
-    call check(nf90_inq_varid(ncid,"fAPAR",varid))
-    call check(nf90_put_var(ncid,varid,fAPAR1,start=(/1,nt/),count=(/nlp,1/)))
-    call check(nf90_inq_varid(ncid,"COS_flux",varid))
-    call check(nf90_put_var(ncid,varid,COS_flux1,start=(/1,nt/),count=(/nlp,1/)))
+
+    call check(nf90_inq_varid(ncid,"Net_Rad",varid))
+    call check(nf90_put_var(ncid,varid,Rh1,start=(/1,nt/),count=(/nlp,1/)))
+    !call check(nf90_inq_varid(ncid,"VOD",varid))
+    !call check(nf90_put_var(ncid,varid,VOD1,start=(/1,nt/),count=(/nlp,1/)))
+    !call check(nf90_inq_varid(ncid,"fAPAR",varid))
+    !call check(nf90_put_var(ncid,varid,fAPAR1,start=(/1,nt/),count=(/nlp,1/)))
+    !call check(nf90_inq_varid(ncid,"COS_flux",varid))
+    !call check(nf90_put_var(ncid,varid,COS_flux1,start=(/1,nt/),count=(/nlp,1/)))
     !    call check(nf90_inq_varid(ncid,"SIF_sat",varid))
     !    call check(nf90_put_var(ncid,varid,SIF_sat1,start=(/1,nt/),count=(/nlp,1/)))
-    call check(nf90_inq_varid(ncid,"SIF",varid))
-    call check(nf90_put_var(ncid,varid,SIF1,start=(/1,nt/),count=(/nlp,1/)))
-    call check(nf90_inq_varid(ncid,"GPPpft",varid))
-    call check(nf90_put_var(ncid,varid,GPPpft1,start=(/1,1,nt/),count=(/nlp,PFT,1/)))
-    call check(nf90_inq_varid(ncid,"Thetam",varid))
+    !call check(nf90_inq_varid(ncid,"SIF",varid))
+    !call check(nf90_put_var(ncid,varid,SIF1,start=(/1,nt/),count=(/nlp,1/)))
+    !call check(nf90_inq_varid(ncid,"GPPpft",varid))
+    !call check(nf90_put_var(ncid,varid,GPPpft1,start=(/1,1,nt/),count=(/nlp,PFT,1/)))
+    call check(nf90_inq_varid(ncid,"Thetam1",varid))
     call check(nf90_put_var(ncid,varid,Thetam1,start=(/1,nt/),count=(/nlp,1/)))
     call check(nf90_inq_varid(ncid,"LH",varid))
     call check(nf90_put_var(ncid,varid,LH1,start=(/1,nt/),count=(/nlp,1/)))
@@ -962,16 +1670,113 @@ contains
     call check(nf90_put_var(ncid,varid,SH1,start=(/1,nt/),count=(/nlp,1/)))
     call check(nf90_inq_varid(ncid,"Trans",varid))
     call check(nf90_put_var(ncid,varid,Trans1,start=(/1,nt/),count=(/nlp,1/)))
+    ! 2023/10/31
+    call check(nf90_inq_varid(ncid,"ETa",varid))
+    call check(nf90_put_var(ncid,varid,ETa1,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"PWS",varid))
+    call check(nf90_put_var(ncid,varid,PWS1,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"Qupt",varid))
+    call check(nf90_put_var(ncid,varid,Qupt1,start=(/1,nt/),count=(/nlp,1/)))
+
     call check(nf90_inq_varid(ncid,"Evap",varid))
     call check(nf90_put_var(ncid,varid,Evap1,start=(/1,nt/),count=(/nlp,1/)))
-    call check(nf90_inq_varid(ncid,"Thetampft",varid))
-    call check(nf90_put_var(ncid,varid,Thetampft1,start=(/1,1,nt/),count=(/nlp,PFT,1/)))
-    call check(nf90_inq_varid(ncid,"Evappft",varid))
-    call check(nf90_put_var(ncid,varid,Evappft1,start=(/1,1,nt/),count=(/nlp,PFT,1/)))
+    !call check(nf90_inq_varid(ncid,"Thetampft",varid))
+    !call check(nf90_put_var(ncid,varid,Thetampft1,start=(/1,1,nt/),count=(/nlp,PFT,1/)))
+    !call check(nf90_inq_varid(ncid,"Evappft",varid))
+    !call check(nf90_put_var(ncid,varid,Evappft1,start=(/1,1,nt/),count=(/nlp,PFT,1/)))
+    ! 2023/07/20
+    call check(nf90_inq_varid(ncid,"fei_leaf",varid))
+    call check(nf90_put_var(ncid,varid,fei_leaf1,start=(/1,nt/),count=(/nlp,1/)))
+    !call check(nf90_inq_varid(ncid,"LAI",varid))
+    !call check(nf90_put_var(ncid,varid,lai1,start=(/1,nt/),count=(/nlp,1/)))
+    !call check(nf90_inq_varid(ncid,"fei_leafpft",varid))
+    !call check(nf90_put_var(ncid,varid,fei_leafpft1,start=(/1,1,nt/),count=(/nlp,PFT,1/)))
+
+    call check(nf90_inq_varid(ncid,"Thetam2",varid))
+    call check(nf90_put_var(ncid,varid,Thetam2,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"Thetam3",varid))
+    call check(nf90_put_var(ncid,varid,Thetam3,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"Thetam4",varid))
+    call check(nf90_put_var(ncid,varid,Thetam4,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"Thetam5",varid))
+    call check(nf90_put_var(ncid,varid,Thetam5,start=(/1,nt/),count=(/nlp,1/)))
+
+    call check(nf90_inq_varid(ncid,"SWP1",varid))
+    call check(nf90_put_var(ncid,varid,SWP1,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"SWP2",varid))
+    call check(nf90_put_var(ncid,varid,SWP2,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"SWP3",varid))
+    call check(nf90_put_var(ncid,varid,SWP3,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"SWP4",varid))
+    call check(nf90_put_var(ncid,varid,SWP4,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"SWP5",varid))
+    call check(nf90_put_var(ncid,varid,SWP5,start=(/1,nt/),count=(/nlp,1/)))
+
+    call check(nf90_inq_varid(ncid,"TS1",varid))
+    call check(nf90_put_var(ncid,varid,TS1,start=(/1,nt/),count=(/nlp,1/)))
+
+    call check(nf90_inq_varid(ncid,"TS2",varid))
+    call check(nf90_put_var(ncid,varid,TS2,start=(/1,nt/),count=(/nlp,1/)))
+
+    call check(nf90_inq_varid(ncid,"TS3",varid))
+    call check(nf90_put_var(ncid,varid,TS3,start=(/1,nt/),count=(/nlp,1/)))
+
+    call check(nf90_inq_varid(ncid,"TS4",varid))
+    call check(nf90_put_var(ncid,varid,TS4,start=(/1,nt/),count=(/nlp,1/)))
+
+    call check(nf90_inq_varid(ncid,"TS5",varid))
+    call check(nf90_put_var(ncid,varid,TS5,start=(/1,nt/),count=(/nlp,1/)))
+
+    !call check(nf90_inq_varid(ncid,"PondWater",varid))
+    !call check(nf90_put_var(ncid,varid,pond,start=(/1,nt/),count=(/nlp,1/)))
+
+    !call check(nf90_inq_varid(ncid,"Rain_g",varid))
+    !call check(nf90_put_var(ncid,varid,rain_g,start=(/1,nt/),count=(/nlp,1/)))
+
+    call check(nf90_inq_varid(ncid,"f_soilwater",varid))
+    call check(nf90_put_var(ncid,varid,f_soilwater1,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"f_feileaf",varid))
+    call check(nf90_put_var(ncid,varid,f_feileaf1,start=(/1,nt/),count=(/nlp,1/)))
+    !call check(nf90_inq_varid(ncid,"f_Tleaf",varid))
+    !call check(nf90_put_var(ncid,varid,f_Tleaf1,start=(/1,nt/),count=(/nlp,1/)))
+
+    call check(nf90_inq_varid(ncid,"LHa",varid))
+    call check(nf90_put_var(ncid,varid,LHa1,start=(/1,nt/),count=(/nlp,1/)))
+
+    call check(nf90_inq_varid(ncid,"GPP_o_sunlit",varid))
+    call check(nf90_put_var(ncid,varid,GPP_o_sunlit1,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"GPP_o_shaded",varid))
+    call check(nf90_put_var(ncid,varid,GPP_o_shaded1,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"GPP_u_sunlit",varid))
+    call check(nf90_put_var(ncid,varid,GPP_u_sunlit1,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"GPP_u_shaded",varid))
+    call check(nf90_put_var(ncid,varid,GPP_u_shaded1,start=(/1,nt/),count=(/nlp,1/)))
+
+    call check(nf90_inq_varid(ncid,"TR_o_sunlit",varid))
+    call check(nf90_put_var(ncid,varid,TR_o_sunlit1,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"TR_o_shaded",varid))
+    call check(nf90_put_var(ncid,varid,TR_o_shaded1,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"TR_u_sunlit",varid))
+    call check(nf90_put_var(ncid,varid,TR_u_sunlit1,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"TR_u_shaded",varid))
+    call check(nf90_put_var(ncid,varid,TR_u_shaded1,start=(/1,nt/),count=(/nlp,1/)))
+
+    call check(nf90_inq_varid(ncid,"Eil",varid))
+    call check(nf90_put_var(ncid,varid,Eil1,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"Evap_soil",varid))
+    call check(nf90_put_var(ncid,varid,Evap_soil1,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"Evap_SW",varid))
+    call check(nf90_put_var(ncid,varid,Evap_SW1,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"EiS",varid))
+    call check(nf90_put_var(ncid,varid,EiS1,start=(/1,nt/),count=(/nlp,1/)))
+    call check(nf90_inq_varid(ncid,"Evap_SS",varid))
+    call check(nf90_put_var(ncid,varid,Evap_SS1,start=(/1,nt/),count=(/nlp,1/)))
+
     call check(nf90_close(ncid))
     !end if
     !call mpi_barrier(mpi_comm_world,ierr)
 
   end subroutine write_output_site
+
 
 end module outputMod

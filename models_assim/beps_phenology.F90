@@ -12,51 +12,51 @@ subroutine beps_phenology(lc,daylen,dt,theta,trans,lai)
 
 !  REAL, ALLOCATABLE, DIMENSION (:,:,:) :: mlai ! monthly LAI fields from external data
   integer,intent(in)  :: lc
-  real(r8),intent(in)     :: daylen
-  real(r8),intent(in)     :: dt
-  real(r8),intent(in)     :: theta
-  real(r8),intent(in)     :: trans
-  real(r8),intent(inout)  :: lai
-  real(r8)                :: tmpm                  ! air-temperature memory [deg C]
-  real(r8)                :: laim                  ! water limited LAI memory
-  real(r8)                :: laihi                 ! highest recorded LAI (with a decay rate, for setting 'zfc')
+  real,intent(in)     :: daylen
+  real,intent(in)     :: dt
+  real,intent(in)     :: theta
+  real,intent(in)     :: trans
+  real,intent(inout)  :: lai
+  real                :: tmpm                  ! air-temperature memory [deg C]
+  real                :: laim                  ! water limited LAI memory
+  real                :: laihi                 ! highest recorded LAI (with a decay rate, for setting 'zfc')
 ! WOK-ADD-070723 litter production to be calculated directly in phenology (not in cbalance indirectly)
-  real(r8)                :: tmpmmult, laimmult    ! auxiliary fields
-  real(r8)                :: leafshed              ! output field
-  real(r8)                :: laihimult
-  real(r8), PARAMETER     :: taulaihi = 5.0        ! memory time for updating fractional cover
+  real                :: tmpmmult, laimmult    ! auxiliary fields
+  real                :: leafshed              ! output field
+  real                :: laihimult
+  real, PARAMETER     :: taulaihi = 5.0        ! memory time for updating fractional cover
 !  REAL, PARAMETER :: laimin = 1e-6            ! minimum LAI for pot. transpiration per LAI estimates
-  real(r8), PARAMETER     :: eta = 0.99999         ! curvature parameter for mins/maxs
+  real, PARAMETER     :: eta = 0.99999         ! curvature parameter for mins/maxs
 ! WOK-ADD-070723 the list of controlling parameters
 ! FREE PARAMETERS
-  real(r8)                :: plaimax(1:10)               ! maximum LAI
-  real(r8)                :: rootdepth(1:10)             ! rootdepth
-  real(r8)                :: ptphen(1:10)                ! leaf onset temperature [deg C]
-  real(r8)                :: ptphenr(1:10)               ! range of leaf onset temperature [1/deg C]
-  real(r8)                :: pdphen                ! leaf shedding daylength [hours]
-  real(r8)                :: pdphenr               ! range of leaf shedding daylength [hours]
+  real                :: plaimax(1:10)               ! maximum LAI
+  real                :: rootdepth(1:10)             ! rootdepth
+  real                :: ptphen(1:10)                ! leaf onset temperature [deg C]
+  real                :: ptphenr(1:10)               ! range of leaf onset temperature [1/deg C]
+  real                :: pdphen                ! leaf shedding daylength [hours]
+  real                :: pdphenr               ! range of leaf shedding daylength [hours]
 !  REAL, ALLOCATABLE, DIMENSION (:) :: PTSHD   ! leaf shedding temperature [deg C]
 !  REAL, ALLOCATABLE, DIMENSION (:) :: PTSHDS  ! spread of leaf shedding temperature [1/deg C]
-  real(r8)                :: plgr                  ! leaf growth factor [1/days]
-  real(r8)                :: pkl(1:10)                   ! inverse leaf longevity from start of senescense [1/days]
-  real(r8)                :: ptauw(1:10)                 ! target survival time at current soil moisture [days]
+  real                :: plgr                  ! leaf growth factor [1/days]
+  real                :: pkl(1:10)                   ! inverse leaf longevity from start of senescense [1/days]
+  real                :: ptauw(1:10)                 ! target survival time at current soil moisture [days]
 ! PARAMETERS LEFT FIXED
-  real(r8)                :: pks                   ! inverse memory time for soil moisture-limited LAI [1/days]
-  real(r8)                :: pkm                   ! inverse memory time for air temperature [1/days]
-  real(r8)                :: pasm
-  real(r8)                :: zfc, zlai
-  real(r8)                :: fcmax0, lailim0, cdrm
-  real(r8)                :: xdtmp, lait, laiw, fx, t0, ts, ft, fd, fg
-  real(r8)                :: lailast
-  real(r8)                :: laimaxw, laimax, r, lailim, wai
-  real(r8)                :: dptrp
+  real                :: pks                   ! inverse memory time for soil moisture-limited LAI [1/days]
+  real                :: pkm                   ! inverse memory time for air temperature [1/days]
+  real                :: pasm
+  real                :: zfc, zlai
+  real                :: fcmax0, lailim0, cdrm
+  real                :: xdtmp, lait, laiw, fx, t0, ts, ft, fd, fg
+  real                :: lailast
+  real                :: laimaxw, laimax, r, lailim, wai
+  real                :: dptrp
   integer             :: plt
 ! WOK-090309 'ph' is now only used in nscale
 ! xph     1: warm-evergreen; 2: cold-evergreen; 3: summergreen; 4: raingreen; 5: grass; 6: annual crop;
  ! INTEGER, DIMENSION (0:13), PARAMETER :: xph= &
 !PFT:0  1  2  3  4  5  6  7  8  9 10 11 12 13
  !  (/5, 1, 4, 1, 3, 2, 3, 1, 4, 5, 5, 2, 5, 6/)
-  real(r8)                :: sla(1:10)
+  real                :: sla(1:10)
 
 select case (lc)
    case (1)    !conifer evergreen
@@ -79,6 +79,14 @@ select case (lc)
     plt = 9
    case(41)     ! C4 crop
     plt = 10
+   case(1001)     ! C4 crop
+    plt = 10
+   case(1002)     
+    plt = 8
+   case(1003)     
+    plt = 8
+   case(1004)     
+    plt = 8
 end select
 
   sla  = (/4.1, 11.3, 12.8, 7.8, 9.0, 9.2, 16.9, 25.3,16.9,16.9/)
@@ -134,7 +142,7 @@ end select
     tmpm = 0.
 !   the water stress index memory
     laim = 0.
-    lai = plaimax(plt)
+    lai  = plaimax(plt)
 !   decay multiplier for maximum LAI used to set fractional cover
     laihimult = exp (-1./(taulaihi*365.))
 !   control for fractional cover 'zfc'
@@ -153,7 +161,7 @@ end select
 ! advances LAI and fractional cover by one day
 ! from its current state to the state at day 'iday'
 !------------------------------------------------------------------
-!DO plt = 1,9
+DO plt = 1,9
 !      IF (ph(k)==1.or.ph(k)==4) THEN ! warm-evergreen and warm-deciduous phenology
       IF (plt==3 .or. plt==4 .or. plt==5 .or. plt==6) THEN ! warm-evergreen and warm-deciduous phenology
         ! effective maximum LAI, taking into account structural limiations
@@ -183,7 +191,6 @@ end select
         lailim = maxx (ft * fd * plgr * plaimax(plt) / r, 1.e-9, 5.e-3)
 !        lai(k) = plaimax(k) - (plaimax(k) - lai(k)) * exp (-r)
 !        lai(k) = lailim - (lailim - lai(k)) * exp (-r)
-       write(*,*) 'lailim, plgr, r', lailim, plgr, r
 
       ELSE ! grass and annual crop phenology
         tmpm = dt * (1. - tmpmmult) + tmpm * tmpmmult
@@ -200,16 +207,12 @@ end select
 !      leafshed(k) = maxx (lailast - lai(k), 0., 1e-3) / sla(k) * 1000. * cdrm
       leafshed = maxx ((lailim-lai)*(1.-exp(-r)), 0., 1.e-3) / sla(plt) * 1000. * cdrm
       lai = lailim - (lailim - lai) * exp (-r)
-      write(*,*) 'leafshed, lai', leafshed, lai
 !      if(pft(k)==9) print '(a,8g30.14)','PFT9-b: lai(k),r,lailim',lai(k),r,lailim
-!END DO
+END DO
       ! set fractional cover
 !      laihi(k) = maxs (lai(k), laihi(k), eta) * laihimult
-      write(*,*) "lai, laihi, laihimult", lai, laihi, laihimult
       laihi = fomaxef_ss (lai, laihi, 2.e-6 ) * laihimult
 !      zfc(k) = maxs (laihi(k) / lailim0, lai(k) / lailim0, eta)
-      write(*,*) "laihi, lailim0, lai", laihi, lailim0, lai
- 
       zfc = fomaxef_ss (laihi / lailim0, lai / lailim0, 2.e-6)
 !      zfc(k) = mins ( zfc(k), 1., eta) * fcmax0
       zfc = minx( zfc, 1., 2.e-6) * fcmax0 ! snb, test

@@ -18,15 +18,15 @@
 # setting namelists for beps run
 input_dir=""
 output_dir=""
-ic_yyyymmdd="20010101"
-ndays=4748
+ic_yyyymmdd="20040101"
+ndays=5844
 nmlfile=""
 #-- default settings for original configuration with two sites
 #   (might be changed with option --npts)
 npts=1
-beps_lai_site_prefix="US-Ne2_LAI_2001_2013"
-site_bound_prefix="US-Ne2-corn_boundary"
-meteo_site_flnm_prefix="US-Ne2_meteo_2001_2013"
+beps_lai_site_prefix="US_MOZ_LAI_V20240513_P1"
+site_bound_prefix="US-MOz_boundary"
+meteo_site_flnm_prefix="US-MOz_meteo_2004_2019"
 
 #-- get fully qualified name of *this* script
 script_name=$(readlink -f $0)
@@ -81,9 +81,9 @@ fi
 
 if [ ${npts} != 2 ]
 then
-  site_bound_prefix="US-Ne2-corn_boundary"
-  beps_lai_site_prefix="US-Ne2_LAI_2001_2013"
-  meteo_site_flnm_prefix="US-Ne2_meteo_2001_2013"
+  site_bound_prefix="US-MOz_boundary"
+  beps_lai_site_prefix="US_MOZ_LAI_V20240513_P1"
+  meteo_site_flnm_prefix="US-MOz_meteo_2004_2019"
 fi
 
 if [ "${output_dir}" = "" ]
@@ -132,17 +132,19 @@ cat <<EOF
    beps_site_path     = "$input_dir/beps_site/"
    site_bound_prefix  = "${site_bound_prefix}"
    lai_input          = 1        !! <0 : lai is simulated, >=0 : lai as forcing
-   SoilC_Mod          = 0        !! 0: default soil carbon model, 1: soil carbon fraction model
    beps_lai_path      = "$input_dir/lai/"
    beps_lai_prefix    = "beps_lai_"
    beps_lai_site_prefix = "${beps_lai_site_prefix}"
    beps_Vcmax_path    = "$input_dir/Vcmax/"
    beps_Vcmax_site_path = "$input_dir/beps_site/"
-   prior_para_prefix = "BEPS_optimized_para_20230714"
-   PF_prior_para_prefix = "BEPS_prior_parameter_paraPF_20230714"
+   prior_para_prefix = "Prior_Para_20240607"  !! parameter file for forward modelling
+   PF_prior_para_prefix = "US-MOz_ParaBoundary_20240129"   !! parameter file for particle filter assimilation
+   MC_prior_para_prefix = "US-MOz_PF_Para_20231215"   !! parameter file for Monte Carlo 
    beps_cpools        = "$input_dir/cpools/cpools_2010.nc"
    beps_PF_obs_path = "$input_dir/beps_site/"
-   prior_PF_obs_prefix = "US-Ne2_obsVOD_2001_2013"
+   prior_PF_obs_prefix = "US-MOz_obs_20240129" !! observed for particle filter assimilation
+   beps_MC_obs_path = "$input_dir/beps_site/"
+   prior_MC_obs_prefix = "US-MOz_PF_obs_20231210"
    beps_out_dir       = "$output_dir/"
    beps_rst_dir       = "$output_dir/"
 EOF

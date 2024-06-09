@@ -10,7 +10,7 @@ implicit none
 
 real(r8),parameter:: PI    = 3.1415926
 real(r8),parameter:: rho_a = 1.292              ! density of air at 0C
-real(r8),parameter:: rho_w = 1025.0             ! density of water
+real(r8),parameter:: rho_w = 1025.0             ! density of water kg/m3
 real(r8),parameter:: cp_ice= 2228.261           ! J/kg/K
 real(r8),parameter:: latent_fusion=3.34*1000000.
 real(r8),parameter:: PI2   = 6.283185307        ! 2 times PI

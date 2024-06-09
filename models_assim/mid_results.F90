@@ -30,9 +30,43 @@ type :: results
 !   real(r8)  :: COS_grnd2
    real(r8)  :: fAPAR
    real(r8)  :: PWS
-   real(r8)  :: ETa
+   real(r8)  :: ETa  ! trans from SAPC
    real(r8)  :: VOD
    real(r8)  :: fei_leaf
+   real(r8)  :: Qupt ! water uptake from SPAC
+   !
+   real(r8)  :: thetam2
+   real(r8)  :: thetam3
+   real(r8)  :: thetam4
+   real(r8)  :: thetam5
+   real(r8)  :: swp1
+   real(r8)  :: swp2
+   real(r8)  :: swp3
+   real(r8)  :: swp4
+   real(r8)  :: swp5
+   real(r8)  :: TS1
+   real(r8)  :: TS2
+   real(r8)  :: TS3
+   real(r8)  :: TS4
+   real(r8)  :: TS5
+   real(r8)  :: Zp
+   real(r8)  :: rain_g
+   real(r8)  :: f_soilwater
+   real(r8)  :: f_feileaf
+   !real(r8)  :: f_Tleaf
+! 2024/03/12
+   real(r8)  :: LHa
+   real(r8)  :: TR_o_sunlit
+   real(r8)  :: TR_o_shaded
+   real(r8)  :: TR_u_sunlit
+   real(r8)  :: TR_u_shaded
+   ! 2024/06/06
+   real(r8)  :: Eil
+   real(r8)  :: Evap_soil
+   real(r8)  :: Evap_SW
+   real(r8)  :: EiS
+   real(r8)  :: Evap_SS
+
 end type results
 
 type :: climatedata

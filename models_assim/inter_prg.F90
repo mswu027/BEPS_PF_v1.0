@@ -2,9 +2,9 @@
 !! Fortran version: 3/5/2017 @J.Wang
 
 subroutine inter_prg(yr, mn, dy, tod, &
-     lai,lai_input,lc,clumping,Vcmax0,VJ_slope,VN_slope,bh2o,mh2o,f_leaf,p_kc25,p_ko25,p_tau25,&
+     lai,lai_input0,lc,clumping,Vcmax0,VJ_slope,VN_slope,bh2o,mh2o,f_leaf,p_kc25,p_ko25,p_tau25,&
      sif_alpha,sif_beta,&
-     vod1,vod2,vod3,param,meteo,CosZs,var_o,var_n,soilp,mid_res,daylen)
+     vod1,vod2,vod3,PHydra,param,meteo,CosZs,var_o,var_n,soilp,mid_res,daylen,fw_flag)
 use shr_kind_mod,only:r8=>shr_kind_r8
 !--iLab::restrict use of beps_time_manager to required entities
 !--iLab-update::extended arguments to avoid time manager completely
@@ -15,6 +15,7 @@ use mid_results
 use beps_par
 use AnGsMod
 use rainsnowMod
+
 implicit none
 
 !--iLab::added date-elements as argument to avoid 'call get_curr_date' further below
@@ -29,9 +30,21 @@ type(climatedata),intent(in) ::meteo
 real(r8),intent(in)  ::var_o(0:40)
 real(r8),intent(out) ::var_n(0:40)
 real(r8),intent(inout)  :: lai
-type(soil)           ::soilp
-type(results)        ::mid_res
-integer,intent(in)   :: lai_input
+type(soil)           :: soilp
+type(results)        :: mid_res
+! when I using point type for plant hydraulics parameters, using lai_input shows error message @Lu Hu 2023/12/13
+integer,intent(in)   :: lai_input0
+! 2023/12/15
+type(Phydraulic)        :: PHydra
+
+integer,intent(in)   :: fw_flag
+! 2024/03/12, flag for choosing the form of water stress on stomatal conductance or Vcmax
+! 0: fws = 1.0, do not consider the water stress from soil or leaf water potential
+! 1: fws = f_soilwater, soil moisture stress on BWB slope
+! 2: fws = 1.0, vcmax = vcmax*f_feileaf,leaf water potential stress on Vcmax
+! 3: fws = f_feileaf,leaf water potential stress on BWB slope
+! 4: fws = 1.0, but f_feileaf only works on Etp, Eta = Etp * f_feileaf
+
 !real(r8),intent(out) :: gs_h2o,G_o_b
 integer              :: num,kkk,i,j
 integer,parameter    :: iter_max = 20
@@ -44,7 +57,7 @@ real(r8)             :: height_wind_sp            !height of the Va measured for
 real(r8)             :: Qhc_o(0:iter_max),Qhc_u(0:iter_max),Qhg(0:iter_max)  !sensible heating
 real(r8)             :: G(0:layer+1,0:iter_max)  !the heat flux into the canopy of over story --in W/m^2
 real(r8)             :: Wcl_o(0:iter_max),Wcs_o(0:iter_max)  !the masses od rain and snow on the canopy
-real(r8)             :: Xcl_o(0:iter_max),Xcs_o(0:iter_max)  !the fractoion of canopy coverd by liquid water and snow
+real(r8)             :: Xcl_o(0:iter_max),Xcs_o(0:iter_max)  !the fraction of canopy coverd by liquid water and snow
 real(r8)             :: Wcl_u(0:iter_max),Wcs_u(0:iter_max)
 real(r8)             :: Xcl_u(0:iter_max),Xcs_u(0:iter_max)
 real(r8)             :: r_rain_g(0:iter_max)   !the rainfall rate on ground surface m/s
@@ -110,7 +123,9 @@ real(r8)             :: COSc_o_sunlit_new,COSc_o_shaded_new,COSc_u_sunlit_new,CO
                         ! COS concentration in the chloroplast
 real(r8)             :: Tc_o_sunlit_new,Tc_o_shaded_new,Tc_u_sunlit_new,Tc_u_shaded_new
                         ! the effective canopy temperature in K
-real(r8)             :: f_soilwater    ! an emperical parameter describin    g the relative availability of soil water for plants
+real(r8)             :: f_soilwater    ! an empirical parameter describin    g the relative availability of soil water for plants
+real(r8)             :: f_feileaf      ! 2024/01/07: an empirical parameter from leaf water potential for plants
+real(r8)             :: f_Tleaf        ! 2024/01/11: an empirical parameter from leaf temperature for plants
 real(r8)             :: Gw_o_sunlit,Gw_o_shaded,Gw_u_sunlit,Gw_u_shaded ! the total conductance for water from     the intercellular space of the leaves to the reference height above the canopy
 real(r8)             :: Gc_o_sunlit,Gc_o_shaded,Gc_u_sunlit,Gc_u_shaded  ! the total conductance for CO2 from th    e intercellular space of the leaves to the reference height above the canopy
 real(r8)             :: Gww_o_sunlit,Gww_o_shaded,Gww_u_sunlit,Gww_u_shaded ! the total conductance for water from     the surface of the leaves to the reference height above the canopy
@@ -129,7 +144,7 @@ real(r8)             :: stSIF_o_sunlit,stSIF_o_shaded,stSIF_u_sunlit,stSIF_u_sha
 real(r8)             :: COS_o_sunlit,COS_o_shaded,COS_u_sunlit,COS_u_shaded
 real(r8)             :: lCOS_o_sunlit,lCOS_o_shaded,lCOS_u_sunlit,lCOS_u_shaded
 real(r8)             :: VPS_air
-real(r8)             :: gs_h2o
+real(r8)             :: gs_h2o_o_sunlit,gs_h2o_o_shaded,gs_h2o_u_sunlit,gs_h2o_u_shaded
 real(r8)             :: GH_o,G_o_a,G_o_b,G_u_a, G_u_b
 real(r8)             :: canopyh_o,canopyh_u
 real(r8)             :: VPD_air
@@ -140,6 +155,7 @@ real(r8)             :: b_h2o            !the intercept term in BWB model (mol H
 real(r8)             :: m_h2o            ! the slope in BWB model
 real(r8)             :: leleaf_o_sunlit,leleaf_o_shaded,leleaf_u_sunlit,leleaf_u_shaded !leaf latent heat flux (mol/m2/s)
 real(r8)             :: Eta
+real(r8)             :: Qupt
 real(r8)             :: vod
 real(r8)             :: fei_leaf
 !for the Vcmax-Nitrogen calculation
@@ -154,8 +170,12 @@ real(r8)             :: theta_day  ! for storing daily mean surface soil moistur
 real(r8)             :: trans_day  ! for storing daily mean transpiration
 real(r8)             :: cosa
 real(r8)             :: cos_soil
+!2024/03/30
+real(r8)             :: Trans_o_sunlit(0:iter_max),Trans_o_shaded(0:iter_max)  !transpiration
+real(r8)             :: Trans_u_sunlit(0:iter_max),Trans_u_shaded(0:iter_max)
 !--iLab::introduced to avoid calling is_end_curr_day() from beps_time_manager
 logical :: is_end_curr_day
+
 
 is_end_curr_day = (tod == 0) !--iLab: taken from BEPS time manager
 temp_day = 0.
@@ -178,7 +198,11 @@ b_h2o       = bh2o
 !-- iLab::g2_h2o is *only* set from other routines in case 'CosZs>0.',
 !         so we *must* initialise it and have uncommented the initialiser
 !         that was already present.
-gs_h2o = 0.
+!gs_h2o = 0.
+gs_h2o_o_sunlit = 0.
+gs_h2o_o_shaded = 0.
+gs_h2o_u_sunlit = 0.
+gs_h2o_u_shaded = 0.
 !gs_h2o      = 0.
 ! Vcmax-Nitrogen calculations by G,Mo 2011.04
 if(CosZs >0.) then
@@ -264,7 +288,11 @@ wind_sp   = meteo%wind
 rainfall  = meteo%rainfall  !m/s   liquid water
 snow      = meteo%snow      !m/s   snow
 temp_air  = meteo%temp
-
+!write(*,*) 'Ks: ', Ks
+!write(*,*) 'rh_air: ', rh_air
+!write(*,*) 'wind_sp: ', wind_sp
+!write(*,*) 'rainfall: ', rainfall
+!write(*,*) 'temp_air: ', temp_air
 if(Ks <=0) then
    alpha_v_o   = 0.
    alpha_n_o   = 0.
@@ -301,9 +329,10 @@ if((Tsn2(0)-temp_air)<-2.)      Tsn2(0)= temp_air-2.0
 
 Wcl_o(0)        = var_o(15)  !the mass of intercepted liquid water and snow, overstory
 Wcs_o(0)        = var_o(16)
-
+!the mass of intercepted liquid water and snow in ks/m2/s, understory
 Wcl_u(0)        = var_o(18)
 Wcs_u(0)        = var_o(19)
+
 Wg_snow(0)      = var_o(20) !  fraction of ground surface covered by snow and snow mass
 
 soilp%Zsp       = var_o(33)
@@ -326,6 +355,11 @@ alpha_n_sw(0:iter_max)   = var_o(40)
 ! alpha_n_sw(0)   = var_o(40)
 Zsp             = soilp%Zsp
 Zp              = soilp%Zp
+! 2024/06/06
+Eil_o(0:iter_max) = 0.
+Eil_u(0:iter_max) = 0.
+EiS_o(0:iter_max) = 0.
+EiS_u(0:iter_max) = 0.
 
 if(Zp <0.001) Zp  = 0.
 !if(Zp < 1.e-6) Zp = 0.
@@ -353,9 +387,10 @@ Tc_o_sunlit_old=temp_air-0.5
 Tc_o_shaded_old=temp_air-0.5
 Tc_u_sunlit_old=temp_air-0.5
 Tc_u_shaded_old=temp_air-0.5
-
+!write(*,*) 'temp_air: ', temp_air
 do kkk = 1,kloop           !sub-time iteration @J.Wang
     ! Snow pack stage 1  by R.Luo
+    !write(*,*), "kkk=", kkk
     call snowpack_stage1(temp_air,snow,Wcs_o(kkk-1),Wcs_u(kkk-1),Wg_snow(kkk-1),rho_snow(kkk-1),Ac_snow_o(kkk-1),&
                          Ac_snow_u(kkk-1),Wcs_o(kkk),Wcs_u(kkk),Wg_snow(kkk),&
                          lai_o,lai_u,clumping,Ac_snow_o(kkk),Ac_snow_u(kkk),Xcs_o(kkk),Xcs_u(kkk),Xg_snow(kkk),&
@@ -369,6 +404,7 @@ do kkk = 1,kloop           !sub-time iteration @J.Wang
     !write(*,*) "DG01: diffrence =",soilp%fei(1)-soilp%theta_vwp(1)*0.5
     !write(*,*) "DG01: diffrenceX =",soilp%fei(1)
     !write(*,*) "DG01: diffrenceY =",soilp%theta_vwp(1)
+    !write(*,*) "soilp%thetam_prev(1)=",soilp%thetam_prev(1)
     if(soilp%thetam_prev(1)<soilp%theta_vwp(1)*0.5) then
          alpha_g  = alpha_dry
     else
@@ -383,6 +419,11 @@ do kkk = 1,kloop           !sub-time iteration @J.Wang
     call soil_water_factor_v2(soilp)
 
     f_soilwater  = soilp%f_soilwater
+    !write(*,*),'f_soilwater=',f_soilwater
+    ! 2024/01/07 f_feileaf in plant_hydraulics in beps_soilMod.F90
+    f_feileaf  = soilp%f_feileaf
+    ! 2024/03/17 currently do not consider the leaf temperature stress
+    !f_Tleaf = soilp%f_Tleaf
 
     if(f_soilwater >1.0) f_soilwater = 1.0
     GH_o    = Qhc_o(kkk-1)        !used as the init. for module aerodynamic_conductance
@@ -423,10 +464,17 @@ do kkk = 1,kloop           !sub-time iteration @J.Wang
        Gh_u_sunlit = 1.0/(1.0/G_u_a+0.5/G_u_b)
        Gh_u_shaded = 1.0/(1.0/G_u_a+0.5/G_u_b)
 
-       Gww_o_sunlit=1.0/(1.0/G_o_a+1.0/G_o_b+100.)  ! conductance for intercepted water of sunlit leaves of overstorey
-       Gww_o_shaded=1.0/(1.0/G_o_a+1.0/G_o_b+100.)
-       Gww_u_sunlit=1.0/(1.0/G_u_a+1.0/G_u_b+100.)
-       Gww_u_shaded=1.0/(1.0/G_u_a+1.0/G_u_b+100.)
+       !Gww_o_sunlit=1.0/(1.0/G_o_a+1.0/G_o_b+100.)  ! conductance for intercepted water of sunlit leaves of overstorey
+       !Gww_o_shaded=1.0/(1.0/G_o_a+1.0/G_o_b+100.)
+       !Gww_u_sunlit=1.0/(1.0/G_u_a+1.0/G_u_b+100.)
+       !Gww_u_shaded=1.0/(1.0/G_u_a+1.0/G_u_b+100.)
+
+       !2024/06/04 to reduce the snow evaporation, '100' changed to '200'
+       ! intercept water and snow evaporation and sublimation
+       Gww_o_sunlit=1.0/(1.0/G_o_a+1.0/G_o_b+200.)  ! conductance for intercepted water of sunlit leaves of overstorey
+       Gww_o_shaded=1.0/(1.0/G_o_a+1.0/G_o_b+200.)
+       Gww_u_sunlit=1.0/(1.0/G_u_a+1.0/G_u_b+200.)
+       Gww_u_shaded=1.0/(1.0/G_u_a+1.0/G_u_b+200.)
 
        ! temperatures of overstorey and understorey canopies
        Tco=(Tc_o_sunlit_old*LAI_o_sunlit+Tc_o_shaded_old*LAI_o_shaded)/(LAI_o_sunlit+LAI_o_shaded)
@@ -451,26 +499,30 @@ do kkk = 1,kloop           !sub-time iteration @J.Wang
        leleaf_u_shaded = Gw_u_shaded*(VPD_air+slope*(Tc_u_shaded_old-temp_air))*rho_a * Cp_ca/psychrometer
 
        if(CosZs>0.) then
+
           call photosynthesis(landcover,Tc_o_sunlit_old,f_leaf,p_kc25,p_ko25,p_tau25,R_o_sunlit,e_a10,&
                               G_o_b,Vcmax_sunlit,VJ_slope,f_soilwater,b_h2o,m_h2o,&
-                              Ci_o_sunlit_old,temp_air,leleaf_o_sunlit,Gs_o_sunlit_new,gs_h2o,Ac_o_sunlit,&
+                              Ci_o_sunlit_old,temp_air,leleaf_o_sunlit,Gs_o_sunlit_new,gs_h2o_o_sunlit,Ac_o_sunlit,&
                               Ci_o_sunlit_new,ffpa,sif_alpha,sif_beta,lSIF_o_sunlit,COSi_o_sunlit_old,&
-                              COSi_o_sunlit_new,lCOS_o_sunlit)
+                              COSi_o_sunlit_new,lCOS_o_sunlit,f_feileaf,fw_flag)
+
           call photosynthesis(landcover,Tc_o_shaded_old,f_leaf,p_kc25,p_ko25,p_tau25,R_o_shaded,e_a10,&
                               G_o_b,Vcmax_shaded,VJ_slope,f_soilwater,b_h2o,m_h2o,&
-                              Ci_o_shaded_old,temp_air,leleaf_o_shaded,Gs_o_shaded_new,gs_h2o,Ac_o_shaded,&
+                              Ci_o_shaded_old,temp_air,leleaf_o_shaded,Gs_o_shaded_new,gs_h2o_o_shaded,Ac_o_shaded,&
                               Ci_o_shaded_new,ffpa,sif_alpha,sif_beta,lSIF_o_shaded,COSi_o_shaded_old,&
-                              COSi_o_shaded_new,lCOS_o_shaded)
+                              COSi_o_shaded_new,lCOS_o_shaded,f_feileaf,fw_flag)
+
           call photosynthesis(landcover,Tc_u_sunlit_old,f_leaf,p_kc25,p_ko25,p_tau25,R_u_sunlit,e_a10,&
                               G_u_b,Vcmax_sunlit,VJ_slope,f_soilwater,b_h2o,m_h2o,&
-                              Ci_u_sunlit_old,temp_air,leleaf_u_sunlit,Gs_u_sunlit_new,gs_h2o,Ac_u_sunlit,&
+                              Ci_u_sunlit_old,temp_air,leleaf_u_sunlit,Gs_u_sunlit_new,gs_h2o_u_sunlit,Ac_u_sunlit,&
                               Ci_u_sunlit_new,ffpa,sif_alpha,sif_beta,lSIF_u_sunlit,COSi_u_sunlit_old,&
-                              COSi_u_sunlit_new,lCOS_u_sunlit)
+                              COSi_u_sunlit_new,lCOS_u_sunlit,f_feileaf,fw_flag)
+
           call photosynthesis(landcover,Tc_u_shaded_old,f_leaf,p_kc25,p_ko25,p_tau25,R_u_shaded,e_a10,&
                               G_u_b,Vcmax_shaded,VJ_slope,f_soilwater,b_h2o,m_h2o,&
-                              Ci_u_shaded_old,temp_air,leleaf_u_shaded,Gs_u_shaded_new,gs_h2o,Ac_u_shaded,&
+                              Ci_u_shaded_old,temp_air,leleaf_u_shaded,Gs_u_shaded_new,gs_h2o_u_shaded,Ac_u_shaded,&
                               Ci_u_shaded_new,ffpa,sif_alpha,sif_beta,lSIF_u_shaded,COSi_u_shaded_old,&
-                              COSi_u_shaded_new,lCOS_u_shaded)
+                              COSi_u_shaded_new,lCOS_u_shaded,f_feileaf,fw_flag)
         else
           Gs_o_sunlit_new=0.0001
           Ac_o_sunlit=0.0
@@ -617,7 +669,7 @@ do kkk = 1,kloop           !sub-time iteration @J.Wang
     !Transpiration module by X. Luo
     call transpiration(Tc_o_sunlit_new, Tc_o_shaded_new, Tc_u_sunlit_new, Tc_u_shaded_new,temp_air, rh_air,&
              Gw_o_sunlit, Gw_o_shaded, Gw_u_sunlit, Gw_u_shaded,LAI_o_sunlit, LAI_o_shaded, LAI_u_sunlit, LAI_u_shaded,&
-             Trans_o(kkk), Trans_u(kkk))
+             Trans_o(kkk), Trans_u(kkk),Trans_o_sunlit(kkk),Trans_o_shaded(kkk),Trans_u_sunlit(kkk),Trans_u_shaded(kkk))
 
     ! Evaporation and sublimation from canopy by X. Luo
     call evaporation_canopy (Tc_o_sunlit_new, Tc_o_shaded_new, Tc_u_sunlit_new, Tc_u_shaded_new,temp_air, rh_air,&
@@ -638,11 +690,12 @@ do kkk = 1,kloop           !sub-time iteration @J.Wang
     Zp        = mass_water_g/rho_w      ! update surface ponding after ponding evaporation calculation
     Zsp       = Wg_snow(kkk)/rho_snow(kkk)    ! update snow depth as well after snow evaporation calculation
 
+    ! 2024/06/02 after checked
     ! to be checked later:  why set these 4 to 0
-    Eil_o(kkk) = 0.
-    EiS_o(kkk) = 0.
-    Eil_u(kkk) = 0.
-    EiS_u(kkk) = 0.
+    !Eil_o(kkk) = 0.
+    !EiS_o(kkk) = 0.
+    !Eil_u(kkk) = 0.
+    !EiS_u(kkk) = 0.
 
     ! soil Thermal Conductivity module by L. He
     call UpdateSoilThermalConductivity(soilp)
@@ -674,16 +727,24 @@ do kkk = 1,kloop           !sub-time iteration @J.Wang
     ! soil water module
     soilp%Zsp   = Zsp
     soilp%G(0)  = G(0,kkk)
-
+    !write(*,*), "soilp%temp_soil_c=", soilp%temp_soil_c(1)
     call UpdateHeatFlux(soilp,Xg_snow(kkk),lambda_snow(kkk),Tsn0(kkk),temp_air,kstep)
     ! call Soil_water_uptake(soilp,Trans_o(kkk),Trans_u(kkk),Evap_soil(kkk))
-    call Soil_water_uptake(lai,param(29),vod1,vod2,vod3,soilp,Trans_o(kkk),Trans_u(kkk),Evap_soil(kkk),vod,fei_leaf)
+    !write(*,*),'kkk=',kkk
+    !write(*,*), 'soilp%thetam_prev=',soilp%thetam_prev(0)
+    !write(*,*), 'soilp%psim=',soilp%psim_prev(0)
+    call Soil_water_uptake(fw_flag,soilp,Trans_o(kkk),Trans_u(kkk),Evap_soil(kkk),lai,param(29),vod1,vod2,vod3,PHydra,&
+             vod,fei_leaf,Qupt,ETa)
 
     soilp%r_rain_g  = r_rain_g(kkk)
     soilp%Zp        = Zp
-
+    !write(*,*), "soilp%Zp=", soilp%Zp
     call UpdateSoilMoisture(soilp)
     Zp              = soilp%Zp
+    !write(*,*), 'soilp%thetam_prev=',soilp%thetam_prev(0)
+    !write(*,*), 'soilp%psim=',soilp%psim_prev(0)
+    !write(*,*) 'Xcl_o =',Xcl_o(kkk)
+    !write(*,*) 'Xcs_o =',Xcs_o(kkk)
 
 end do       !END kkk iteration
 !    write(*,*) G_o_b,gs_h2o
@@ -731,9 +792,12 @@ end do       !END kkk iteration
     mid_res%LH        = Lv_liquid *(Trans_o(kkk)+Eil_o(kkk)+Trans_u(kkk)+Eil_u(kkk)+Evap_soil(kkk)+Evap_SW(kkk))+&
                         Lv_solid*(EiS_o(kkk)+EiS_u(kkk)+Evap_SS(kkk))
     mid_res%SH        = Qhc_o(kkk)+Qhc_u(kkk)+Qhg(kkk)
-    mid_res%Trans     = (Trans_o(kkk)+Trans_u(kkk))/rho_w
+    mid_res%Trans     = (Trans_o(kkk)+Trans_u(kkk))/rho_w ! kg/(s*m2) / (kg/m3) = m/s
+    !mid_res%Evap      = (Eil_o(kkk)+Eil_u(kkk)+Evap_soil(kkk)+Evap_SW(kkk))/rho_w+ &
+                        !(EiS_o(kkk)+EiS_u(kkk)+Evap_SS(kkk))/rho_snow(kkk)
     mid_res%Evap      = (Eil_o(kkk)+Eil_u(kkk)+Evap_soil(kkk)+Evap_SW(kkk))/rho_w+ &
-                        (EiS_o(kkk)+EiS_u(kkk)+Evap_SS(kkk))/rho_snow(kkk)
+                        (EiS_o(kkk)+EiS_u(kkk)+Evap_SS(kkk))/rho_w ! @LuHu 2024/05/14 should be rho_w rather rho_snow(kkk)
+
     mid_res%gpp_o_sunlit = GPP_o_sunlit*12.*1.e-6*1.e-3    !J.Wang kg/m2/s// umol C/m2/s
     mid_res%gpp_u_sunlit = GPP_u_sunlit*12.*1.e-6*1.e-3
     mid_res%gpp_o_shaded = GPP_o_shaded*12.*1.e-6*1.e-3
@@ -741,12 +805,58 @@ end do       !END kkk iteration
 
     mid_res%GPP          = mid_res%gpp_o_sunlit+mid_res%gpp_u_sunlit+mid_res%gpp_o_shaded+mid_res%gpp_u_shaded
     mid_res%SIF          = SIF_o_sunlit+SIF_o_shaded+SIF_u_sunlit+SIF_u_shaded
-    mid_res%thetam_surf  = soilp%thetam(0)
+    mid_res%thetam_surf  = soilp%thetam_prev(0)
     mid_res%COS_plant    = COS_o_sunlit+COS_o_shaded+COS_u_sunlit+COS_u_shaded      ! pmol/m2/s
     mid_res%VOD = vod
+    ! 2023/07/20
+    mid_res%fei_leaf=fei_leaf
+    mid_res%ETa =ETa
+    mid_res%Qupt =Qupt
+    mid_res%PWS = soilp%Sp
+    !write(*,*),'Evap = ', mid_res%Evap
+    !write(*,*),'Trans = ', mid_res%Trans
+    !write(*,*),'ETa = ', mid_res%ETa
+    !write(*,*),'Qupt = ', mid_res%Qupt
+    ! 2023/10/30
+    mid_res%thetam2=soilp%thetam_prev(1)
+    mid_res%thetam3=soilp%thetam_prev(2)
+    mid_res%thetam4=soilp%thetam_prev(3)
+    mid_res%thetam5=soilp%thetam_prev(4)
+    mid_res%swp1=soilp%psim_prev(0)
+    mid_res%swp2=soilp%psim_prev(1)
+    mid_res%swp3=soilp%psim_prev(2)
+    mid_res%swp4=soilp%psim_prev(3)
+    mid_res%swp5=soilp%psim_prev(4)
+    ! check pond water and rain arrived at ground
+    mid_res%Zp=soilp%Zp
+    mid_res%rain_g=soilp%r_rain_g
+    ! check for soil temperature at different layers
+    mid_res%TS1=soilp%temp_soil_p(0)
+    mid_res%TS2=soilp%temp_soil_p(1)
+    mid_res%TS3=soilp%temp_soil_p(2)
+    mid_res%TS4=soilp%temp_soil_p(3)
+    mid_res%TS5=soilp%temp_soil_p(4)
 !    write(*,*) "thetam_surf = ", mid_res%thetam_surf
+    mid_res%f_soilwater=soilp%f_soilwater
+    mid_res%f_feileaf=soilp%f_feileaf
+    !mid_res%f_Tleaf=soilp%f_Tleaf
+    ! 2024/03/12
+    mid_res%LHa = Lv_liquid *(ETa*rho_w+Eil_o(kkk)+Eil_u(kkk)+Evap_soil(kkk)+Evap_SW(kkk))+&
+                  Lv_solid*(EiS_o(kkk)+EiS_u(kkk)+Evap_SS(kkk))
+    ! 2024/03/30
+    mid_res%TR_o_sunlit = Trans_o_sunlit(kkk)/rho_w ! kg/(s*m2) / (kg/m3) = m/s
+    mid_res%TR_o_shaded = Trans_o_shaded(kkk)/rho_w
+    mid_res%TR_u_sunlit = Trans_u_sunlit(kkk)/rho_w
+    mid_res%TR_u_shaded = Trans_u_shaded(kkk)/rho_w
 
-    if(lai_input < 0) then
+    mid_res%Eil = (Eil_o(kkk)+Eil_u(kkk))/rho_w
+    mid_res%Evap_soil = Evap_soil(kkk)/rho_w
+    mid_res%Evap_SW = Evap_SW(kkk)/rho_w
+    mid_res%EiS = (EiS_o(kkk)+EiS_u(kkk))/rho_w
+    mid_res%Evap_SS = Evap_SS(kkk)/rho_w
+    !write (*,*),'mid_res%EiS =',mid_res%EiS
+
+    if(lai_input0 < 0) then
        temp_day = temp_day + meteo%temp
        theta_day = theta_day + (soilp%theta_vfc(0) - soilp%theta_vwp(0))
        trans_day = trans_day + mid_res%Trans
@@ -767,7 +877,7 @@ end do       !END kkk iteration
        else
           mid_res%lai_new = mid_res%lai_old
        end if
-       lai = mid_res%lai_new
+          lai = mid_res%lai_new
           !mid_res%fAPAR = 1. - exp(-0.45*lai)    ! calculate fAPAR using the Lambert-Beer law, Benjamin Smith et al., 2008, &
                                                  ! & Forest Ecology and Management, @Mousong.Wu, 201905
 !          write(*,*) 'lai = ', mid_res%lai_old

@@ -13,7 +13,9 @@ integer,parameter :: PFT  = 14 !previous 9, with c4 grass and crop added
  !(/1,2,6,9,10,13,14,15,40,41,1001,1002,1003,1004/) =>(/conifer evergreen,conifer decidous,broadleaf decidous,broadleaf evergreen,mix,shrub,grass,crop,c4grass,c4crop,1001:corn   1002:soybean   1003:spring wheat   1004:rice/)
 integer,parameter :: texture = 11 ! 11 soil texture classes
 ! For Soil
-integer :: nparameters=20000
+! for Monte Carlo, nparameters for each job, MC_nums=nparameters*jobnum, 800*25=20000
+integer :: nparameters=800
+integer :: PF_np=45     ! number of parameters for PF optimization
 integer :: parloop=200
 integer :: layer = 5
 integer :: FW_VERSION  = 1    ! 1 =>soil water uptake using R*fpsisr  other val=>soil water uptake using R
@@ -32,8 +34,8 @@ integer :: DEPTH_F     = 6    ! ??
 #endif
 
 ! CO2 concentration
-real(r8):: CO2_air    = 380   !ppm
-real(r8):: COS_air    = 450   !ppt
+real(r8):: CO2_air    = 380.0   !ppm
+real(r8):: COS_air    = 450.0   !ppt
 ! FOR MPI
 integer   :: nlp              ! num of land points in total
 integer,allocatable :: stype(:) ! land mask 1=>land
@@ -46,6 +48,8 @@ integer,allocatable :: ep(:)  ! ! end point
 integer   :: myid,nproc
 integer   :: npoints
 
+! using two years data to force the model, the first years for spinning up, the second year for comparison
+integer   :: mc_length = 730 * 24
 
 ! For initial/restart/branch
 integer, public :: nsrest             = 0

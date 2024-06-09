@@ -36,12 +36,12 @@ real(r8),intent(in):: mass_water_o_last,mass_water_u_last  !remins of water from
 real(r8),intent(in):: lai_o,lai_u,clumping
 real(r8),intent(out) :: mass_water_o,mass_water_u  !mass of water on leaves kg/m2 per ground area
 real(r8),intent(out) :: percent_water_o,percent_water_u
-real(r8),intent(out) :: precipitation_g
+real(r8),intent(out) :: precipitation_g !rate of rainfall on ground
 
-real(r8) :: precipitation_o,precipitation_u
+real(r8) :: precipitation_o,precipitation_u ! rate of rainfall on overstorey, understory
 real(r8) :: massMax_water_o,massMax_water_u !Maximum mass of water could be intercepted per leaf area(kg/m2)
 real(r8) :: massStep_water_o,massStep_water_u ! mass of water intercepted in this step per leaf area
-real(r8) :: length_step 
+real(r8) :: length_step
 
 length_step      = kstep
 precipitation_g  = 0.
@@ -120,20 +120,21 @@ implicit none
 real(r8),intent(in) :: temp_air,precipitation ! here precipitation = solid water @J.Wang
 real(r8),intent(in) :: mass_snow_o_last,mass_snow_u_last,mass_snow_g_last,density_snow_last,area_snow_o_last,area_snow_u_last
 real(r8),intent(in) :: lai_o,lai_u,clumping
-real(r8),intent(out):: mass_snow_o,mass_snow_u,mass_snow_g ! mass of intercepted snow on canopy and gournd 
+real(r8),intent(out):: mass_snow_o,mass_snow_u,mass_snow_g ! mass of intercepted snow on canopy and gournd
 real(r8),intent(out):: area_snow_o,area_snow_u
 real(r8),intent(out):: percent_snow_o,percent_snow_u,percent_snow_g !percentage of snow cover on canopy and ground
 real(r8),intent(inout) :: density_snow
 real(r8),intent(inout) :: depth_snow,albedo_v_snow,albedo_n_snow
 
-real(r8) :: massMax_snow_o, massMax_snow_u
-real(r8) :: massStep_snow_o, massStep_snow_u
+real(r8) :: massMax_snow_o, massMax_snow_u ! maximum weight of snow on overstory and understory
+real(r8) :: massStep_snow_o, massStep_snow_u ! weight (mass) of snow accumulated in this step
 real(r8) :: areaMax_snow_o, areaMax_snow_u !Maximum area of snow at overstorey and understorey
 real(r8) :: change_depth_snow !change of snow depth on ground
 real(r8) :: density_water, density_new_snow !density of water, density of newly fallen snow
-real(r8) :: snowrate, snowrate_o, snowrate_u, snowrate_g
+real(r8) :: snowrate, snowrate_o, snowrate_u, snowrate_g ! snow rate, and snow rate for every part
 real(r8) :: albedo_v_Newsnow, albedo_n_Newsnow ! albedo of newly fallen snow in visible and near infrared band
 
+!write(*,*) 'temp_air: ', temp_air
 density_new_snow=67.9+51.3*exp(temp_air/2.6)
 albedo_v_Newsnow=0.94
 albedo_n_Newsnow=0.8
@@ -141,6 +142,7 @@ massMax_snow_o=0.1*lai_o
 massMax_snow_u=0.1*lai_u
 areaMax_snow_o=lai_o*0.01
 areaMax_snow_u=lai_u*0.01
+
 
 snowrate  = precipitation  !!@J.Wang
 !write(*,*) 'snowrate as precp', snowrate
@@ -192,8 +194,8 @@ else
   percent_snow_u  = max(0.,percent_snow_u)
   percent_snow_u  = min(1.,percent_snow_u)
   area_snow_u     = area_snow_u_last
- 
-  !!ground 
+
+  !!ground
   change_depth_snow=0.
 end if
 
@@ -202,27 +204,28 @@ end if
   mass_snow_g=max(0.,mass_snow_g)
 !  write(*,*) 'change_depth_snow', change_depth_snow
 !  write(*,*) 'density_snow', density_snow_last
-  
+
   if (change_depth_snow > 0.) then
    density_snow=(density_snow_last*depth_snow+density_new_snow*change_depth_snow)/(depth_snow+change_depth_snow)
   else
    density_snow=(density_snow_last-250.)*exp(-0.001*kstep/3600.)+250.0   !!@J.Wang ???
-!    density_snow= 250.
+   !density_snow= 250.
   end if
+
 
   if(mass_snow_g >0.) then
      depth_snow  = mass_snow_g/density_snow
-  else 
+  else
      depth_snow  = 0.
   end if
 
   percent_snow_g = mass_snow_g/(0.05*density_snow)
   percent_snow_g = min(percent_snow_g,1.)
 
-!! albedo of snow in this step 
+!! albedo of snow in this step
  if(snowrate_o>0.) then
      albedo_v_snow   = (albedo_v_snow-0.70)*exp(-0.005*kstep/3600.)+0.7  !!@J.Wang cannot understand clearly
-     albedo_n_snow   = (albedo_n_snow-0.42)*exp(-0.005*kstep/3600.)+0.42  
+     albedo_n_snow   = (albedo_n_snow-0.42)*exp(-0.005*kstep/3600.)+0.42
   else
      albedo_v_snow   = albedo_v_Newsnow
      albedo_n_snow   = albedo_n_Newsnow
@@ -260,7 +263,7 @@ real(r8) :: mass_snow_melt, mass_water_frozen
 real(r8) :: melt_depth_snow, frozen_depth_snow
 real(r8) :: melt_depth_water, frozen_depth_water
 
-!! assumed sublimation happens before the melting and freezing 
+!! assumed sublimation happens before the melting and freezing
 depth_snow_sup  = depth_snow
 mass_snow_sup   = mass_snow_g
 
@@ -269,7 +272,7 @@ mass_snow_melt=0.
 mass_water_frozen=0.
 if(depth_snow_sup <=0.02) then
     if(temp_air >0. .and. depth_snow_sup >0.) then
-       mass_snow_melt=temp_air*0.0075*kstep/3600*0.3 
+       mass_snow_melt=temp_air*0.0075*kstep/3600*0.3
        mass_snow_melt=min(mass_snow_sup, mass_snow_melt)
     else
        mass_snow_melt=0.
@@ -323,7 +326,7 @@ depth_water        = depth_water+melt_depth_water-frozen_depth_water
 depth_water        = max(0.,depth_water)
 
 return
-end subroutine 
+end subroutine
 
 
 end module

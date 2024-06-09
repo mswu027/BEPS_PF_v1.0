@@ -174,9 +174,12 @@ implicit none
         Vcmax_sunlit = Vcmax0
         Vcmax_shaded = Vcmax0
     end if
-
-    Jmax_sunlit = Vcmax_sunlit * 2.39 - 14.2
-    Jmax_shaded = Vcmax_shaded * 2.39 - 14.2
+    ! VJ_slope = 2.39, currently was not used!
+    !Jmax_sunlit = Vcmax_sunlit * 2.39 - 14.2
+    !Jmax_shaded = Vcmax_shaded * 2.39 - 14.2
+    ! 2024/03/17, when water stress works on Vcmax, using the additive Eqs could avoid the negative values of jmax
+    Jmax_sunlit = Vcmax_sunlit * 1.64 + 29.1
+    Jmax_shaded = Vcmax_shaded * 1.64 + 29.1
 
 
 end subroutine
@@ -242,7 +245,8 @@ subroutine transpiration(tempL_o_sunlit, tempL_o_shaded, tempL_u_sunlit,    &
                tempL_u_shaded, temp_air, rh_air, Gtrans_o_sunlit,           &
                Gtrans_o_shaded, Gtrans_u_sunlit, Gtrans_u_shaded,           &
                lai_o_sunlit, lai_o_shaded, lai_u_sunlit, lai_u_shaded,      &
-               trans_o, trans_u )
+               trans_o, trans_u,trans_o_sunlit, trans_o_shaded,&
+               trans_u_sunlit,trans_u_shaded)
 use meteoMod
 implicit none
 
@@ -251,6 +255,8 @@ implicit none
     real(r8)  ::  Gtrans_o_sunlit, Gtrans_o_shaded, Gtrans_u_sunlit, Gtrans_u_shaded
     real(r8)  ::  lai_o_sunlit, lai_o_shaded, lai_u_sunlit, lai_u_shaded
     real(r8)  ::  trans_o, trans_u
+    ! 2024/03/30
+    real(r8)  ::  trans_o_sunlit, trans_o_shaded,trans_u_sunlit,trans_u_shaded
 
     real(r8)  ::  LHt_o_sunlit, LHt_o_shaded, LHt_u_sunlit, LHt_u_shaded  !latent heat from leaves W/m2
 
@@ -264,6 +270,11 @@ implicit none
 
     trans_o =1/latent_water *(LHt_o_sunlit *lai_o_sunlit +LHt_o_shaded*lai_o_shaded )
     trans_u =1/latent_water *(LHt_u_sunlit *lai_u_sunlit +LHt_u_shaded*lai_u_shaded )
+    ! 2024/03/30
+    trans_o_sunlit = 1/latent_water * LHt_o_sunlit * lai_o_sunlit
+    trans_o_shaded = 1/latent_water * LHt_o_shaded * lai_o_shaded
+    trans_u_sunlit = 1/latent_water * LHt_u_sunlit * lai_u_sunlit
+    trans_u_shaded = 1/latent_water * LHt_u_shaded * lai_u_shaded
 
 end subroutine
 
@@ -284,10 +295,10 @@ implicit none
 !temperature of sunlit and shaded leaves from other storey (leaf temperature module).
 !temperature of air, relative humidity,
 !aerodynamic conductance of water (snow) for sunlit shaded leaves from overstorey
-!and understorey 
-!percentage of overstorey or understorey covered by water or snow 
+!and understorey
+!percentage of overstorey or understorey covered by water or snow
 !leaf area index, sunlit and shaded, overstorey and understorey
-!(from leaf area index module) 
+!(from leaf area index module)
 
 ! output:
 !evaporation of water and snow from overstorey and understorey
@@ -325,10 +336,8 @@ implicit none
     LHs_u_shaded =percent_snow_u*(vpd+slope_vapor *(tempL_u_shaded   &
                   -temp_air ))*density_air*cp_air*Gwater_u_shaded /psy
 
-
     evapo_water_o =1./(latent_water )*(max(LHw_o_sunlit,1.e-6) *lai_o_sunlit + &
                    max(LHw_o_shaded,1.e-6) * lai_o_shaded )
-!    write(*,*) LHw_u_sunlit,lai_u_sunlit,LHw_u_shaded,lai_u_shaded
     evapo_water_u =1./(latent_water )*(max(LHw_u_sunlit,1.e-6) *lai_u_sunlit + &
                    max(LHw_u_shaded,1.e-6) * lai_u_shaded )
     evapo_snow_o =1/(latent_snow )*(max(LHs_o_sunlit,1.e-6) *lai_o_sunlit + &
@@ -347,7 +356,7 @@ end subroutine
 subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e_air,&
                          g_lb_w,vc_opt,vj_slope,f_soilwater,b_h2o,m_h2o,cii,temp_leaf_c,&
                          LH_leaf,Gs_w,gs_h2o_mole,aphoto,ci,ffpa,sif_alpha,sif_beta,xSIF,&
-                         cosii,cosi,cos_assim)
+                         cosii,cosi,cos_assim,f_feileaf,fw_flag)
 
 
 !*************************************************************************
@@ -529,6 +538,10 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
     real(r8)  :: tprime25
     real(r8)  :: k_T_opt,k_T,M1,M2,M
     real(r8)  :: VT,RT,KT,kt25,Alpha,Beta,Theta,Qp,c4_a,c4_b,c4_c,c4_d
+! 2024/01/07 flag for choosing the form of water stress on stomatal conductance
+    real(r8)  :: f_feileaf       ! an empirical scalar of leaf water potential stress on stomatal conductance, dimensionless
+    integer   :: fw_flag         !
+    real(r8)  :: fws  ! factor of water stress
     !integer   :: quad2,OUTDAT2
     !quad2=500
     !OUTDAT2=600
@@ -537,8 +550,9 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
     midroot=0.0
 
 
-    ca=CO2_air
+    ca=CO2_air ! CO2_air was updated in get_CO2.F90
     cosa = COS_air
+    !write(*,*), 'ca = ', ca
 !    iphoton = 4.55*0.5*rad_leaf
     iphoton = 4.55*f_leaf*rad_leaf   ! replace 0.5 to a coefficient, f_leaf, leaf respiration rate, for optimization purpose, @MOUSONG WU, 2020-09-14
 
@@ -561,6 +575,7 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
 
 
     g_lb_c  = 1. / (1.0/g_lb_w*1.6 * temp_leaf_K * (met%pstat273))
+    !write(*,*), 'g_lb_c = ', g_lb_c
 
     m_co2 = m_h2o/1.6
     b_co2 = b_h2o/1.6
@@ -573,11 +588,11 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
 
 !   /** use Arrhenius Eq. to compute KC and km_o2 */
 
-    call TEMP_FUNC(kc25, ekc, tprime25, tk_25, temp_leaf_K, km_co2)
+    call TEMP_FUNC(p_kc25, ekc, tprime25, tk_25, temp_leaf_K, km_co2)
 
-    call TEMP_FUNC(ko25, eko, tprime25, tk_25,temp_leaf_K, km_o2)
+    call TEMP_FUNC(p_ko25, eko, tprime25, tk_25,temp_leaf_K, km_o2)
 
-    call TEMP_FUNC(tau25, ektau, tprime25, tk_25,temp_leaf_K, tau)
+    call TEMP_FUNC(p_tau25, ektau, tprime25, tk_25,temp_leaf_K, tau)
 
     bc = km_co2 * (1.0 + o2 / km_o2)
 
@@ -594,9 +609,15 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
 
 !    jmopt   = 2.39*vc_opt - 14.2
 
-     jmopt   = vj_slope*vc_opt - 14.2
+! vj_slope default value is 2.39 when using subtractive Eqs
+     !jmopt   = vj_slope*vc_opt - 14.2
 
-    call TBOLTZ(jmopt, ejm, toptjm, temp_leaf_K, jmax)  ! Apply temperature correction to JMAX
+! 2024/03/17, when water stress works on Vcmax, using the additive Eqs could avoid the negative values of jmax
+! 2024/03/13 note: using jmax = 1.64*vcmax +29.1 not the TBOLTZC4 function for jmopt, so jmopt was not used behind
+     !jmopt   = 1.64*vc_opt + 29.1
+
+    ! 2024/03/13 using  j = 29.1+1.64*vcmax
+    !call TBOLTZ(jmopt, ejm, toptjm, temp_leaf_K, jmax)  ! Apply temperature correction to JMAX
 
     if (LC == 40 .or. LC == 41) then
        call TBOLTZC4(vc_opt, toptvc, temp_leaf_K, vcmax) ! Apply temperature correction to vcmax
@@ -616,6 +637,35 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
 !        for A
 
 !****************************************
+! choose the form of water stress
+    select case (fw_flag)
+    case (0)
+        fws = 1.0  ! non water stress on Gs
+    case (1)
+        fws = f_soilwater ! f_soilwater works on BWB slope
+    case (2)
+        vcmax = vcmax*max(f_feileaf,0.1)  !f_feileaf works on vcmax, and finally influnence the Gs
+        fws = 1.0
+    case (3)
+        fws = f_feileaf ! f_feileaf works on BWB slope
+    case (4)
+        fws = 1.0 ! f_feileaf only works on Etp
+    case (5)
+        fws = 1.0
+        vcmax = vcmax*max(f_soilwater,0.1) !f_soilwater works on vcmax, and finally influnence the Gs
+    case (6)
+        fws = 1.0
+        vcmax = vcmax*max(min(f_soilwater,f_feileaf),0.1)
+    case default
+        fws = f_soilwater
+    end select
+! 2024/03/17, when water stress works on Vcmax, using the additive Eqs could avoid the negative values of jmax
+    jmax = 29.1 + 1.64 * vcmax ! 2024/03/13, 1.64 could be set as vj_slope parameter when using additive Eqs
+
+
+
+
+!*******************************************
     if (LC == 40 .or. LC==41) then   ! analytical solution for C4 photosynthesis, added by MOUSONG.WU@201907, refer to Chen et al.2019 AFM
 
         k_T_opt = 2.*1.e4*vc_opt
@@ -638,22 +688,38 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
            M = M2
         end if
 
-        alpha_ps = Beta*m_co2*f_soilwater*rh_leaf - Beta*b_co2/g_lb_c - 1.6*k_T/g_lb_c &
-               + k_T*m_co2*f_soilwater*rh_leaf/g_lb_c - k_T*b_co2/g_lb_c/g_lb_c
+        !alpha_ps = Beta*m_co2*f_soilwater*rh_leaf - Beta*b_co2/g_lb_c - 1.6*k_T/g_lb_c &
+               !+ k_T*m_co2*f_soilwater*rh_leaf/g_lb_c - k_T*b_co2/g_lb_c/g_lb_c
+        alpha_ps = Beta*m_co2*fws*rh_leaf - Beta*b_co2/g_lb_c - 1.6*k_T/g_lb_c &
+               + k_T*m_co2*fws*rh_leaf/g_lb_c - k_T*b_co2/g_lb_c/g_lb_c
 
-        beta_ps  = Beta*b_co2*ca - Beta*m_co2*f_soilwater*rh_leaf*resp_ld + 1.6*k_T*ca &
-               - M*m_co2*f_soilwater*rh_leaf - k_T*m_co2*f_soilwater*rh_leaf*ca &
-               + M*b_co2/g_lb_c - resp_ld*k_T*m_co2*f_soilwater*rh_leaf/g_lb_c &
+        !beta_ps  = Beta*b_co2*ca - Beta*m_co2*f_soilwater*rh_leaf*resp_ld + 1.6*k_T*ca &
+               !- M*m_co2*f_soilwater*rh_leaf - k_T*m_co2*f_soilwater*rh_leaf*ca &
+               !+ M*b_co2/g_lb_c - resp_ld*k_T*m_co2*f_soilwater*rh_leaf/g_lb_c &
+               !+2*k_T*b_co2*ca/g_lb_c + (1.6*k_T*resp_ld+1.6*k_T*M- &
+               !M*k_T*m_co2*f_soilwater*rh_leaf)/g_lb_c + M*k_T*b_co2/g_lb_c/g_lb_c
+
+        beta_ps  = Beta*b_co2*ca - Beta*m_co2*fws*rh_leaf*resp_ld + 1.6*k_T*ca &
+               - M*m_co2*fws*rh_leaf - k_T*m_co2*fws*rh_leaf*ca &
+               + M*b_co2/g_lb_c - resp_ld*k_T*m_co2*fws*rh_leaf/g_lb_c &
                +2*k_T*b_co2*ca/g_lb_c + (1.6*k_T*resp_ld+1.6*k_T*M- &
-               M*k_T*m_co2*f_soilwater*rh_leaf)/g_lb_c + M*k_T*b_co2/g_lb_c/g_lb_c
+               M*k_T*m_co2*fws*rh_leaf)/g_lb_c + M*k_T*b_co2/g_lb_c/g_lb_c
 
-        gamma_ps = resp_ld*M*m_co2*f_soilwater*rh_leaf - M*b_co2*ca + resp_ld*k_T &
-               *m_co2*f_soilwater*rh_leaf*ca - k_T*b_co2*ca*ca + (M*k_T*m_co2*f_soilwater &
-               *rh_leaf-1.6*resp_ld*k_T-1.6*k_T*M)*ca - 2*M*k_T*b_co2*ca/g_lb_c - (1.6*M &
-               *resp_ld*k_T-M*k_T*m_co2*f_soilwater*rh_leaf*resp_ld)/g_lb_c
+        !gamma_ps = resp_ld*M*m_co2*f_soilwater*rh_leaf - M*b_co2*ca + resp_ld*k_T &
+               !*m_co2*f_soilwater*rh_leaf*ca - k_T*b_co2*ca*ca + (M*k_T*m_co2*f_soilwater &
+               !*rh_leaf-1.6*resp_ld*k_T-1.6*k_T*M)*ca - 2*M*k_T*b_co2*ca/g_lb_c - (1.6*M &
+               !*resp_ld*k_T-M*k_T*m_co2*f_soilwater*rh_leaf*resp_ld)/g_lb_c
+
+        gamma_ps = resp_ld*M*m_co2*fws*rh_leaf - M*b_co2*ca + resp_ld*k_T &
+               *m_co2*fws*rh_leaf*ca - k_T*b_co2*ca*ca + (M*k_T*m_co2*fws*rh_leaf &
+               -1.6*resp_ld*k_T-1.6*k_T*M)*ca - 2*M*k_T*b_co2*ca/g_lb_c - (1.6*M &
+               *resp_ld*k_T-M*k_T*m_co2*fws*rh_leaf*resp_ld)/g_lb_c
+
+        !theta_ps = M*k_T*b_co2*ca*ca + 1.6*M*resp_ld*k_T*ca - M*resp_ld*k_T &
+               !*m_co2*f_soilwater*rh_leaf*ca
 
         theta_ps = M*k_T*b_co2*ca*ca + 1.6*M*resp_ld*k_T*ca - M*resp_ld*k_T &
-               *m_co2*f_soilwater*rh_leaf*ca
+               *m_co2*fws*rh_leaf*ca
 
         if ((wj <= resp_ld).or.(wc <= resp_ld)) goto 300
         !        //cubic solution:
@@ -723,7 +789,7 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
             end if
         end if
 
-        aphoto=0
+        aphoto=0.0
 !     find out where roots plop down relative to the x-y axis
 
         if (minroot > 0 .and. midroot > 0 .and. maxroot > 0) aphoto=minroot
@@ -739,7 +805,8 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
 
         cs = ca - aphoto / g_lb_c
 
-        gs_h2o_mole = (f_soilwater *m_h2o* rh_leaf * aphoto / cs) + b_h2o   !mol m-2 s-1
+        !gs_h2o_mole = (f_soilwater *m_h2o* rh_leaf * aphoto / cs) + b_h2o   !mol m-2 s-1
+        gs_h2o_mole = (fws * m_h2o*rh_leaf * aphoto / cs) + b_h2o   !mol m-2 s-1
         gs_co2_mole = gs_h2o_mole /1.6
 
         ci = cs - aphoto / gs_co2_mole
@@ -774,11 +841,11 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
 
 !  // Bin Chen:
 !         r_tot = 1.0/b_co2 + 1.0/g_lb_c  // total resistance to CO2 (m2 s mol-1)
-!         denom = g_lb_c * b_co2 
+!         denom = g_lb_c * b_co2
 
-!         Aquad = r_tot * e_ps 
-!         Bquad = (e_ps*resp_ld + a_ps)*r_tot - b_ps - e_ps*ca 
-!         Cquad = a_ps*(ca-d_ps) - resp_ld*(e_ps*ca+b_ps) 
+!         Aquad = r_tot * e_ps
+!         Bquad = (e_ps*resp_ld + a_ps)*r_tot - b_ps - e_ps*ca
+!         Cquad = a_ps*(ca-d_ps) - resp_ld*(e_ps*ca+b_ps)
 
 
 300 Aquad = Beta + k_T/g_lb_c + 1.6*k_T/b_co2
@@ -797,18 +864,30 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
 
     cs = ca - aphoto / g_lb_c
 
-    gs_h2o_mole = (f_soilwater *m_h2o* rh_leaf * aphoto / cs) + b_h2o   !mol m-2 s-1
+    !gs_h2o_mole = (f_soilwater *m_h2o* rh_leaf * aphoto / cs) + b_h2o   !mol m-2 s-1
+    gs_h2o_mole = (fws * m_h2o*rh_leaf * aphoto / cs) + b_h2o   !mol m-2 s-1
     gs_co2_mole = gs_h2o_mole /1.6
 
     ci = cs - aphoto / gs_co2_mole
 
     Gs_w = gs_h2o_mole * temp_leaf_K * (met%pstat273)     !m s-1
 
+    ! 2024/03/31 Constraint the ci >=0.1*ca, cs >=0.8*ca, avoid the negative value in Ci when using water stress on BWB slope @Lu Hu
+    ! ci>a*ca, cs>b*ca, a,b should be explored
+    ! ci>0.1*ca, (ci/ca)min =[0.10-0.36],ref 'dynamics of changing intercellular co2 concentration during drought and determination of minimum functional ci'
+    cs = max(cs,0.8*ca)
+    ci = max(ci,0.1*ca)
+
+
     else
-        alpha_ps = 1.0 + (b_co2 / g_lb_c) - m_co2*rh_leaf*f_soilwater
-        beta_ps = ca * (g_lb_c*m_co2*rh_leaf*f_soilwater - 2.0 * b_co2 - g_lb_c)
+
+        !alpha_ps = 1.0 + (b_co2 / g_lb_c) - m_co2*rh_leaf*f_soilwater
+        !beta_ps = ca * (g_lb_c*m_co2*rh_leaf*f_soilwater - 2.0 * b_co2 - g_lb_c)
+        alpha_ps = 1.0 + (b_co2 / g_lb_c) - m_co2*rh_leaf*fws
+        beta_ps = ca * (g_lb_c*m_co2*rh_leaf*fws - 2.0 * b_co2 - g_lb_c)
         gamma_ps = ca * ca * g_lb_c * b_co2
-        theta_ps = g_lb_c*m_co2*rh_leaf*f_soilwater - b_co2
+        !theta_ps = g_lb_c*m_co2*rh_leaf*f_soilwater - b_co2
+        theta_ps = g_lb_c*m_co2*rh_leaf*fws - b_co2
 
     !***************************************
 
@@ -834,8 +913,11 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
 !  initial guess of intercellular CO2 concentration to estimate Wc and Wj:
 
         wj = j_photon * (cii - gammac) / (4. * cii + 8.0*gammac)
+        !write(*,*), 'cii = ', cii
+        !write(*,*), 'wj = ', wj
 
         wc = vcmax * (cii - gammac) / (cii + bc)
+        !write(*,*), 'wc = ', wc
 
 !    if(LC == 40) then
 !        wc = vcmax
@@ -946,7 +1028,7 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
             end if
         end if
 
-        aphoto=0
+        aphoto=0.0
 !     find out where roots plop down relative to the x-y axis
 
         if (minroot > 0 .and. midroot > 0 .and. maxroot > 0) aphoto=minroot
@@ -995,11 +1077,11 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
 
 !  // Bin Chen:
 !         r_tot = 1.0/b_co2 + 1.0/g_lb_c  // total resistance to CO2 (m2 s mol-1)
-!         denom = g_lb_c * b_co2 
+!         denom = g_lb_c * b_co2
 
-!         Aquad = r_tot * e_ps 
-!         Bquad = (e_ps*resp_ld + a_ps)*r_tot - b_ps - e_ps*ca 
-!         Cquad = a_ps*(ca-d_ps) - resp_ld*(e_ps*ca+b_ps) 
+!         Aquad = r_tot * e_ps
+!         Bquad = (e_ps*resp_ld + a_ps)*r_tot - b_ps - e_ps*ca
+!         Cquad = a_ps*(ca-d_ps) - resp_ld*(e_ps*ca+b_ps)
 
 100 ps_1    = ca * g_lb_c * b_co2
     delta_1 = b_co2 + g_lb_c
@@ -1019,27 +1101,38 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
 
     cs = ca - aphoto / g_lb_c
 
-    gs_h2o_mole = (f_soilwater *m_h2o* rh_leaf * aphoto / cs) + b_h2o   !mol m-2 s-1
+
+    !gs_h2o_mole = (f_soilwater *m_h2o* rh_leaf * aphoto / cs) + b_h2o   !mol m-2 s-1
+    gs_h2o_mole = (fws * m_h2o*rh_leaf * aphoto / cs) + b_h2o   !mol m-2 s-1
     gs_co2_mole = gs_h2o_mole /1.6
 
     ci = cs - aphoto / gs_co2_mole
 
     Gs_w = gs_h2o_mole * temp_leaf_K * (met%pstat273)     !m s-1
-    
+
+    ! 2024/03/31 Constraint the ci >=0.1*ca, cs >=0.8*ca, avoid the negative value in Ci when using water stress on BWB slope @Lu Hu
+    ! ci>a*ca, cs>b*ca, a,b should be explored
+    ! ci>0.1*ca, (ci/ca)min =[0.10-0.36],ref 'dynamics of changing intercellular co2 concentration during drought and determination of minimum functional ci'
+    cs = max(cs,0.8*ca)
+    ci = max(ci,0.1*ca)
+    ! for US-MOZ site test,
+    ! = max(ci,0.5*ca)
+
     end if
 
 
     if (LC == 1001) then   ! C4 model refer to Xiaorong Wang
-
+! 2024/01/07 some codes were repeated compared with those before 'if (LC == 40 .or. LC==41) then '
         ca=CO2_air
 !       iphoton = 4.55*0.5*rad_leaf
+
         iphoton = 4.55*f_leaf*rad_leaf   ! replace 0.5 to a coefficient, f_leaf, leaf respiration rate, for optimization purpose, @MOUSONG WU, 2020-09-14
 
         if(2*iphoton < 1)then
             iphoton = 0
         end if
 
-        temp_leaf_K = temp_leaf_c + 273.13
+        temp_leaf_K = temp_leaf_c + 273.13  !repeated in the front 2024/03/06 @Lu Hu
 
 
         call LAMBDA(temp_leaf_p, fact%latent)
@@ -1088,145 +1181,169 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
 
         Theta=0.83   !Collatz 1992
         Beta=0.93    !Collatz 1992
-		
-		
-		M1=((wj+wc)+sqrt((wj+wc)*(wj+wc)-4*Theta*wj*wc))/(2*Theta) 
-        M2=((wj+wc)-sqrt((wj+wc)*(wj+wc)-4*Theta*wj*wc))/(2*Theta) 
+
+
+		M1=((wj+wc)+sqrt((wj+wc)*(wj+wc)-4*Theta*wj*wc))/(2*Theta)
+        M2=((wj+wc)-sqrt((wj+wc)*(wj+wc)-4*Theta*wj*wc))/(2*Theta)
 
         if(M1<M2) then
-           M=M1 
+           M=M1
         else
-           M=M2 
+           M=M2
         end if
 
-        c4_a = Beta*m_h2o*rh_leaf*f_soilwater -Beta*b_h2o/g_lb_c &
-               - 1.6*KT/g_lb_c + KT*m_h2o*rh_leaf*f_soilwater &
-               /g_lb_c - KT*b_h2o/(g_lb_c*g_lb_c) 
+        !c4_a = Beta*m_h2o*rh_leaf*f_soilwater -Beta*b_h2o/g_lb_c &
+               !- 1.6*KT/g_lb_c + KT*m_h2o*rh_leaf*f_soilwater &
+               !/g_lb_c - KT*b_h2o/(g_lb_c*g_lb_c)
 
-        c4_b = Beta*b_h2o*ca - Beta*m_h2o*rh_leaf*RT*f_soilwater &
-               +  1.6*KT*ca - M*m_h2o*rh_leaf*f_soilwater &
-               - KT*m_h2o*rh_leaf*ca*f_soilwater - M*b_h2o/g_lb_c &
-               - RT*KT*m_co2*rh_leaf*f_soilwater /g_lb_c &
-               +2*KT*b_h2o*ca /g_lb_c + (1.6*KT*RT+1.6*KT*M-M*KT*m_h2o*rh_leaf*f_soilwater) &
-               /g_lb_c +  M*KT*b_h2o/(g_lb_c*g_lb_c) 
+        c4_a = Beta*m_h2o*rh_leaf*fws -Beta*b_h2o/g_lb_c &
+               - 1.6*KT/g_lb_c + KT*m_h2o*rh_leaf*fws &
+               /g_lb_c - KT*b_h2o/(g_lb_c*g_lb_c)
 
-        c4_c = RT*M*m_h2o*rh_leaf*f_soilwater - M*b_h2o*ca + RT*KT*m_h2o*rh_leaf*ca*f_soilwater &
-               - KT*b_h2o*ca*ca+(M*KT*m_h2o*rh_leaf*f_soilwater -1.6*KT*RT-1.6*KT*M)*ca &
-               - 2*M*KT*b_h2o*ca/g_lb_c - (1.6*M*RT*KT - M*KT*m_h2o*rh_leaf*RT*f_soilwater )/g_lb_c 
+        !c4_b = Beta*b_h2o*ca - Beta*m_h2o*rh_leaf*RT*f_soilwater &
+               !+  1.6*KT*ca - M*m_h2o*rh_leaf*f_soilwater &
+               !- KT*m_h2o*rh_leaf*ca*f_soilwater - M*b_h2o/g_lb_c &
+               !- RT*KT*m_co2*rh_leaf*f_soilwater /g_lb_c &
+               !+2*KT*b_h2o*ca /g_lb_c + (1.6*KT*RT+1.6*KT*M-M*KT*m_h2o*rh_leaf*f_soilwater) &
+               !/g_lb_c +  M*KT*b_h2o/(g_lb_c*g_lb_c)
 
-        c4_d = M*KT*b_h2o*ca*ca + 1.6*M*RT*KT*ca - M*RT*KT*m_h2o*rh_leaf*ca*f_soilwater 
+        c4_b = Beta*b_h2o*ca - Beta*m_h2o*rh_leaf*RT*fws &
+               +  1.6*KT*ca - M*m_h2o*rh_leaf*fws &
+               - KT*m_h2o*rh_leaf*ca*fws - M*b_h2o/g_lb_c &
+               - RT*KT*m_co2*rh_leaf*fws /g_lb_c &
+               +2*KT*b_h2o*ca /g_lb_c + (1.6*KT*RT+1.6*KT*M-M*KT*m_h2o*rh_leaf*fws) &
+               /g_lb_c +  M*KT*b_h2o/(g_lb_c*g_lb_c)
+
+        !c4_c = RT*M*m_h2o*rh_leaf*f_soilwater - M*b_h2o*ca + RT*KT*m_h2o*rh_leaf*ca*f_soilwater &
+               !- KT*b_h2o*ca*ca+(M*KT*m_h2o*rh_leaf*f_soilwater -1.6*KT*RT-1.6*KT*M)*ca &
+               !- 2*M*KT*b_h2o*ca/g_lb_c - (1.6*M*RT*KT - M*KT*m_h2o*rh_leaf*RT*f_soilwater )/g_lb_c
+
+        c4_c = RT*M*m_h2o*rh_leaf*fws - M*b_h2o*ca + RT*KT*m_h2o*rh_leaf*ca*fws &
+               - KT*b_h2o*ca*ca+(M*KT*m_h2o*rh_leaf*fws -1.6*KT*RT-1.6*KT*M)*ca &
+               - 2*M*KT*b_h2o*ca/g_lb_c - (1.6*M*RT*KT - M*KT*m_h2o*rh_leaf*RT*fws )/g_lb_c
+
+        !c4_d = M*KT*b_h2o*ca*ca + 1.6*M*RT*KT*ca - M*RT*KT*m_h2o*ca*rh_leaf*f_soilwater
+
+        c4_d = M*KT*b_h2o*ca*ca + 1.6*M*RT*KT*ca - M*RT*KT*m_h2o*ca*rh_leaf*fws
 
 
-        denom = c4_a 
-        p_cubic = c4_b/c4_a 
-        q_cubic = c4_c/c4_a 
-        r_cubic = c4_d/c4_a 
-		
-		
+        denom = c4_a
+        p_cubic = c4_b/c4_a
+        q_cubic = c4_c/c4_a
+        r_cubic = c4_d/c4_a
+
+
 		!Use solution from Numerical Recipes from Press
-        Qroot = (p_cubic*p_cubic - 3.0 * q_cubic) / 9.0 
-        Rroot = (2.0 * p_cubic*p_cubic*p_cubic  - 9.0 * p_cubic * q_cubic + 27.0 * r_cubic) / 54.0 
-       	r3q = Rroot / sqrt(Qroot*Qroot*Qroot) 
+        Qroot = (p_cubic*p_cubic - 3.0 * q_cubic) / 9.0
+        Rroot = (2.0 * p_cubic*p_cubic*p_cubic  - 9.0 * p_cubic * q_cubic + 27.0 * r_cubic) / 54.0
+       	r3q = Rroot / sqrt(Qroot*Qroot*Qroot)
 
-	    if (r3q>1) then 
+	    if (r3q>1) then
             r3q=1 	!  by G. Mo
         end if
-	    if (r3q<-1) then 
+	    if (r3q<-1) then
             r3q=-1 	!  by G. Mo
         end if
 
-	    ang_L = acos(r3q) 
+	    ang_L = acos(r3q)
 
         root1 = -2.0 * sqrt(Qroot) * cos(ang_L / 3.0) - p_cubic / 3.0   ! real roots
-        root2 = -2.0 * sqrt(Qroot) * cos((ang_L + PI2) / 3.0) - p_cubic / 3.0 
-        root3 = -2.0 * sqrt(Qroot) * cos((ang_L - PI2) / 3.0) - p_cubic / 3.0 
-		
-		
+        root2 = -2.0 * sqrt(Qroot) * cos((ang_L + PI2) / 3.0) - p_cubic / 3.0
+        root3 = -2.0 * sqrt(Qroot) * cos((ang_L - PI2) / 3.0) - p_cubic / 3.0
+
+
 		! Here A = x - p / 3, allowing the cubic expression to be expressed
         !as: x^3 + ax + b = 0
 		! rank roots #1,#2 and #3 according to the minimum, intermediate and maximum value
 
 	   if(root1 <= root2 .and. root1 <= root3) then
-		   minroot=root1 
+		   minroot=root1
 		   if (root2 <= root3) then
-			   midroot=root2 
-               maxroot=root3 
+			   midroot=root2
+               maxroot=root3
            else
-           
-			   midroot=root3 
-               maxroot=root2 
+
+			   midroot=root3
+               maxroot=root2
             end if
         end if
-		   
-	   
+
+
        if(root2 <= root1 .and. root2 <= root3) then
-		   minroot=root2 
+		   minroot=root2
 		   if (root1 <= root3) then
-			   midroot=root1 
-               maxroot=root3 
+			   midroot=root1
+               maxroot=root3
            else
-			   midroot=root3 
-               maxroot=root1 
+			   midroot=root3
+               maxroot=root1
             end if
         end if
 
 
        if(root3 <= root1 .and. root3 <= root2) then
-		   minroot=root3 
+		   minroot=root3
            if (root1 < root2) then
-			   midroot=root1 
-               maxroot=root2 
+			   midroot=root1
+               maxroot=root2
            else
-			   midroot=root2 
-               maxroot=root1 
+			   midroot=root2
+               maxroot=root1
             end if
         end if
 
-		aphoto=0 
+		aphoto=0.0
 
-        if (minroot > 0 .and. midroot > 0 .and. maxroot > 0) aphoto=minroot 
-
-
-        if (minroot < 0 .and. midroot < 0 .and. maxroot > 0) aphoto=maxroot 
+        if (minroot > 0 .and. midroot > 0 .and. maxroot > 0) aphoto=minroot
 
 
-        if (minroot < 0 .and. midroot > 0 .and. maxroot > 0) aphoto=midroot 
+        if (minroot < 0 .and. midroot < 0 .and. maxroot > 0) aphoto=maxroot
+
+
+        if (minroot < 0 .and. midroot > 0 .and. maxroot > 0) aphoto=midroot
 
         if(aphoto <= 0.0) then
-			goto 500 
+			goto 500
 		else
-			goto 600 
+			goto 600
         end if
 !a quadratic solution of A is derived if gs=b, but a cubic form occurs
 !if gs =ax + b.  Use quadratic case when A <=0
-500 Aquad = Beta+KT/g_lb_c+1.6*KT/b_h2o 
-	Bquad = 2*Beta*RT-M-ca*KT-(KT/g_lb_c+1.6*KT/b_h2o)*(M-RT) 
-	Cquad = Beta*RT*RT-M*RT+ca*KT*(M-RT) 
+500 Aquad = Beta+KT/g_lb_c+1.6*KT/b_h2o
+	Bquad = 2*Beta*RT-M-ca*KT-(KT/g_lb_c+1.6*KT/b_h2o)*(M-RT)
+	Cquad = Beta*RT*RT-M*RT+ca*KT*(M-RT)
 
-    product=Bquad * Bquad - 4.0 * Aquad * Cquad 
+    product=Bquad * Bquad - 4.0 * Aquad * Cquad
 
     if (product >= 0) then
-	!	*aphoto = (-Bquad + sqrt(product)) / (2.0 * Aquad) 
-		aphoto = (-Bquad - sqrt(product)) / (2.0 * Aquad) 
+	!	*aphoto = (-Bquad + sqrt(product)) / (2.0 * Aquad)
+		aphoto = (-Bquad - sqrt(product)) / (2.0 * Aquad)
     end if
 
     !Tests suggest that APHOTO2 is the correct photosynthetic root when
     !light is zero because root 2, not root 1 yields the dark respiration
     !value rd.
-		
-600 aphoto =max(0., aphoto) 
 
-    cs = ca - aphoto / g_lb_c 
+600 aphoto =max(0., aphoto)
 
-	gs_h2o_mole = (f_soilwater *m_h2o* rh_leaf *aphoto / cs) + b_h2o  ! mol m-2 s-1
-	gs_co2_mole = gs_h2o_mole /1.6 
+    cs = ca - aphoto / g_lb_c
 
-	ci = cs - aphoto / gs_co2_mole 
+	!gs_h2o_mole = (f_soilwater *m_h2o* rh_leaf *aphoto / cs) + b_h2o  ! mol m-2 s-1
+	gs_h2o_mole = (fws * m_h2o*rh_leaf * aphoto / cs) + b_h2o  ! mol m-2 s-1
+	gs_co2_mole = gs_h2o_mole /1.6
+
+	ci = cs - aphoto / gs_co2_mole
 
 	Gs_w = gs_h2o_mole * temp_leaf_K * (met%pstat273)  ! m s-1
 
+    ! 2024/03/31 Constraint the ci >=0.1*ca, cs >=0.8*ca, avoid the negative value in Ci when using water stress on BWB slope @Lu Hu
+    ! ci>a*ca, cs>b*ca, a,b should be explored in the future
+    ! ci>0.1*ca, (ci/ca)min =[0.10-0.36],ref 'dynamics of changing intercellular co2 concentration during drought and determination of minimum functional ci'
+    cs = max(cs,0.8*ca)
+    ci = max(ci,0.1*ca)
+
     end if
-    
+
 
    !! QBO
 !   ffpa = 0.8    ! 0.6~0.9
@@ -1260,7 +1377,7 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
     end if
 
     ! add the module for calculating COS uptake by plants, @MOUSONG.WU 2020-09-17
-
+    ! for COS modeling, whether replacing f_soilwater with f_feileaf should be explored in the future @Lu Hu 2024/01/07
     call cos_plant(LC,cosii,convf,gs_h2o_mole,g_lb_cos,vcmax,ffpa,f_soilwater,cos_assim)
 
     coss = cosa - cos_assim/g_lb_cos                           ! ppb
@@ -1420,8 +1537,8 @@ end subroutine
 subroutine VT_FUNC(Tl,Vcmax25,y)
    implicit none
    real(r8)  :: Tl, Vcmax25, y,Q10
-   Q10=2.4 
-   y=(Vcmax25*Q10**((Tl-298.13)/10))/( (1+exp (0.3*(286.13-Tl)))*(1+exp(0.3*(Tl-309.13)))) 
+   Q10=2.4
+   y=(Vcmax25*Q10**((Tl-298.13)/10))/( (1+exp (0.3*(286.13-Tl)))*(1+exp(0.3*(Tl-309.13))))
 end subroutine
 
 
@@ -1433,8 +1550,8 @@ end subroutine
 subroutine RT_FUNC(Tl,Rd25,y)
    implicit none
    real(r8)  :: Tl,Rd25, Q10,y
-   Q10=2 
-   y=(Rd25*Q10**((Tl-298.13)/10))/(1+exp(1.3*(Tl-328.13))) 
+   Q10=2
+   y=(Rd25*Q10**((Tl-298.13)/10))/(1+exp(1.3*(Tl-328.13)))
 end subroutine
 
 !/*----------------------------------------------------------------*/
@@ -1445,7 +1562,7 @@ subroutine KT_FUNC(Tl,KT25,y)
    implicit none
    real(r8)  :: Tl,KT25, Q10,y
    Q10=2.4  !//mol/m2/s-->umol/m2/s
-   y=(KT25*Q10**((Tl-298.13)/10)) 
+   y=(KT25*Q10**((Tl-298.13)/10))
 end subroutine
 
 end module
