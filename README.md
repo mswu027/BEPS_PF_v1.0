@@ -1,2 +1,2 @@
-# BEPS_PF_v1.0
- The particle filtering based BEPS data assimilation system
+# BEPS_Hydraulics (BEPS-H)
+ BEPS model couping with plant hydraulics module, BEPS-H v 1.0
