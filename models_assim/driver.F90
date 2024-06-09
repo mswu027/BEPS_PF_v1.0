@@ -11,7 +11,6 @@ use beps_time_manager
 use bepstype
 use bepstypeInit
 use ecoRespMod
-use MOD_MEND
 use mid_results
 !use mpi_mod
 use beps_soilMod
@@ -19,17 +18,9 @@ use beps_cropMod
 use beps_par
 use outputMod
 use PF_run
-use MOD_MEND_TYPE
-use MOD_USRFS
 use restart
 use esmf
 implicit none
-
-TYPE(sMEND_PAR) sPAR
-TYPE(sMEND_INP) sINP
-TYPE(sMEND_OUT) sOUT
-TYPE(sMEND_INI) sINI
-TYPE(sSCE_PAR) sSCE
 
 type(climatedata)    :: meteo
 type(results)        :: mid_res
@@ -38,7 +29,7 @@ integer              :: i,j,k,llll,jj,ii,kk
 type(soil)           :: soilp                !! at single point
 real(r8)             :: Ccd(0:4),Cssd(0:4),Csmd(0:4),Cfsd(0:4),Cfmd(0:4),Csm(0:4),Cm(0:4),Cs(0:4),Cp(0:4)
 real(r8)             :: param(0:49),var_o(0:40),var_n(0:40),coef(0:49)
-real(r8)             :: inparticles(200,20) ! 19 parameters for optimization, 20th is the pf weight
+real(r8)             :: inparticles(200,19)
 real(r8)             :: pfweightnormalize(200)
 real(r8)             :: lai
 type(para),pointer   :: ppar                  !! initial parameters
@@ -60,7 +51,7 @@ real(r8)             :: ratio_cloud,shortRad_df,shortRad_dir,PFweightupdatesum,S
 ! real(r8)             :: D0(1:9)
 ! real(r8)             :: taweff(1:9)
 integer              :: kount,rst_nstep,p,run_pf,p1,p2,p3,p4,p5
-integer              :: yr,mn,dy,tod,caldy,n_meteo,n_lai, n_vod_pf !n_gpp_pf
+integer              :: yr,mn,dy,tod,caldy,n_meteo,n_gpp_pf,n_lai
 !-- iLab::converted from real(r8) to integer
 integer              :: doys
 integer              :: ierr
@@ -68,7 +59,7 @@ real(r8)             :: daylen
 !-- iLab::for revised interface to 'av_output'
 character(len=len('YYYY-MM-DDTHH:MM:SS')), save :: ref_date = ''
 integer :: yr_ref, mn_ref, dy_ref, tod_ref
-real(r8)             :: secs_elapsed,secs_meteo,days_lai, secs_vod_pf ! secs_gpp_pf
+real(r8)             :: secs_elapsed,secs_meteo,secs_gpp_pf,days_lai
 ! .. Parameters for model-internal use
 real(r8)             :: pio180 = PI/180.
 ! variables for daily input, used in climin and getmonth
@@ -81,7 +72,6 @@ real(r8)             :: rdaymid, delta, arg, h0, h1, sd, sd1, dhour, tmin, tmp1
 real(r8)             :: a, b, sunset_arc
 integer              :: nd                   !! for counting the time-step number, i.e. ith step
 
-! ..................... related to crop module .........................................................
 real(r8)             :: temp_gpp,outGPP   		!crop module
 real(r8)             :: temp_npp,outNPP   		!crop module
 real(r8)             :: temp_accu_gpp  !crop module    accumulate  GPP(kg m-2 d-1)
@@ -89,65 +79,19 @@ real(r8)             :: temp_accu_npp  !crop module    accumulate  NPP(kg m-2 d-
 real(r8)             :: temp_accu_temp !crop module    accumulate  temperature(degree d-1)
 logical :: is_end_day
 logical :: is_end_week
-integer :: SoilC_Mod
-!.........................................................................................
+
+
 ! .. Intrinsic Functions ..
 intrinsic ACOS, COS, SIN, MOD,atan, REAL,int
-SoilC_Mod = 0
-
-sINI%nPar = 27
-
-real(r8) :: xx(1:sINI%nPar)
-
 ! parameters used for calculating VOD,@MOUSONG.WU,2019-11
 !NPP_yr_acc(:,:) = 0.
 !agb2vod = 0.9517
 !D0 = (/0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05/)
 !taweff = (/0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006/)
 
-!Allocate(xx(sINI%nPar))
-xx(1) = 0.3    !sINI % LCI0 = 0.3d0
-xx(2) = 0.1    !sINI % r0 = 0.1d0
-xx(3) = 2.      !sINI%VP1 = 2
-xx(4) = 2.      !sINI % VP2 = 2
-xx(5) = 2.      !sINI % VM = 2
-xx(6) = 58.     !sINI % KP1 = 58
-xx(7) = 6.      !sINI % KP2 = 6
-xx(8) = 500.    !sINI % KM = 500
-xx(9) = 1.7    !sINI % Qmax = 1.7
-xx(10) = 6.0    !sINI % Kba = 6.0
-xx(11) = 0.    !sINI % Kdes = 0.000
-xx(12) = 0.003    !sINI % rE = 0.003
-xx(13) = 0.01    !sINI % pEP = 0.01
-xx(14) = 1.0    !sINI % fpEM = 1.0
-xx(15) = 0.87    !sINI % fD = 0.87
-xx(16) = 0.38    !sINI % gD = 0.38
-xx(17) = 0.01    !sINI % Vg = 0.01
-xx(18) = 0.2    !sINI % alpha = 0.2
-xx(19) = 0.26    !sINI % KD = 0.26
-xx(20) = 0.30    !sINI % Yg = 0.30
-xx(21) = 0.01    !sINI % Ygsl = 0.01
-xx(22) = 1.2    !sINI % wdie = 1.2
-xx(23) = 1.0    !sINI % gamma = 1.0
-xx(24) = 0.001    !sINI % beta = 0.001
-xx(25) = 0.4    !sINI % WPA2D = 0.4
-xx(26) = 0.25    !sINI % tau = 0.25
-xx(27) = 4.0    !sINI % wdorm = 4.0
-
-! Assign initial parameter values
-sINI%SIN_C12_C14 = 0.33
-sINI%SIN_other(1,:) = (/0., 0., 0./)
-sINI%SIN_other(2,:) = (/0., 0., 0./)
-sINI%iKinetics = 0
-!sINI%iKinetics = 0-Michaelis-Menten, 1-First Order, 2-Second Order
-sINI%BIOME = 'MGC'  
-!!'ASM' = arid|semiarid|mediterranean; 'MGC'=mesic grassland & cropland; 'MDF'=Mesic Deciduous Forest; 'MCF'=MEsic Conifer Forest; used by fSWP()
-sINI%SOM = 'SOL'
-!!'SOD' = disturbed soil; 'SOL'=intact soil; 'LIT'=litter; used by fSWP()
-
 !! setting up MPI enviroments with the namelists
 !   call Initmpi()
-   
+
 call rdnamelist()
 if(nscale == 1) then
   nlp = n_site
@@ -212,11 +156,10 @@ PF_obsva => PF_obs
 PF_resa  => PF_resample
 p_pgdd   => pgdd
 
-! 0 for forwar model; 1 for praticle filter
+
 run_pf=1
 PFweightupdatesum=0.
 PFweightupdatesum_resample=0.
-
 temp_gpp=0.
 outGPP=0.
 temp_npp=0.
@@ -224,7 +167,6 @@ outNPP=0.
 temp_accu_gpp=0.
 temp_accu_npp=0.
 temp_accu_temp=0.
-!..................................................
 
  !**********************************************************************************run BEPS with default parameters parameters**************************************************
 if (run_pf==0) then
@@ -258,7 +200,6 @@ if (run_pf==0) then
     caldy = get_curr_calday()
     call get_curr_date(yr,mn,dy,tod)
     doys = get_doys(yr)
-    write(*,*) 'nd=', nd
     !-- iLab::inserted in order to pass ref_date downstream
     if( nd.eq.1 ) then
         yr_ref = yr
@@ -293,7 +234,7 @@ if (run_pf==0) then
             secs_meteo)
           n_meteo = int(secs_meteo/3600 + 1)
           call read_meteo_site(n_meteo)
-          print *, 'read site meteo successfully!'
+          !print *, 'read site meteo successfully!'
       end if
     else
       if(is_first_step() .or. is_end_curr_day()) then
@@ -311,7 +252,7 @@ if (run_pf==0) then
              call read_lai(yr, mn, dy, tod, n_lai)
           else
              call read_lai_site(n_lai)
-             print *, 'read site lai successfully!'
+             !print *, 'read site lai successfully!'
           end if
         end if
     else
@@ -320,7 +261,17 @@ if (run_pf==0) then
         end if
     end if
 
+    ! Reading the Vcmax here for assimilation usage @J.Wang
+    !if(is_first_step() .or. is_end_curr_month()) then
+    !   if (nscale == 0) then
+    !    call read_Vcmax(yr, mn, dy, tod)
+    !   else
+    !    call read_Vcmax_site(yr, mn, dy, tod)
+    !   end if
+    !end if
+
     !call mpi_barrier(mpi_comm_world,ierr)
+
 
        do i = 1,npoints    !! spatial iteration
 
@@ -329,12 +280,27 @@ if (run_pf==0) then
                bfields%latitude(i),bfields%longitude(i),CosZs,hr_loc,hr_arc)
           !!if(myid == 0) write(*,*) "hr_loc=",hr_loc
           !! retrieve meteo for this point
-
+#ifdef COUP_CSM
+          meteo%LR                     = climate%Lwdn(i)
+          meteo%rainfall               = climate%Rain(i)
+          meteo%snow                   = climate%Snow(i)
+          meteo%S_dff                  = climate%Swdf(i)
+          meteo%S_dir                  = climate%Swdr(i)
+          meteo%Srad                   = meteo%S_dff + meteo%S_dir
+          meteo%wind                   = climate%Wind(i)
+          !meteo%rh                     = ...
+#else
           meteo%Srad                   = climate%Srad(i)
           meteo%wind                   = climate%Wind(i)
           meteo%rainfall               = climate%Rain(i)
           meteo%snow                   = climate%Snow(i)
           meteo%rh                     = climate%Rh(i)
+          if (meteo_input < 0) then
+            meteo%tempmx                = climate%Tempmx(i)    ! read daily max and min temperatures instead
+            meteo%tempmn                = climate%Tempmn(i)
+          else
+            meteo%temp                  = climate%Temp(i)
+          end if
 
           ! .. compute daily course of temperature and daylength
           rdaymid = REAL (sim_duration+1) / 2.
@@ -352,6 +318,52 @@ if (run_pf==0) then
               !normal day / night:
               daylen = ACOS(arg)/PI*24.
           END IF
+
+          !###########Compute subdaily temperature based on daily input,@MOUSONG.WU,201905#####################
+
+          if(meteo_input < 0) then
+              ! .. compute average conditions
+              atmean = (meteo%tempmx + meteo%tempmn)/ 2.
+              atrange = meteo%tempmx - meteo%tempmn
+
+              !hour angle at sunset, added by MOUSONG.WU, 201905
+              sunset_arc   = (daylen/2.)*2.0*PI/24.0
+
+              IF (daylen>=4. .AND. daylen<=20.) THEN
+                  !sunrise
+                  h0 = 12. - daylen/2.
+                  !sundown
+                  h1 = 12. + daylen/2.
+                  !at sundown:
+                  sd1 = SIN(PI*(2.*h1+(daylen-52.)/2.)/(daylen+4.))
+
+                  !! unroll zum vektorisieren
+                  IF (hr_loc>h0 .AND. hr_loc<h1) THEN
+                      sd = SIN(PI*(2.*hr_loc+(daylen-52.)/2.)/(daylen+4.))
+                      meteo%temp = atmean + atrange/2.*sd
+                  ELSE
+                      ! temperature at sundown
+                      tmp1 = atmean + atrange/2.*sd1
+                      ! hours since sundown
+                      dhour = MOD(hr_loc-h1+24.,24.)
+                      tmin = atmean - atrange/2.
+                      meteo%temp = tmp1 - (tmp1-tmin)*(dhour/(24.-daylen))
+                  END IF
+              ELSEIF (daylen>20.) THEN
+                  sd = COS(PI*(hr_loc-14.)/(daylen/2.+2.))
+                  meteo%temp = atmean + atrange/2.*sd
+              ELSE
+                  meteo%temp = atmean
+              END IF
+              climate%Temp(i) = meteo%temp
+              ! convert daily solar radiation into hourly using the method by M. Collares-Pereira and A. Rabl,
+              ! “The average distribution of solar radiation-correlations between diffuse and hemispherical
+              !and between daily and hourly insolation values,” Solar Energy,vol. 22, no. 2, pp. 155–164, 1979.
+              a = 0.409 + 0.5016 * SIN(sunset_arc - 60.)
+              b = 0.6609 - 0.4767 * SIN(sunset_arc - 60.)
+              meteo%Srad = meteo%Srad*(a+b*COS(hr_arc))*(PI/24.)*(COS(hr_arc)-COS(sunset_arc))/ &
+                                &(SIN(sunset_arc)-(2*PI*sunset_arc/360.)*COS(sunset_arc))
+          end if
 
           ! Calculate cloud fraction, separate shortwave radiation
           if(CosZs < 0.001) then
@@ -375,10 +387,9 @@ if (run_pf==0) then
           meteo%S_dir   = shortRad_dir
           climate%Swdr(i)   = shortRad_dir
           climate%Swdf(i)   = shortRad_df
+#endif
 
-          !write(*,*) 'Before start_PFT_loop!!!!!'
-          do j = 11,11!1,PFT    !! PFT iteration  ! 2023/06/30 beps land cover id
-               !write(*,*) 'start_PFT_loop!!!!'
+          do j = 11,11!1,PFT    !! PFT iteration
                if(bfields%lcno(i,j) > 0 .and. bfields%sw(i) >0. .and. bfields%stext(i) >0 .and. bfields%clumping(i) > 0.5) then
                     call readparam(bfields%lcno(i,j),param)
 
@@ -397,10 +408,7 @@ if (run_pf==0) then
                     call readcoef(bfields%lcno(i,j),bfields%stext(i),coef)
 
                     if(nsrest == nsrStartup .and. is_first_step()) then
-                        !write(*,*) 'Startup!!!!'
-		        ! 2023/06/30 ????????????
-                        call Init_soil_parameters(bfields%lcno(i,j),bfields%laiyr(i,j),bfields%stext(i), &
-                                            ppar%p_f_decay(j,i), param(27),soilp) ! 2023/06/30
+                        call Init_soil_parameters(bfields%lcno(i,j),bfields%stext(i), ppar%p_r_decay(j,i),soilp)
                         soilp%r_drainage = param(26)
                         !soilp%r_drainage = ppar%p_drainage(j)            ! read this
                                                                     !para from NC file,@MOUSONG.WU,2019-11
@@ -437,10 +445,7 @@ if (run_pf==0) then
                         end do
 
                     else if(nsrest == nsrContinue .and. is_first_step()) then
-                         !write(*,*) 'Continue!!!!'
-                        call Init_soil_parameters(bfields%lcno(i,j),bfields%laiyr(i,j),bfields%stext(i), &
-                                      ppar%p_f_decay(j,i), param(27),soilp) ! 2023/06/30
-
+                        call Init_soil_parameters(bfields%lcno(i,j),bfields%stext(i),ppar%p_r_decay(j,i),soilp)
                         soilp%r_drainage = param(26)
                         !soilp%r_drainage = ppar%p_drainage(j)  ! read from nc
                                                           ! file,MOUSONG.WU@2019-11
@@ -463,28 +468,43 @@ if (run_pf==0) then
                         !end do
 
                     else
-                        !write(*,*) 'others!!!!'
                         var_o(:)         = v2last(i,:,j)
                         call retrive_soilp(soilp,i,j,0)
                     end if
-                    !write(*,*) 'layer = ', soilp%n_layer
+
+                    !!! simulating photosynthesis
+                    !              do llll = 0,40
+                    !                 write(*,*)  "DG004: Var_o = ",llll, var_o(llll)
+                    !              end do
+
+                    !write(*,*) 'nd=',nd
+                    !write(*,*) 'i=',i
+                    !write(*,*) 'j=',j
+                    !write(*,*) 'p_Ksat = ',ppar%p_Ksat_scalar(ii,i)
+                    !write(*,*) 'p_r_decay = ',ppar%p_r_decay(j,i)
+                    !write(*,*) 'p_Vcmax = ',ppar%p_Vcmax(j,i)
+                    !write(*,*) 'p_VJ_slope = ',ppar%p_VJ_slope(j,i)
+                    !write(*,*) 'ppar%p_N_leaf = ',ppar%p_N_leaf(j,i)
+                    !write(*,*) 'ppar%p_p_b_h2o = ',ppar%p_b_h2o(j,i)
+                    !write(*,*) 'ppar%p_m_h2o = ',ppar%p_m_h2o(j,i)
 
                     call inter_prg(yr, mn, dy, tod, &
                          lai,lai_input,bfields%lcno(i,j),bfields%clumping(i),ppar%p_Vcmax(j,i),ppar%p_VJ_slope(j,i),&
-                         ppar%p_VN_slope(j,i),ppar%p_b_h2o(j,i),ppar%p_m_h2o(j,i),ppar%p_f_leaf(j,i),&
+                         ppar%p_N_leaf(j,i),ppar%p_b_h2o(j,i),ppar%p_m_h2o(j,i),ppar%p_f_leaf(j,i),&
                          ppar%p_kc25(j,i),ppar%p_ko25(j,i),ppar%p_tau25(j,i),ppar%p_sif_alpha(j,i),ppar%p_sif_beta(j,i),&
-                         ppar%p_a(j,i),ppar%p_b(j,i),ppar%p_c(j,i),&
                          param,meteo,CosZs,var_o,var_n,soilp,mid_res,daylen)
-
                     !print *, 'end of inter_prg'
-
+                    ! CHANGE Vcmax read from Vcmax file with the Vcmax read from initial para. NC
+                    ! file, for optimization purpose,@MOUSONG.WU,2019-11
+                    !              do llll =0,40
+                    !                write(*,*)  "DG004: Var_n = ",llll,var_n(llll)
+                    !             end do
                     v2last(i,:,j)  = var_n(:)
                     call retrive_soilp(soilp,i,j,1)
                     !print *, 'end of retrive_soilp'
                     !!! simluating Ra
                     call plant_resp(ppar%p_q10(j,i),bfields%lcno(i,j),mid_res,bfields%laiyr(i,j),lai,meteo%temp,&
                                soilp%temp_soil_c(1),CosZs)
-
                     !print *, 'end of plant_resp'
                     !USE p_q10 here to adjust q10,p_q10 is read from initial para. NC file, for
                     !optimization purpose,@MOUSONG.WU,2019-11
@@ -501,28 +521,9 @@ if (run_pf==0) then
                     ! to get soil texture for this point,@MOUSONG.WU,2019-11
                     jj = bfields%stext(i)
 
-                    call soil_resp(ppar%p_f_resp(j,i),Ccd,Cssd,Csmd,Cfsd,Cfmd,Csm,Cm,Cs,&
+                    call soil_resp(Ccd,Cssd,Csmd,Cfsd,Cfmd,Csm,Cm,Cs,&
                                  Cp,bfields%nppyr(i,j),coef,bfields%stext(i),soilp,mid_res)
-                    ! to update the carbon pool for the next time step, added @MOUSONG.WU, 202312
-                    bfields%Ccd(i,j) = Ccd(0)
-                    bfields%Cssd(i,j) = Cssd(0)
-                    bfields%Csmd(i,j) = Csmd(0)
-                    bfields%Cfsd(i,j) = Cfsd(0)
-                    bfields%Cfmd(i,j) = Cfmd(0)
-                    bfields%Csm(i,j) = Csm(0)
-                    bfields%Cm(i,j) = Cm(0)
-                    bfields%Cm(i,j) = Cs(0)
-                    bfields%Cp(i,j) = Cp(0)               
                     !print *, 'end of soil_resp'
-                    if (SoilC_Mod > 0) then
-                        sINI%SIN = coef(2)/8760.*bfields%nppyr(i,j)*10**6*0.1*10**6 ! SOC input, mgC/cm3/h, 8.14
-                        sINI%tmp = soilp%temp_soil_c(1)               ! soil temperature, degree C
-                        sINI%SWP = soilp%psim(1)*0.01                      ! soil water potential, MPa??? check
-                        sINI%pH  = 7.0
-                    
-                        call subMEND_RUN(xx, sPAR, sINI, sOUT)
-
-                    end if
 
                     !! for output variables
                     pp%GPPpft(i,j)   = mid_res%GPP*bfields%PCT_PFT(i,j)/100.
@@ -538,11 +539,21 @@ if (run_pf==0) then
                     pp%Thetampft(i,j)   = mid_res%thetam_surf*bfields%PCT_PFT(i,j)/100.
                     pp%fAPARpft(i,j) = mid_res%fAPAR*bfields%PCT_PFT(i,j)/100.
                     pp%COS_fluxpft(i,j) = (mid_res%COS_plant+mid_res%COS_grnd)*bfields%PCT_PFT(i,j)/100.
-                    pp%PWSpft(i,j) =  mid_res%PWS*bfields%PCT_PFT(i,j)/100.
-                    pp%ETapft(i,j) = mid_res%ETa*bfields%PCT_PFT(i,j)/100.
-                    pp%VODpft(i,j) = mid_res%VOD*bfields%PCT_PFT(i,j)/100.
-                    pp%fei_leafpft(i,j) = mid_res%fei_leaf*bfields%PCT_PFT(i,j)/100.
-                    !write(*,*) 'pp%VODpft=', pp%VODpft(i,j)
+
+                    pp%NPP_yr_acc(i,j) = pp%NPP_yr_acc(i,j) + mid_res%NPP*bfields%PCT_PFT(i,j)/100.*1.e-2*step       ! convert NPP to Mg/ha for calculation of VOD
+
+                    if (is_end_curr_year()) then
+                    ! calculate VOD (vegetation optical depth) with results derived from SMOS-IC product, @Mousong.Wu, 201905,taweff is a PFT specific parameter
+                       pp%VODpft(i,j)   = ppar%p_agb2vod(j,i)*atan(ppar%p_taweff(j,i)*pp%NPP_yr_acc(i,j)) + ppar%p_D0(j,i)*lai
+                       pp%NPP_yr_acc(i,j) = 0.
+                    !                  write(*,*) 'VOD= ',pp%VODpft(i,j)
+                    else
+                       pp%VODpft(i,j) = 0.
+                    end if
+
+                    ! write(*,*) 'hr_loc = ', hr_loc
+                    !! calculate the OCO-2 SIF   across at 1:30pm
+                    !write(*,*) 'SIFpft= ',mid_res%SIF*bfields%PCT_PFT(i,j)
                     if(hr_loc >= 13. .and. hr_loc <14.) then
                         pp%SIFpft_sat(i,j)  = mid_res%SIF*bfields%PCT_PFT(i,j)/100.
                     else
@@ -568,9 +579,6 @@ if (run_pf==0) then
           pp%fAPAR(i)   = sum(pp%fAPARpft(i,:))
           pp%VOD(i)     = sum(pp%VODpft(i,:))
           pp%COS_flux(i)     = sum(pp%COS_fluxpft(i,:))
-          pp%PWS(i)     = sum(pp%PWSpft(i,:))
-          pp%ETa(i)     = sum(pp%ETapft(i,:))
-          pp%fei_leaf(i)     = sum(pp%fei_leafpft(i,:))
 
        end do      !! end spatial loop
        !          call mpi_barrier(mpi_comm_world,ierr)
@@ -582,10 +590,29 @@ if (run_pf==0) then
        call av_output(yr, mn, dy, tod, get_nstep(), is_end_curr_month(), ref_date, secs_elapsed)
        !-- iLab::restart requires next time-step
        call get_curr_date(yr,mn,dy,tod)
-
+       !write(*,*) 'yr2=', yr
+       !write(*,*) 'mn2=', mn
+       !write(*,*) 'dy2=', dy
+       !write(*,*) 'tod2=', tod
+       !if(restart_frq <0) then   !! <0 ndays
+       !   kount = get_nstep()
+       !   rst_nstep  = -restart_frq*86400/step
+       !   if(mod(kount,rst_nstep) ==0) call restart_io("write",yr,mn,dy,tod)
+       ! else if(restart_frq ==0) then
+       !   if(is_end_curr_month()) call restart_io("write",yr,mn,dy,tod)
+       ! end if
+       !!! determine whether it's the last step
        if(is_last_step()) exit
   end do   !! end time loop
+  !if(restart_frq <0) then   !! <0 ndays
+  !      kount = get_nstep()
+  !      rst_nstep  = -restart_frq*86400/step
+  !      if(mod(kount,rst_nstep) ==0) call restart_io("write",2013,1,1,0)
+  !else if(restart_frq ==0) then
+  !      if(is_end_curr_month()) call restart_io("write",yr,mn,dy,tod)
+  !end if
 
+! end do !! end paramater loop
 
  !*************************************************************************************Particle Fliter ****************************************************************************
 else if (run_pf==1) then
@@ -601,7 +628,6 @@ else if (run_pf==1) then
  nd = 0
  do     !! start time looping
     nd = nd + 1
-    write(*,*) 'nd=',nd
     !-- iLab::inserted in order to pass 'calday' downstream
     caldy = get_curr_calday()
     call get_curr_date(yr,mn,dy,tod)
@@ -619,11 +645,11 @@ else if (run_pf==1) then
         write(ref_date(9:10),  '(i2.2)') dy_ref
         write(ref_date(11:19), '(a)')    'T00:00:00'
     end if
-    !write(*,*) "yr=" , yr
-    !write(*,*) "mn=" , mn
-    !write(*,*) "dy=" , dy
-    !write(*,*) "tod=" , tod
-    !write(*,*) "caldy=" , caldy
+    write(*,*) "yr=" , yr
+    write(*,*) "mn=" , mn
+    write(*,*) "dy=" , dy
+    write(*,*) "tod=" , tod
+    write(*,*) "caldy=" , caldy
     is_end_day = ((yr>yr_ref .or. mn>mn_ref .or. dy>dy_ref) .and. (tod == 0)) !--iLab: taken from BEPS time manager
     is_end_week = ((yr>yr_ref .or. mn>mn_ref .or. dy>dy_ref) .and. (MOD((dy-dy_ref+1),7)==0) .and. (tod == 82800))
     !-- iLab::determine seconds elapsed since reference time
@@ -668,20 +694,27 @@ else if (run_pf==1) then
         end if
     end if
 
+    ! Reading the Vcmax here for assimilation usage @J.Wang
+    !if(is_first_step() .or. is_end_curr_month()) then
+    !   if (nscale == 0) then
+    !    call read_Vcmax(yr, mn, dy, tod)
+    !   else
+    !    call read_Vcmax_site(yr, mn, dy, tod)
+    !   end if
+    !end if
 
     !call mpi_barrier(mpi_comm_world,ierr)
     call timemgr_diff_secs(2001*10000+1*100+1,0,yr*10000+mn*100+dy,tod,&
-            secs_vod_pf)
-    ! n_gpp_pf = int(secs_gpp_pf/3600 + 1)
-    n_vod_pf = int(secs_vod_pf/3600 + 1)
-    call read_PF_obs(n_vod_pf) !xiuli
+            secs_gpp_pf)
+    n_gpp_pf = int(secs_gpp_pf/3600 + 1)
+    call read_PF_obs(n_gpp_pf) !xiuli
 
-    !if (PF_obsva%obs_GPP(1) == PF_obsva%obs_GPP(1)) then !if observation exsits xiuli
-    if (PF_obsva%obs_VOD(1) == PF_obsva%obs_VOD(1)) then
+    if (PF_obsva%obs_GPP(1) == PF_obsva%obs_GPP(1)) then !if observation exsits xiuli
+
      do p1 =1,parloop !! start particles loop xiuli
      !do p =1,10!!1,nparameters !! start parameter loop
 
-       write(*,*) 'p1=',p1
+       !write(*,*) 'p1=',p1
        do i = 1,npoints    !! spatial iteration
 
           !! calculate the solar zenith
@@ -689,13 +722,27 @@ else if (run_pf==1) then
                bfields%latitude(i),bfields%longitude(i),CosZs,hr_loc,hr_arc)
           !!if(myid == 0) write(*,*) "hr_loc=",hr_loc
           !! retrieve meteo for this point
-
+#ifdef COUP_CSM
+          meteo%LR                     = climate%Lwdn(i)
+          meteo%rainfall               = climate%Rain(i)
+          meteo%snow                   = climate%Snow(i)
+          meteo%S_dff                  = climate%Swdf(i)
+          meteo%S_dir                  = climate%Swdr(i)
+          meteo%Srad                   = meteo%S_dff + meteo%S_dir
+          meteo%wind                   = climate%Wind(i)
+          !meteo%rh                     = ...
+#else
           meteo%Srad                   = climate%Srad(i)
           meteo%wind                   = climate%Wind(i)
           meteo%rainfall               = climate%Rain(i)
           meteo%snow                   = climate%Snow(i)
           meteo%rh                     = climate%Rh(i)
-
+          if (meteo_input < 0) then
+            meteo%tempmx                = climate%Tempmx(i)    ! read daily max and min temperatures instead
+            meteo%tempmn                = climate%Tempmn(i)
+          else
+            meteo%temp                  = climate%Temp(i)
+          end if
 
           ! .. compute daily course of temperature and daylength
           rdaymid = REAL (sim_duration+1) / 2.
@@ -714,7 +761,53 @@ else if (run_pf==1) then
               daylen = ACOS(arg)/PI*24.
           END IF
 
-                   ! Calculate cloud fraction, separate shortwave radiation
+          !###########Compute subdaily temperature based on daily input,@MOUSONG.WU,201905#####################
+
+          if(meteo_input < 0) then
+              ! .. compute average conditions
+              atmean = (meteo%tempmx + meteo%tempmn)/ 2.
+              atrange = meteo%tempmx - meteo%tempmn
+
+              !hour angle at sunset, added by MOUSONG.WU, 201905
+              sunset_arc   = (daylen/2.)*2.0*PI/24.0
+
+              IF (daylen>=4. .AND. daylen<=20.) THEN
+                  !sunrise
+                  h0 = 12. - daylen/2.
+                  !sundown
+                  h1 = 12. + daylen/2.
+                  !at sundown:
+                  sd1 = SIN(PI*(2.*h1+(daylen-52.)/2.)/(daylen+4.))
+
+                  !! unroll zum vektorisieren
+                  IF (hr_loc>h0 .AND. hr_loc<h1) THEN
+                      sd = SIN(PI*(2.*hr_loc+(daylen-52.)/2.)/(daylen+4.))
+                      meteo%temp = atmean + atrange/2.*sd
+                  ELSE
+                      ! temperature at sundown
+                      tmp1 = atmean + atrange/2.*sd1
+                      ! hours since sundown
+                      dhour = MOD(hr_loc-h1+24.,24.)
+                      tmin = atmean - atrange/2.
+                      meteo%temp = tmp1 - (tmp1-tmin)*(dhour/(24.-daylen))
+                  END IF
+              ELSEIF (daylen>20.) THEN
+                  sd = COS(PI*(hr_loc-14.)/(daylen/2.+2.))
+                  meteo%temp = atmean + atrange/2.*sd
+              ELSE
+                  meteo%temp = atmean
+              END IF
+              climate%Temp(i) = meteo%temp
+              ! convert daily solar radiation into hourly using the method by M. Collares-Pereira and A. Rabl,
+              ! “The average distribution of solar radiation-correlations between diffuse and hemispherical
+              !and between daily and hourly insolation values,” Solar Energy,vol. 22, no. 2, pp. 155–164, 1979.
+              a = 0.409 + 0.5016 * SIN(sunset_arc - 60.)
+              b = 0.6609 - 0.4767 * SIN(sunset_arc - 60.)
+              meteo%Srad = meteo%Srad*(a+b*COS(hr_arc))*(PI/24.)*(COS(hr_arc)-COS(sunset_arc))/ &
+                                &(SIN(sunset_arc)-(2*PI*sunset_arc/360.)*COS(sunset_arc))
+          end if
+
+          ! Calculate cloud fraction, separate shortwave radiation
           if(CosZs < 0.001) then
               ratio_cloud=0.
           else
@@ -736,10 +829,12 @@ else if (run_pf==1) then
           meteo%S_dir   = shortRad_dir
           climate%Swdr(i)   = shortRad_dir
           climate%Swdf(i)   = shortRad_df
+#endif
+          !write(6,*)   "PFT start"
+          do j = 11,11!1,PFT    !! PFT iteration
+               !write(6,*)   "PFT worng/(ㄒoㄒ)/~~"
+               ii = bfields%stext(i)
 
-          !write(*,*) 'Before start_PFT_loop!!!!!'
-          do j = 11,11!1,PFT    !! PFT iteration  ! 2023/06/30 beps land cover id
-               !write(*,*) 'start_PFT_loop!!!!'
                if(bfields%lcno(i,j) > 0 .and. bfields%sw(i) >0. .and. bfields%stext(i) >0 .and. bfields%clumping(i) > 0.5) then
                     call readparam(bfields%lcno(i,j),param)
 
@@ -756,16 +851,13 @@ else if (run_pf==1) then
 
                     lai = lai*param(2)/bfields%clumping(i)
                     call readcoef(bfields%lcno(i,j),bfields%stext(i),coef)
-
+                    !write(*,*) 'r_decay = ',PF_ppar%r_decay(p1,i)
                     if(nsrest == nsrStartup .and. is_first_step()) then
-                        !write(*,*) 'Startup!!!!'
-		        ! 2023/06/30 ????????????
-                        call Init_soil_parameters(bfields%lcno(i,j),bfields%laiyr(i,j),bfields%stext(i), &
-                                            PF_ppar%f_decay(p1,i), param(27),soilp) ! 2023/06/30
+                        call Init_soil_parameters(bfields%lcno(i,j),bfields%stext(i), PF_ppar%r_decay(p1,i),soilp)
                         soilp%r_drainage = param(26)
                         !soilp%r_drainage = ppar%p_drainage(j)            ! read this
                                                                     !para from NC file,@MOUSONG.WU,2019-11
-                        ii = bfields%stext(i)
+                        !ii = bfields%stext(i)
 
                         !write(*,*) 'Ksat_old = ',soilp%Ksat(0)
                         do kk = 0,4
@@ -798,14 +890,11 @@ else if (run_pf==1) then
                         end do
 
                     else if(nsrest == nsrContinue .and. is_first_step()) then
-                         !write(*,*) 'Continue!!!!'
-                        call Init_soil_parameters(bfields%lcno(i,j),bfields%laiyr(i,j),bfields%stext(i), &
-                                      PF_ppar%f_decay(p1,i), param(27),soilp) ! 2023/06/30
-
+                        call Init_soil_parameters(bfields%lcno(i,j),bfields%stext(i),PF_ppar%r_decay(p1,i),soilp)
                         soilp%r_drainage = param(26)
                         !soilp%r_drainage = ppar%p_drainage(j)  ! read from nc
                                                           ! file,MOUSONG.WU@2019-11
-                        ii = bfields%stext(i)
+                        !ii = bfields%stext(i)
                         do kk = 0,4
                             soilp%Ksat(kk) = PF_ppar%Ksat_scalar(p1,i)*soilp%Ksat(kk)
                             soilp%b(kk)    = PF_ppar%b_scalar(p1,i)*soilp%b(kk)
@@ -824,17 +913,31 @@ else if (run_pf==1) then
                         !end do
 
                     else
-                        !write(*,*) 'others!!!!'
                         var_o(:)         = v2last(i,:,j)
                         call retrive_soilp(soilp,i,j,0)
                     end if
-                    !write(*,*) 'layer = ', soilp%n_layer
+
+                    !!! simulating photosynthesis
+                    !              do llll = 0,40
+                    !                 write(*,*)  "DG004: Var_o = ",llll, var_o(llll)
+                    !              end do
+
+                    !write(*,*) 'nd=',nd
+                    !write(*,*) 'i=',i
+                    !write(*,*) 'j=',j
+                    !write(*,*) 'Ksat = ',PF_ppar%Ksat_scalar(p1,i)
+                    !write(*,*) 'r_decay = ',PF_ppar%r_decay(p1,i)
+                    !write(*,*) 'Vcmax = ',PF_ppar%Vcmax(p1,i)
+                    !write(*,*) 'VJ_slope = ',PF_ppar%VJ_slope(p1,i)
+                    !write(*,*) 'PF_ppar%N_leaf = ',PF_ppar%N_leaf(p1,i)
+                    !write(*,*) 'PF_ppar%p_b_h2o = ',PF_ppar%b_h2o(p1,i)
+                    !write(*,*) 'PF_ppar%m_h2o = ',PF_ppar%m_h2o(p1,i)
 
                     call inter_prg(yr, mn, dy, tod, &
                          lai,lai_input,bfields%lcno(i,j),bfields%clumping(i),PF_ppar%Vcmax(p1,i),PF_ppar%VJ_slope(p1,i),&
-                         PF_ppar%VN_slope(p1,i),PF_ppar%b_h2o(p1,i),PF_ppar%m_h2o(p1,i),PF_ppar%f_leaf(p1,i),&
+                         PF_ppar%N_leaf(p1,i),PF_ppar%b_h2o(p1,i),PF_ppar%m_h2o(p1,i),PF_ppar%f_leaf(p1,i),&
                          PF_ppar%kc25(p1,i),PF_ppar%ko25(p1,i),PF_ppar%tau25(p1,i),PF_ppar%sif_alpha(p1,i),PF_ppar%sif_beta(p1,i),&
-                         PF_ppar%a(p1,i),PF_ppar%b(p1,i),PF_ppar%c(p1,i),param,meteo,CosZs,var_o,var_n,soilp,mid_res,daylen)
+                         param,meteo,CosZs,var_o,var_n,soilp,mid_res,daylen)
                     !print *, 'end of inter_prg'
                     ! CHANGE Vcmax read from Vcmax file with the Vcmax read from initial para. NC
                     ! file, for optimization purpose,@MOUSONG.WU,2019-11
@@ -843,10 +946,9 @@ else if (run_pf==1) then
                     !             end do
                     v2last(i,:,j)  = var_n(:)
                     call retrive_soilp(soilp,i,j,1)
-                    !write(*,*) 'porosity = ', soilp%fei(0)
                     !print *, 'end of retrive_soilp'
                     !!! simluating Ra
-                    call plant_resp(PF_ppar%q10(p1,i),bfields%lcno(i,j),mid_res,bfields%laiyr(i,j),lai,meteo%temp,&
+                    call plant_resp(pf_ppar%q10(p1,i),bfields%lcno(i,j),mid_res,bfields%laiyr(i,j),lai,meteo%temp,&
                                soilp%temp_soil_c(1),CosZs)
                     !print *, 'end of plant_resp'
                     !USE p_q10 here to adjust q10,p_q10 is read from initial para. NC file, for
@@ -864,7 +966,7 @@ else if (run_pf==1) then
                     ! to get soil texture for this point,@MOUSONG.WU,2019-11
                     jj = bfields%stext(i)
 
-                    call soil_resp(PF_ppar%f_resp(p1,i),Ccd,Cssd,Csmd,Cfsd,Cfmd,Csm,Cm,Cs,&
+                    call soil_resp(Ccd,Cssd,Csmd,Cfsd,Cfmd,Csm,Cm,Cs,&
                                  Cp,bfields%nppyr(i,j),coef,bfields%stext(i),soilp,mid_res)
                     !print *, 'end of soil_resp'
 
@@ -877,7 +979,7 @@ else if (run_pf==1) then
                             !write(6,*)   "outGPP=mid_res%GPP*1000.*3600."
                         end if
 
-                        if (mid_res%NPP*1000.*3600. >=4) then
+                         if (mid_res%NPP*1000.*3600. >=4) then
                             outNPP=temp_npp
                             !write(6,*)   "outNPP=temp_npp"
                         else
@@ -920,7 +1022,6 @@ else if (run_pf==1) then
                         end if
                     end if
 
-
                     !! for output variables
                     pp%GPPpft(i,j)   = mid_res%GPP*bfields%PCT_PFT(i,j)/100.
                     pp%SIFpft(i,j)   = mid_res%SIF*bfields%PCT_PFT(i,j)/100.
@@ -936,21 +1037,16 @@ else if (run_pf==1) then
                     pp%fAPARpft(i,j) = mid_res%fAPAR*bfields%PCT_PFT(i,j)/100.
                     pp%COS_fluxpft(i,j) = (mid_res%COS_plant+mid_res%COS_grnd)*bfields%PCT_PFT(i,j)/100.
 
-                    pp%PWSpft(i,j) =  mid_res%PWS*bfields%PCT_PFT(i,j)/100.
-                    pp%ETapft(i,j) = mid_res%ETa*bfields%PCT_PFT(i,j)/100.
-                    pp%VODpft(i,j) = mid_res%VOD*bfields%PCT_PFT(i,j)/100.
-                    pp%fei_leafpft(i,j) = mid_res%fei_leaf*bfields%PCT_PFT(i,j)/100.
+                    pp%NPP_yr_acc(i,j) = pp%NPP_yr_acc(i,j) + mid_res%NPP*bfields%PCT_PFT(i,j)/100.*1.e-2*step       ! convert NPP to Mg/ha for calculation of VOD
 
-                    !pp%NPP_yr_acc(i,j) = pp%NPP_yr_acc(i,j) + mid_res%NPP*bfields%PCT_PFT(i,j)/100.*1.e-2*step       ! convert NPP to Mg/ha for calculation of VOD
-
-                    !if (is_end_curr_year()) then
+                    if (is_end_curr_year()) then
                     ! calculate VOD (vegetation optical depth) with results derived from SMOS-IC product, @Mousong.Wu, 201905,taweff is a PFT specific parameter
-                      ! pp%VODpft(i,j)   = PF_ppar%agb2vod(p1,i)*atan(PF_ppar%taweff(p1,i)*pp%NPP_yr_acc(i,j)) + PF_ppar%D0(p1,i)*lai
-                      ! pp%NPP_yr_acc(i,j) = 0.
+                       pp%VODpft(i,j)   = PF_ppar%agb2vod(p1,i)*atan(PF_ppar%taweff(p1,i)*pp%NPP_yr_acc(i,j)) + PF_ppar%D0(p1,i)*lai
+                       pp%NPP_yr_acc(i,j) = 0.
                     !                  write(*,*) 'VOD= ',pp%VODpft(i,j)
-                    !else
-                      ! pp%VODpft(i,j) = 0.
-                    !end if
+                    else
+                       pp%VODpft(i,j) = 0.
+                    end if
 
                     ! write(*,*) 'hr_loc = ', hr_loc
                     !! calculate the OCO-2 SIF   across at 1:30pm
@@ -982,10 +1078,6 @@ else if (run_pf==1) then
           pp%VOD(i)     = sum(pp%VODpft(i,:))
           pp%COS_flux(i)     = sum(pp%COS_fluxpft(i,:))
 
-          pp%PWS(i)     = sum(pp%PWSpft(i,:))
-          pp%ETa(i)     = sum(pp%ETapft(i,:))
-          pp%fei_leaf(i)     = sum(pp%fei_leafpft(i,:))
-
         end do      !! end spatial loop
 
         !weight calculation
@@ -993,7 +1085,7 @@ else if (run_pf==1) then
 
      end do   !! end particles loop
      PFweightupdatesum=sum(PF_ppar%pfweightupdate(:,1)) !do 循环结束后自动增加1，这个时候还是算的i=1的时候的weight，但i已经自动成2了
-     write(*,*) 'PFweightupdatesum=' , PFweightupdatesum
+     !write(*,*) 'PFweightupdatesum=' , PFweightupdatesum
 
      do p2=1,parloop
           !write(*,*) "p2=", p2
@@ -1019,57 +1111,42 @@ else if (run_pf==1) then
         inparticles(:,1)=PF_ppar%Vcmax(:,1)
         inparticles(:,2)=PF_ppar%q10(:,1)
         inparticles(:,3)=PF_ppar%VJ_slope(:,1)
-        ! inparticles(:,4)=PF_ppar%N_leaf(:,1)
-        inparticles(:,4)=PF_ppar%VN_slope(:,1)
-        !inparticles(:,5)=PF_ppar%r_decay(:,1) ! use f_decay not r_decay
-        inparticles(:,5)=PF_ppar%b_h2o(:,1)
-        inparticles(:,6)=PF_ppar%sif_alpha(:,1)
-        inparticles(:,7)=PF_ppar%sif_beta(:,1)
-        !inparticles(:,9)=PF_ppar%taweff(:,1)
-        !inparticles(:,10)=PF_ppar%D0(:,1)
-        inparticles(:,8)=PF_ppar%Ksat_scalar(:,1)
-        inparticles(:,9)=PF_ppar%b_scalar(:,1)
-        inparticles(:,10)=PF_ppar%m_h2o(:,1)
-        inparticles(:,11)=PF_ppar%f_leaf(:,1)
-        inparticles(:,12)=PF_ppar%kc25(:,1)
-        inparticles(:,13)=PF_ppar%ko25(:,1)
-        inparticles(:,14)=PF_ppar%tau25(:,1)
-        !inparticles(:,18)=PF_ppar%agb2vod(:,1)
-        inparticles(:,15)=PF_ppar%f_resp(:,1)
-        inparticles(:,16)=PF_ppar%f_decay(:,1)
-        inparticles(:,17)=PF_ppar%a(:,1)
-        inparticles(:,18)=PF_ppar%b(:,1)
-        inparticles(:,19)=PF_ppar%c(:,1)
-
-        inparticles(:,20)=PF_ppar%pfweight(:,1)
-
+        inparticles(:,4)=PF_ppar%N_leaf(:,1)
+        inparticles(:,5)=PF_ppar%r_decay(:,1)
+        inparticles(:,6)=PF_ppar%b_h2o(:,1)
+        inparticles(:,7)=PF_ppar%sif_alpha(:,1)
+        inparticles(:,8)=PF_ppar%sif_beta(:,1)
+        inparticles(:,9)=PF_ppar%taweff(:,1)
+        inparticles(:,10)=PF_ppar%D0(:,1)
+        inparticles(:,11)=PF_ppar%Ksat_scalar(:,1)
+        inparticles(:,12)=PF_ppar%b_scalar(:,1)
+        inparticles(:,13)=PF_ppar%m_h2o(:,1)
+        inparticles(:,14)=PF_ppar%f_leaf(:,1)
+        inparticles(:,15)=PF_ppar%kc25(:,1)
+        inparticles(:,16)=PF_ppar%ko25(:,1)
+        inparticles(:,17)=PF_ppar%tau25(:,1)
+        inparticles(:,18)=PF_ppar%agb2vod(:,1)
+        inparticles(:,19)=PF_ppar%pfweight(:,1)
         call resample(inparticles,PF_ppar%pfweight(:,1))
-
         PF_ppar%Vcmax(:,1)= PF_resa%outparticles(:,1)
         PF_ppar%q10(:,1)=PF_resa%outparticles(:,2)
         PF_ppar%VJ_slope(:,1)=PF_resa%outparticles(:,3)
-        !PF_ppar%N_leaf(:,1)=PF_resa%outparticles(:,4)
-        PF_ppar%VN_slope(:,1)=PF_resa%outparticles(:,4)
-        !PF_ppar%r_decay(:,1)=PF_resa%outparticles(:,5)
-        PF_ppar%b_h2o(:,1)=PF_resa%outparticles(:,5)
-        PF_ppar%sif_alpha(:,1)=PF_resa%outparticles(:,6)
-        PF_ppar%sif_beta(:,1)=PF_resa%outparticles(:,7)
-        !PF_ppar%taweff(:,1)=PF_resa%outparticles(:,9)
-        !PF_ppar%D0(:,1)=PF_resa%outparticles(:,10)
-        PF_ppar%Ksat_scalar(:,1)=PF_resa%outparticles(:,8)
-        PF_ppar%b_scalar(:,1)=PF_resa%outparticles(:,9)
-        PF_ppar%m_h2o(:,1)=PF_resa%outparticles(:,10)
-        PF_ppar%f_leaf(:,1)=PF_resa%outparticles(:,11)
-        PF_ppar%kc25(:,1)=PF_resa%outparticles(:,12)
-        PF_ppar%ko25(:,1)=PF_resa%outparticles(:,13)
-        PF_ppar%tau25(:,1)=PF_resa%outparticles(:,14)
-        !PF_ppar%agb2vod(:,1)=PF_resa%outparticles(:,18)
-        PF_ppar%f_resp(:,1)=PF_resa%outparticles(:,15)
-        PF_ppar%f_decay(:,1)=PF_resa%outparticles(:,16)
-        PF_ppar%a(:,1)=PF_resa%outparticles(:,17)
-        PF_ppar%b(:,1)=PF_resa%outparticles(:,18)
-        PF_ppar%c(:,1)=PF_resa%outparticles(:,19)
-        PF_resa%resample_weight(:)=PF_resa%outparticles(:,20)
+        PF_ppar%N_leaf(:,1)=PF_resa%outparticles(:,4)
+        PF_ppar%r_decay(:,1)=PF_resa%outparticles(:,5)
+        PF_ppar%b_h2o(:,1)=PF_resa%outparticles(:,6)
+        PF_ppar%sif_alpha(:,1)=PF_resa%outparticles(:,7)
+        PF_ppar%sif_beta(:,1)=PF_resa%outparticles(:,8)
+        PF_ppar%taweff(:,1)=PF_resa%outparticles(:,9)
+        PF_ppar%D0(:,1)=PF_resa%outparticles(:,10)
+        PF_ppar%Ksat_scalar(:,1)=PF_resa%outparticles(:,11)
+        PF_ppar%b_scalar(:,1)=PF_resa%outparticles(:,12)
+        PF_ppar%m_h2o(:,1)=PF_resa%outparticles(:,13)
+        PF_ppar%f_leaf(:,1)=PF_resa%outparticles(:,14)
+        PF_ppar%kc25(:,1)=PF_resa%outparticles(:,15)
+        PF_ppar%ko25(:,1)=PF_resa%outparticles(:,16)
+        PF_ppar%tau25(:,1)=PF_resa%outparticles(:,17)
+        PF_ppar%agb2vod(:,1)=PF_resa%outparticles(:,18)
+        PF_resa%resample_weight(:)=PF_resa%outparticles(:,19)
 
         do p4=1,parloop
            call PF_weight_update_resample(p4,PF_resa%resample_weight(p4))
@@ -1084,14 +1161,13 @@ else if (run_pf==1) then
         PF_ppar%Vcmax(:,1)= PF_ppar%Vcmax(:,1)
         PF_ppar%q10(:,1)=PF_ppar%q10(:,1)
         PF_ppar%VJ_slope(:,1)=PF_ppar%VJ_slope(:,1)
-        !PF_ppar%N_leaf(:,1)=PF_ppar%N_leaf(:,1)
-        PF_ppar%VN_slope(:,1)=PF_ppar%VN_slope(:,1)
-        !PF_ppar%r_decay(:,1)=PF_ppar%r_decay(:,1)
+        PF_ppar%N_leaf(:,1)=PF_ppar%N_leaf(:,1)
+        PF_ppar%r_decay(:,1)=PF_ppar%r_decay(:,1)
         PF_ppar%b_h2o(:,1)=PF_ppar%b_h2o(:,1)
         PF_ppar%sif_alpha(:,1)=PF_ppar%sif_alpha(:,1)
         PF_ppar%sif_beta(:,1)=PF_ppar%sif_beta(:,1)
-        !PF_ppar%taweff(:,1)=PF_ppar%taweff(:,1)
-        !PF_ppar%D0(:,1)=PF_ppar%D0(:,1)
+        PF_ppar%taweff(:,1)=PF_ppar%taweff(:,1)
+        PF_ppar%D0(:,1)=PF_ppar%D0(:,1)
         PF_ppar%Ksat_scalar(:,1)=PF_ppar%Ksat_scalar(:,1)
         PF_ppar%b_scalar(:,1)=PF_ppar%b_scalar(:,1)
         PF_ppar%m_h2o(:,1)=PF_ppar%m_h2o(:,1)
@@ -1099,12 +1175,7 @@ else if (run_pf==1) then
         PF_ppar%kc25(:,1)=PF_ppar%kc25(:,1)
         PF_ppar%ko25(:,1)=PF_ppar%ko25(:,1)
         PF_ppar%tau25(:,1)=PF_ppar%tau25(:,1)
-        !PF_ppar%agb2vod(:,1)=PF_ppar%agb2vod(:,1)
-        PF_ppar%f_resp(:,1)=PF_ppar%f_resp(:,1)
-        PF_ppar%f_decay(:,1)=PF_ppar%f_decay(:,1)
-        PF_ppar%a(:,1)=PF_ppar%a(:,1)
-        PF_ppar%b(:,1)=PF_ppar%b(:,1)
-        PF_ppar%c(:,1)=PF_ppar%c(:,1)
+        PF_ppar%agb2vod(:,1)=PF_ppar%agb2vod(:,1)
         do p5=1,parloop
           PF_ppar%pfweight(p5,1)=PF_ppar%pfweightupdate(p5,1)/PFweightupdatesum
         end do

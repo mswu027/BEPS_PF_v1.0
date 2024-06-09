@@ -2,9 +2,8 @@
 !! Fortran version: 3/5/2017 @J.Wang
 
 subroutine inter_prg(yr, mn, dy, tod, &
-     lai,lai_input,lc,clumping,Vcmax0,VJ_slope,VN_slope,bh2o,mh2o,f_leaf,p_kc25,p_ko25,p_tau25,&
-     sif_alpha,sif_beta,&
-     vod1,vod2,vod3,param,meteo,CosZs,var_o,var_n,soilp,mid_res,daylen)
+     lai,lai_input,lc,clumping,Vcmax0,VJ_slope,N_leaf,bh2o,mh2o,f_leaf,p_kc25,p_ko25,p_tau25,sif_alpha,sif_beta,&
+     param,meteo,CosZs,var_o,var_n,soilp,mid_res,daylen)
 use shr_kind_mod,only:r8=>shr_kind_r8
 !--iLab::restrict use of beps_time_manager to required entities
 !--iLab-update::extended arguments to avoid time manager completely
@@ -20,11 +19,8 @@ implicit none
 !--iLab::added date-elements as argument to avoid 'call get_curr_date' further below
 integer, intent(in) :: yr,mn,dy,tod
 integer,intent(in)   ::lc
-real(r8),intent(in)  ::clumping,Vcmax0,VJ_slope,bh2o,mh2o,f_leaf,p_ko25,p_kc25,p_tau25,sif_alpha,sif_beta,CosZs,daylen   !!J.Wang
-!real(r8),intent(in)  ::clumping,Vcmax0,VJ_slope,f_leaf,sif_alpha,sif_beta,CosZs,daylen   !!J.Wang
-! real(r8),intent(in)  ::param(0:49)
-!real(r8),intent(in)  ::param(0:49),lai_yr,VN_slope,vod1,vod2,vod3
-real(r8),intent(in)  ::param(0:49),VN_slope,vod1,vod2,vod3
+real(r8),intent(in)  ::clumping,Vcmax0,VJ_slope,N_leaf,bh2o,mh2o,f_leaf,p_ko25,p_kc25,p_tau25,sif_alpha,sif_beta,CosZs,daylen   !!J.Wang
+real(r8),intent(in)  ::param(0:49)
 type(climatedata),intent(in) ::meteo
 real(r8),intent(in)  ::var_o(0:40)
 real(r8),intent(out) ::var_n(0:40)
@@ -139,9 +135,7 @@ real(r8)             :: Gheat_g
 real(r8)             :: b_h2o            !the intercept term in BWB model (mol H2O m-2 s-1)
 real(r8)             :: m_h2o            ! the slope in BWB model
 real(r8)             :: leleaf_o_sunlit,leleaf_o_shaded,leleaf_u_sunlit,leleaf_u_shaded !leaf latent heat flux (mol/m2/s)
-real(r8)             :: Eta
-real(r8)             :: vod
-real(r8)             :: fei_leaf
+
 !for the Vcmax-Nitrogen calculation
 real(r8)             :: Kn = 0.3
 real(r8)             :: G_theta = 0.5
@@ -171,7 +165,6 @@ height_wind_sp   = param(31)
 !height_wind_sp   = 30.
 !m_h2o       = param(33)    ! used for photosynthesis
 !b_h2o       = param(34)
-
 m_h2o       = mh2o
 b_h2o       = bh2o
 
@@ -194,13 +187,13 @@ if(CosZs >0.) then
    expr3   = 1.-exp(-Kn*lai)
 
    if(expr1 >0.) then
-      Vcmax_sunlit = Vcmax0*VN_slope*param(46)*K*expr2/(Kn+K)/expr1
+      Vcmax_sunlit = Vcmax0*param(47)*param(46)*K*expr2/(Kn+K)/expr1
    else
       Vcmax_sunlit = Vcmax0
    end if
 
    if(K>0 .and. lai>expr1/K) then
-      Vcmax_shaded = Vcmax0*VN_slope*param(46)*(expr3/Kn-expr2/(Kn+K))/(lai-expr1/K)
+      Vcmax_shaded = Vcmax0*param(47)*param(46)*(expr3/Kn-expr2/(Kn+K))/(lai-expr1/K)
    else
       Vcmax_shaded = Vcmax0
    end if
@@ -309,7 +302,7 @@ Wg_snow(0)      = var_o(20) !  fraction of ground surface covered by snow and sn
 soilp%Zsp       = var_o(33)
 soilp%Zp        = var_o(34)
 soilp%r_rain_g  = var_o(35)
-!write(*,*) 'Zp = ', soilp%Zsp
+
 !-- iLab::*must* at least initialise arrays for complete number of iterations
 !          (and not only the first element),
 !         since elements are input/output(!) arguments to called routines
@@ -335,19 +328,16 @@ end do
 do i = 21,26
     soilp%thetam_prev(i-21)  = var_o(i)
 end do
-! write(*,*) 'thetam_prev = ', var_o(21)
 do i = 27,32
     soilp%ice_ratio(i-27)    = var_o(i)
 end do
 
 ! vcmax jmax module  by L. He
-! slope_Vcmax_N      = param(47)
-slope_Vcmax_N      = VN_slope
-leaf_N             = param(46)
-!leaf_N             = N_leaf
+slope_Vcmax_N      = param(47)
+!leaf_N             = param(46)
+leaf_N             = N_leaf
 
-call Vcmax_Jmax(lai_o,clumping,Vcmax0,VJ_slope,slope_Vcmax_N,leaf_N,CosZs,Vcmax_sunlit,&
-                Vcmax_shaded,Jmax_sunlit,Jmax_shaded)
+call Vcmax_Jmax(lai_o,clumping,Vcmax0,VJ_slope,slope_Vcmax_N,leaf_N,CosZs,Vcmax_sunlit,Vcmax_shaded,Jmax_sunlit,Jmax_shaded)
 ! temperatures of overstorey and understorey canopies
 Tc_o_sunlit_old=temp_air-0.5
 Tc_o_shaded_old=temp_air-0.5
@@ -360,24 +350,21 @@ do kkk = 1,kloop           !sub-time iteration @J.Wang
                          Ac_snow_u(kkk-1),Wcs_o(kkk),Wcs_u(kkk),Wg_snow(kkk),&
                          lai_o,lai_u,clumping,Ac_snow_o(kkk),Ac_snow_u(kkk),Xcs_o(kkk),Xcs_u(kkk),Xg_snow(kkk),&
                          rho_snow(kkk),Zsp,alpha_v_sw(kkk),alpha_n_sw(kkk))
-    !write(*,*) "DG01: Ac_snow_o(kkk) =",Ac_snow_o(kkk)
+!    write(*,*) "DG01: Ac_snow_o(kkk) =",Ac_snow_o(kkk)
 
     ! rainfall stag 1
     call rainfall_stage1(temp_air,rainfall,Wcl_o(kkk-1),Wcl_u(kkk-1),lai_o,lai_u,clumping,Wcl_o(kkk),Wcl_u(kkk),&
                          Xcl_o(kkk),Xcl_u(kkk),r_rain_g(kkk))
-    !write(*,*) "DG01: r_rain_g(kkk) =",r_rain_g(kkk)
-    !write(*,*) "DG01: diffrence =",soilp%fei(1)-soilp%theta_vwp(1)*0.5
-    !write(*,*) "DG01: diffrenceX =",soilp%fei(1)
-    !write(*,*) "DG01: diffrenceY =",soilp%theta_vwp(1)
+
     if(soilp%thetam_prev(1)<soilp%theta_vwp(1)*0.5) then
          alpha_g  = alpha_dry
     else
-         alpha_g  = (soilp%thetam_prev(1)-soilp%theta_vwp(1)*0.5+1.e-6)/(soilp%fei(1)-soilp%theta_vwp(1)*0.5+1.e-6)*&
+         alpha_g  = (soilp%thetam_prev(1)-soilp%theta_vwp(1)*0.5)/(soilp%fei(1)-soilp%theta_vwp(1)*0.5)*&
                     (alpha_sat-alpha_dry)+alpha_dry
     end if
-    !write(*,*) "alpha_g =",alpha_g
-    alpha_v_g     = 2. / 3. * alpha_g
-    alpha_n_g     = 4. / 3. * alpha_g
+
+    alpha_v_g     = 2./3.*alpha_g
+    alpha_n_g     = 4./3.*alpha_g
 
     ! soil water factor module
     call soil_water_factor_v2(soilp)
@@ -639,10 +626,10 @@ do kkk = 1,kloop           !sub-time iteration @J.Wang
     Zsp       = Wg_snow(kkk)/rho_snow(kkk)    ! update snow depth as well after snow evaporation calculation
 
     ! to be checked later:  why set these 4 to 0
-    Eil_o(kkk) = 0.
-    EiS_o(kkk) = 0.
-    Eil_u(kkk) = 0.
-    EiS_u(kkk) = 0.
+    !Eil_o(kkk) = 0.
+    !EiS_o(kkk) = 0.
+    !Eil_u(kkk) = 0.
+    !EiS_u(kkk) = 0.
 
     ! soil Thermal Conductivity module by L. He
     call UpdateSoilThermalConductivity(soilp)
@@ -676,8 +663,7 @@ do kkk = 1,kloop           !sub-time iteration @J.Wang
     soilp%G(0)  = G(0,kkk)
 
     call UpdateHeatFlux(soilp,Xg_snow(kkk),lambda_snow(kkk),Tsn0(kkk),temp_air,kstep)
-    ! call Soil_water_uptake(soilp,Trans_o(kkk),Trans_u(kkk),Evap_soil(kkk))
-    call Soil_water_uptake(lai,param(29),vod1,vod2,vod3,soilp,Trans_o(kkk),Trans_u(kkk),Evap_soil(kkk),vod,fei_leaf)
+    call Soil_water_uptake(soilp,Trans_o(kkk),Trans_u(kkk),Evap_soil(kkk))
 
     soilp%r_rain_g  = r_rain_g(kkk)
     soilp%Zp        = Zp
@@ -732,8 +718,11 @@ end do       !END kkk iteration
                         Lv_solid*(EiS_o(kkk)+EiS_u(kkk)+Evap_SS(kkk))
     mid_res%SH        = Qhc_o(kkk)+Qhc_u(kkk)+Qhg(kkk)
     mid_res%Trans     = (Trans_o(kkk)+Trans_u(kkk))/rho_w
+
+    !mid_res%Evap      = (Eil_o(kkk)+Eil_u(kkk)+Evap_soil(kkk)+Evap_SW(kkk))/rho_w+ &
+                        !(EiS_o(kkk)+EiS_u(kkk)+Evap_SS(kkk))/rho_snow(kkk)
     mid_res%Evap      = (Eil_o(kkk)+Eil_u(kkk)+Evap_soil(kkk)+Evap_SW(kkk))/rho_w+ &
-                        (EiS_o(kkk)+EiS_u(kkk)+Evap_SS(kkk))/rho_snow(kkk)
+                        (EiS_o(kkk)+EiS_u(kkk)+Evap_SS(kkk))/rho_w  ! 2024/05/14 checked: should be rho_w rather rho_snow(kkk)
     mid_res%gpp_o_sunlit = GPP_o_sunlit*12.*1.e-6*1.e-3    !J.Wang kg/m2/s// umol C/m2/s
     mid_res%gpp_u_sunlit = GPP_u_sunlit*12.*1.e-6*1.e-3
     mid_res%gpp_o_shaded = GPP_o_shaded*12.*1.e-6*1.e-3
@@ -743,7 +732,9 @@ end do       !END kkk iteration
     mid_res%SIF          = SIF_o_sunlit+SIF_o_shaded+SIF_u_sunlit+SIF_u_shaded
     mid_res%thetam_surf  = soilp%thetam(0)
     mid_res%COS_plant    = COS_o_sunlit+COS_o_shaded+COS_u_sunlit+COS_u_shaded      ! pmol/m2/s
-    mid_res%VOD = vod
+
+    !write (*,*), 'trans =', mid_res%Trans
+    !write (*,*), 'GPP =', mid_res%GPP
 !    write(*,*) "thetam_surf = ", mid_res%thetam_surf
 
     if(lai_input < 0) then
@@ -767,7 +758,7 @@ end do       !END kkk iteration
        else
           mid_res%lai_new = mid_res%lai_old
        end if
-       lai = mid_res%lai_new
+          lai = mid_res%lai_new
           !mid_res%fAPAR = 1. - exp(-0.45*lai)    ! calculate fAPAR using the Lambert-Beer law, Benjamin Smith et al., 2008, &
                                                  ! & Forest Ecology and Management, @Mousong.Wu, 201905
 !          write(*,*) 'lai = ', mid_res%lai_old

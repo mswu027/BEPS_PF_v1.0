@@ -3,9 +3,6 @@
 !           water, soil thermal etc.)
 ! Created : Jun Wang
 ! Date    : 2016/12/5
-! 2023/06/20
-! Xing Xiuli: particle filter DA; Prof. Wu: simulating microwave VOD.
-! Combination of PA and simulating VOD
 !*******************************************************
 module beps_soilMod
 use shr_kind_mod, only: r8=>shr_kind_r8
@@ -28,9 +25,6 @@ type,public:: soil
     real(r8)  :: psi_min     ! for fw
     real(r8)  :: alpha       ! for fw
     real(r8)  :: f_soilwater
-! following parameters are essential for the Soil-Plant-Atmosphere Continuum (SPAC)
-    real(r8)  ::  Sp    ! initial plant water storage   @Xiuli Xing 20221113
-    real(r8)  :: biomass_root     ! aboveground biomass @Xiuli Xing 20221113
 
 !!! Properties belong to each soil horizon
     real(r8)  :: d_soil(0:MAX_LAYERS-1)
@@ -56,7 +50,7 @@ type,public:: soil
 !!   ! derived variables
     real(r8)  :: f_ice(0:MAX_LAYERS-1)
     real(r8)  :: psim(0:MAX_LAYERS-1)          ! soil water suction in this layer
-    real(r8)  :: psim_prev(0:MAX_LAYERS-1)
+    real(r8)  :: psim_prev(0:MAX_LAYERS-1)     ! for updating psim
     real(r8)  :: thetab(0:MAX_LAYERS-1)        ! soil water content at the bottom of each layer
     real(r8)  :: psib(0:MAX_LAYERS-1)          ! soil water suction at the bottom this layer
     real(r8)  :: r_waterflow(0:MAX_LAYERS-1)   ! the liquid water flow rates at the soil layer interfaces
@@ -85,19 +79,14 @@ private ::  Init_soil_rootfraction, &
 
 contains
 ! Initialization process
- subroutine Init_soil_parameters(lc,lai_yr,stxt,f_r_decay,r_root_decay,p)
+ subroutine Init_soil_parameters(lc,stxt,r_root_decay,p)
  implicit none
- real(r8) :: biomass,biomass_leaf_o,biomass_stem_o,biomass_root_o
- real(r8) :: biomass_leaf_u,biomass_stem_u,biomass_root_u,biomass_root
  integer,intent(in)  :: lc
  integer,intent(in)  :: stxt
- real(r8),intent(in) :: r_root_decay,lai_yr,f_r_decay
+ real(r8),intent(in) :: r_root_decay
  type(soil)          :: p
- write(*,*) "lc=:", lc
- write(*,*) "stxt=:", stxt
+
  p%n_layer      = 5
- p%KK(0:4)=max(1.e-12,p%KK(0:4))         !constrain KK
- !write(*,*)  "p%KK = ",p%KK
 
  if(lc == 3 .or. lc == 4) then
     p%psi_min  = 10.0      ! for fw
@@ -108,7 +97,7 @@ contains
  end if
 
  p%d_soil(0:4)      = (/0.05,0.10,0.20,0.40,1.25/)    ! depth_layer
- p%r_root_decay     = f_r_decay*r_root_decay          !scaling root distribution, f_r_decay
+ p%r_root_decay     = r_root_decay
 
  call Init_soil_rootfraction(p)
 
@@ -213,68 +202,6 @@ contains
     p%psi_sat(0:4)       = (/0.37,0.38,0.39,0.40,0.42/)
  end select
 
-if(lc >=1 .and. lc <= 5) then
-           !/*  calculating aboveground biomass based on LAI  J. Liu 2002 */
-        biomass=0.9097*lai_yr+0.125*lai_yr*lai_yr
-        biomass_leaf_o=0.05*biomass    !/* leaf C of overstory */
-        biomass_stem_o=0.95*biomass    !/* stem C of overstory */
-        biomass_root_o=0.454*biomass
-        !/*biomass_root_o=0.232*biomass; // root C of overstoryKurz 1996 */
-        biomass_leaf_u=0.3*biomass_leaf_o  !/* leaf C of understory */
-        biomass_stem_u=0.02*biomass_stem_o     !/* stem C of understory */
-        biomass_root_u=0.05*biomass_root_o !/* root C of understory */
-        p%biomass_root = biomass_root_o + biomass_root_u
-
- else if(lc ==6 .or. lc ==9) then
-        !!/*  calculating aboveground biomass based on LAI  J. Liu 2002 */
-        biomass=1.545*lai_yr+0.183*lai_yr*lai_yr
-        biomass_leaf_o=0.04*biomass    !/* leaf C of overstory */
-        biomass_stem_o=0.96*biomass    !/* stem C of overstory */
-        biomass_root_o=1.432*biomass**0.639    !/* root C of overstory  Kurz 1996 */
-        biomass_leaf_u=0.3*biomass_leaf_o  !/* leaf C of understory */
-        biomass_stem_u=0.01*biomass_stem_o     !/* stem C of understory */
-        biomass_root_u=0.01*biomass_root_o  !/* root C of understory */
-        p%biomass_root = biomass_root_o + biomass_root_u
-
-else if (lc == 10) then
-        biomass = 1.227*lai_yr+0.154*lai_yr*lai_yr
-        biomass_leaf_o  = 0.045*biomass
-        biomass_stem_o  = 0.95*biomass
-        biomass_root_o  = (0.454*biomass+1.432*biomass**0.639)/2.
-        biomass_leaf_u  = 0.3*biomass_leaf_o
-        biomass_stem_u  = 0.015*biomass_stem_o
-        biomass_root_u  = 0.03*biomass_root_o
-        p%biomass_root = biomass_root_o + biomass_root_u
-
-else if (lc ==13) then
-        biomass=1.545*lai_yr+0.183*lai_yr*lai_yr
-        biomass_leaf_o=0.1*biomass    !/* leaf C of overstory */
-        biomass_stem_o=0.90*biomass    !/* stem C of overstory */
-        biomass_root_o=1.432*biomass**0.639    !/* root C of overstory  Kurz 1996 */
-        biomass_leaf_u=0.3*biomass_leaf_o     !/* leaf C of understory */
-        biomass_stem_u=0.01*biomass_stem_o    ! /* stem C of understory */
-        biomass_root_u=0.01*biomass_root_o    !/* root C of understory */
-        p%biomass_root = biomass_root_o + biomass_root_u
-
-else if(lc == 14 .or. lc == 15 .or. lc ==25 .or. lc ==40 .or. lc==41) then
-        biomass_leaf_o=0.05*lai_yr  ! /* leaf C = lai/20  from W.Ju 05y11*/
-        biomass_stem_o=0.0          !/* stem C */
-        biomass_root_o=0.061*lai_yr    !/* root C = lai/20*0.55/0.45  from W.Ju 05y11*/
-        biomass_leaf_u=0.0
-        biomass_stem_u=0.0
-        biomass_root_u=0.0
-        p%biomass_root = biomass_root_o + biomass_root_u
-else
-        biomass_leaf_o=0.05*lai_yr  ! /* leaf C = lai/20  from W.Ju 05y11*/
-        biomass_stem_o=0.0          !/* stem C */
-        biomass_root_o=0.061*lai_yr    !/* root C = lai/20*0.55/0.45  from W.Ju 05y11*/
-        biomass_leaf_u=0.0
-        biomass_stem_u=0.0
-        biomass_root_u=0.0
-        p%biomass_root = biomass_root_o + biomass_root_u
-
-end if
-
  return
  end subroutine
 
@@ -314,7 +241,8 @@ end if
  p%thetam(5)        = 1.25*Ms
  p%thetam_prev(0:5) = p%thetam(0:5)
 
- p%thetam(0:5) = (/0.1,0.1,0.1,0.1,0.1,0.1/)
+! 2023/12/13
+ p%psim(0:5) = (/0.1,0.1,0.1,0.1,0.1,0.1/)
  p%psim_prev(0:5) = p%psim(0:5)
 
  do i = 0,p%n_layer     !-1
@@ -339,7 +267,7 @@ end if
  cum_depth(0)   = p%d_soil(0)
  p%f_root(0)    = 1-p%r_root_decay**(cum_depth(0)*100)
 
- do i  = 1,p%n_layer-2  ! change to n_layer-1 from n_layer-2, a bug@MOUSONG,20221105
+ do i  = 1,p%n_layer-2
    cum_depth(i)  = cum_depth(i-1)+p%d_soil(i)
    p%f_root(i)   = p%r_root_decay**(cum_depth(i-1)*100) - p%r_root_decay**(cum_depth(i)*100)
  end do
@@ -528,8 +456,6 @@ end subroutine
     p%temp_soil_c(i) = p%temp_soil_p(i)+(p%G(i)-p%G(i+1)+S)/(p%Cs(i)*p%d_soil(i))*real(period_in_seconds)
     if(p%temp_soil_c(i) > 50.0) p%temp_soil_c(i)  = 50.
     if(p%temp_soil_c(i) < -50.0) p%temp_soil_c(i) = -50.
-
-    ! avoid floating point overflows @ Xing Xiuli
     if(p%temp_soil_c(i) < 1.e-6 .and. p%temp_soil_c(i)>0.) p%temp_soil_c(i) = 0.
     if(p%temp_soil_c(i) > -1.e-6 .and. p%temp_soil_c(i)<0.) p%temp_soil_c(i) = 0.
  end do
@@ -630,8 +556,14 @@ end subroutine
 
  kkstep = 1.*kstep
  !do i=0,p%n_layer
- !   p%thetam_prev(i) = p%thetam(i)  !save previous thetam
+    !p%thetam_prev(i) = p%thetam(i)  !save previous thetam
  !end do
+
+ ! 2023/12/13 after checked
+do i=0,p%n_layer
+    p%thetam(i) = p%thetam_prev(i)  !save previous thetam
+end do
+
 
 do i=0,p%n_layer
    if(p%temp_soil_c(i) >0.0) then
@@ -751,198 +683,33 @@ do i=0,p%n_layer
     p%ice_ratio(i) = p%ice_ratio(i)*p%thetam_prev(i)/p%thetam(i)
     p%ice_ratio(i) = min(1.0,p%ice_ratio(i))
  end do
+
+ ! 2023/12/13 after checked and add to update thetam and psim
  do i=0,p%n_layer
     p%thetam_prev(i) = p%thetam(i)  !save previous thetam
  end do
 
  do i=0,p%n_layer
-    p%psim_prev(i) = p%psim(i)  !save previous thetam
+    p%psim_prev(i) = p%psim(i)  !save previous soil water potential
  end do
+
  return
 end subroutine
 
- subroutine Soil_water_uptake(lai,Hp,a,b,c,p,Trans_o,Trans_u,Evap_soil,vod,fei_leaf)
+ subroutine Soil_water_uptake(p,Trans_o,Trans_u,Evap_soil)
  implicit none
  type(soil) :: p
- real(r8)   :: lai,Hp,prlsp,vod,deltal_Sp,k_rs
- real(r8)   :: Trans_o,Trans_u,Evap_soil,a,b,c
- real(r8)   :: Source!,a,b,c
- real(r8)   :: z_depth(0:MAX_LAYERS-1)
- real(r8)   :: thetaox, pox, Sox, tWA, Ttrig, tWB, fei_c,p1,p2,ftheta,theta_Amin
- real(r8)   :: r_xylem,r_r,Lr,deltal_min,deltal_max,p_delta,f_deltal,p_excess
- real(r8)   :: qupt_sum,q1,q2,q3,ppsl,ppslh,fpmax,fei_leaf,fei_min,fei_th,f_feil,Eta !pmax,
- real(r8)   :: f_T(0:MAX_LAYERS-1),f_theta(0:MAX_LAYERS-1),rp(0:MAX_LAYERS-1)
- real(r8)   :: r_delta(0:MAX_LAYERS-1),rs(0:MAX_LAYERS-1),qupt(0:MAX_LAYERS-1)
+ real(r8)   :: Trans_o,Trans_u,Evap_soil
+ real(r8)   :: Source
 
-!!! In this part, the transpiration for plants was calculated using the SPAC approach,
-!!! we adopted the Darcy's law for calculating plant hydraulics as done in CoupModel,
-!!! this will result in the simultion of plant water content or leaf potential, and
-!!! will be linked to VOD data at daily scale. @MOUSONG, 20221106
-!!! Below are parameters for the SPAC-based water uptake modeling used in CoupModel,
-!!! units are converted to fit BEPS.
+ Source  = Trans_o+Trans_u
 
- !Hp = param(29)
- !f_deltal=0.
- k_rs=10.**(-3)                 !need to be calibrated
- !deltal_Sp=0.
- !vod=0.
- !fei_leaf=0.
- pox = 4.
- fei_c = 400./100.            ! cm water to m water
- p1 = 400*10.**(-3)/24./3600.     ! 1/d to /s and covert mm to m for transpiration
- p2 = 0.1/1000./24./3600.     ! kg/(m2 d) to m/s
- fei_min = 15000./100.        ! cm water to m water
- ppsl = 1./1000.              ! mm to m
- ppslh = 0.5/1000.            ! mm/m to m/m
- r_r = 1000.*24.*3600.        ! d/m to s/m
- r_xylem = 1.*24.*3600.       ! d/m to s/m
- p_delta = 0.5                ! m2
- deltal_max = 0.01            ! m
- deltal_min = 0.001           ! m
- tWA = 0.8
- tWB = 0.
- p_excess = 2.0/1000./24./3600.  ! mm/d to m/s
- theta_Amin = 5./100.            ! % to -
- Ttrig = 15.                      ! oC
- qupt_sum = 0.
- qupt(0:4) = (/0.,0.,0.,0.,0./)       ! m/s
- fei_th = 1000./100.                  ! leaf threshold suction, cm to m water
- !q1 = 0.
- !q2 = 0.
- !q3 = 0.
- prlsp = 0.0001                   ! specific root length, gC/m
- !Lr = 1000.*p%biomass_root/prlsp    ! root lenght,0.1 m/m2, calculated from root biomass of PFT
- Lr = 0.1
- !a = 0.3                          ! These three para. need further tuning, [0,50],[0,20],[0,50]
- !b = 0.64
- !c = 0.04
-
- Source  = Trans_o+Trans_u        ! g/s    transpiration calculated from energy balance by original BEPS
-
-! implement the root distribution function to calcualte relative water uptake for each layer
-
- z_depth(0)   =   p%d_soil(0)
- p%f_root(0)  =   1-p%r_root_decay**(z_depth(0)*100.)
-
- do i  = 1,p%n_layer-1    ! change to n_layer-1 from n_layer-2, a bug@MOUSONG,20221105
-   z_depth(i)  = z_depth(i-1)+p%d_soil(i)
-   p%f_root(i)   = p%r_root_decay**(z_depth(i-1)*100.) - p%r_root_decay**(z_depth(i)*100.)
- end do
-
- p%f_root(p%n_layer-1) = p%r_root_decay**(z_depth(p%n_layer-2)*100.)
-
- !fpmax = ppsl*LAI
- fpmax = ppslh*lai*Hp    ! maximum water storage, estimated from LAI and canopy height, m
-
-! Estimate water uptake for each layer using the Darcy's approach
-
- do i = 0,p%n_layer-1
-    ! water stress function
-    thetaox = p%fei(i) - theta_Amin
-    Sox = (p%thetam_prev(i)-thetaox)/(p%fei(i)-thetaox)
-    Sox = min(1.,Sox)
-    Sox = max(Sox,1.e-6)
-    ftheta = 10**(-pox*Sox)
-    f_theta(i) = min((fei_c/p%psim_prev(i))**(p1*Source/rho_w+p2),ftheta)
-    !write(*,*), 'i =', i+1
-    !write(*,*), 'p%r_root_decay =', p%r_root_decay
-    !write(*,*)  "f_theta(i) = ",f_theta(i)
-    ! temperature stress function
-    f_T(i) = 1 - exp(-tWA*(max(0.,p%temp_soil_p(i)-Ttrig))**tWB)
-    !write(*,*)  "f_T(i) = ",f_T(i)
-    ! plant resistance
-    !write(*,*)  "p%f_root = ",p%f_root(i)
-    !write(*,*)  "Lr = ",Lr
-    rp(i) = (r_xylem*Hp/p%f_root(i) + r_r/(Lr*p%f_root(i)))*(1.0/f_T(i))*(1.0/f_theta(i))
-    !write(*,*)  "rp(i) = ",rp(i)
-    !write(*,*)  "p%f_root(i) = ", p%f_root(i)
-    !write(*,*)  "p%d_soil(i) = ", p%d_soil(i)
-    ! soil-root resistance
-    r_delta(i) = Lr*p%f_root(i)/p%d_soil(i)
-    !write(*,*)  "r_delta(i) = ",r_delta(i)
-    !write(*,*)  "deltal_min = ",deltal_min
-    !write(*,*)  "deltal_max = ",deltal_max
-    !write(*,*)  "-p_delta = ",-p_delta
-    !write(*,*)  "p%f_root(i) = ", p%f_root(i)
-    !write(*,*)  "-p_delta*r_delta(i) = ", -p_delta*r_delta(i)
-    !write(*,*)  "exp(-p_delta*r_delta(i)) = ", exp(-p_delta*r_delta(i))
-    f_deltal = deltal_min + (deltal_max - deltal_min)*exp(-p_delta*r_delta(i))
-
-    !write(*,*)  "p%KK(i) = ", p%KK(i)
-    !write(*,*)  "p%f_root(i) = ", p%f_root(i)
-    !write(*,*)  "*************** "
-    rs(i) = k_rs*f_deltal/(p%KK(i)*p%f_root(i))
-    !write(*,*)  "i = ",i
-    !write(*,*)  "p%KK*p%f_root = ",p%KK(i)*p%f_root(i)
-    !rs(i) = 1000.
-    !write(*,*)  "f_deltal = ",f_deltal
-    !write(*,*)  "p%f_root(i) = ",p%f_root(i)
-    !write(*,*)  "rs(i) = ",rs(i)
-    ! leaf water potential
-    !write(*,*)  "fpmax = ",fpmax
-    !write(*,*)  "p%Sp = ",p%Sp
-    !write(*,*)  "fei_min = ",fei_min
-    !write(*,*)  "Hp = ",Hp
-
-    fei_leaf = (1-p%Sp/fpmax)*(fei_min + Hp) - Hp
-
-    !write(*,*)  "fei_leaf = ",fei_leaf
-    !write(*,*)  "psim = ", p%psim(i)
-    !write(*,*)  "z_depth", z_depth(p%n_layer-1)
-    ! water uptake as the minimum of three terms
-    !q1 = p%f_root(i)*( p%psim(i) - fei_leaf - (Hp+z_depth(p%n_layer-1)) )/(rp(i) + rs(i))
-    q1 = p%f_root(i)*(fei_leaf -p%psim_prev(i) - (Hp+z_depth(p%n_layer-1)) )/(rp(i) + rs(i))
-    q1=max(0.,q1)
-    !write(* ,*)  "q1 = ",q1
-    q2 = p%f_root(i)*Source/rho_w + p_excess*p%f_root(i)
-    !write(*,*)  "q2 = ",q2
-    q3 = fpmax*p%f_root(i) - p%Sp*p%f_root(i)
-    !write(*,*)  "q3 = ",q3
-    q3=max(0.,q3)
-    qupt(i) = min(q1,q2)
-    qupt(i) = min(qupt(i),q3)
-    !qupt(i) =q2
-
-    !write(*,*)  "qupt(i) = ",qupt(i)
-
- end do
-
- ! calculate vod based on lai and leaf water potential, based on Liu et al., 2021
- !"Global ecosystem-scale plant hydraulic traits retrieved using modelÃƒâ€šÃ‚Â¨Cdata fusion"
-
- vod = (a + b*lai)*(1 + c*fei_leaf/101.)
-
-! Calculate the actual transpiration with relation to leaf water potential
-
- f_feil = min((fei_leaf - fei_min)/(fei_th - fei_min),1.)
- f_feil = max(0.,f_feil)
-  !write(*,*)  "f_feil = ",f_feil
- Eta = f_feil * Source/rho_w
-! write(*,*)  "Eta = ",Eta
-! Update the plant water storage
- do i=0,p%n_layer-1
-    qupt_sum = qupt_sum + qupt(i)
- end do
- !write(*,*)  "qupt_sum = ",qupt_sum
-
- deltal_Sp =  -(Eta - qupt_sum) * kstep*1.
- !if (deltal_Sp>0) then
- !   deltal_Sp=min(10.**(-3),deltal_Sp)
- !else
- !   deltal_Sp=min(-10.**(-3),deltal_Sp)
- !end if
- p%Sp=p%Sp+deltal_Sp
- !write(*,*)  "deltal_Sp = ",deltal_Sp
-
-! Blow is the code for original BEPS
  ! for the top layer
- !p%Ett(0) = (Source/rho_w)*p%dt(0) + Evap_soil/rho_w
- p%Ett(0) = min((Source/rho_w)*p%dt(0),qupt(0)) + Evap_soil/rho_w
+ p%Ett(0) = (Source/rho_w)*p%dt(0) + Evap_soil/rho_w
 !  p%Ett(0) = 0.
  ! for each layer
  do i = 1,p%n_layer-1
-!    p%Ett(i) = min(Source/rho_w*p%dt(i),qupt(i))
-    p%Ett(i) = min(Source/rho_w*p%dt(i),qupt(i))
+   p%Ett(i) = Source/rho_w*p%dt(i)
  end do
 
  return
@@ -967,10 +734,10 @@ end subroutine
  fpsisr_sum = 0._8
 
  !! change the rule for updating p%psim @MOUSONG.WU,2018.11
-
+! 2023/12/13
  !do i = 0,p%n_layer-1
- !   p%psim(i) = p%psi_sat(i)*(p%thetam(i)/p%fei(i))**(-p%b(i))
- !   p%psim(i) = max(p%psi_sat(i),1.e-6)
+    !p%psim(i) = p%psi_sat(i)*(p%thetam(i)/p%fei(i))**(-p%b(i))
+    !p%psim(i) = max(p%psi_sat(i),1.e-6)
  !end do
 
  do i = 0,p%n_layer-1

@@ -371,11 +371,10 @@ contains
     real(r8) :: sum
 
     mean=0
-    std=1 ! should be smaller for vod
+    std=1
     sum=0
 
-    !a=-(PF_obs%obs_GPP(1)-GPP9(1)-mean)**2/(2*std**2)
-    a=-(PF_obs%obs_VOD(1)-VOD9(1)-mean)**2/(2*std**2)
+    a=-(PF_obs%obs_GPP(1)-GPP9(1)-mean)**2/(2*std**2)
     !write(*,*)"a=" , a
 
     if (a<-200.0) then
@@ -385,10 +384,10 @@ contains
     end if
 
     likehood=(1/((2*PI)**(0.5))*std)*exp(a)
-    write(*,*)"likehood=" , likehood
+    !write(*,*)"likehood=" , likehood
 
     PF%pfweightupdate(p,1)=PF%pfweight(p,1)*likehood
-    write(*,*)"PF%pfweightupdate(p,1)=" , PF%pfweightupdate(p,1)
+    !write(*,*)"PF%pfweightupdate(p,1)=" , PF%pfweightupdate(p,1)
 
   end subroutine PF_weight_update
 
@@ -404,8 +403,7 @@ contains
     mean=0
     std=1
     sum=0
-    !a=-(PF_obs%obs_GPP(1)-GPP9(1)-mean)**2/(2*std**2)
-    a=-(PF_obs%obs_VOD(1)-VOD9(1)-mean)**2/(2*std**2)
+    a=-(PF_obs%obs_GPP(1)-GPP9(1)-mean)**2/(2*std**2)
     if (a<-200.0) then
         a=-200.0
     else
@@ -431,9 +429,9 @@ contains
     N=size(weights,dim=1)
     a=size(inparticles,dim=1)
     b=size(inparticles,dim=2)
-    write(*,*)"N" , N
-    write(*,*)"a" , a
-    write(*,*)"b" , b
+    !write(*,*)"N" , N
+    !write(*,*)"a" , a
+    !write(*,*)"b" , b
 
     allocate ( cum_copies(N) )
     allocate ( num_copies(N) )
@@ -472,15 +470,15 @@ contains
               allocate(kkk(num_copies(i),b) )
               do kk =1,j-1
                   h = 10 * (exp(-((2.0 * kk - 1.0) / N*1.0) )- 0.9) * 0.01
-                  kkk(kk,1:19)=inparticles(i,1:19)-h
-                  kkk(kk,20)=inparticles(i,20)
+                  kkk(kk,1:18)=inparticles(i,1:18)-h
+                  kkk(kk,19)=inparticles(i,19)
               end do
               kkk(j,:)=inparticles(i,:)
               kkk(j+1,:)=inparticles(i,:)
               do kk =(j+2),num_copies(i)
                   h=10 * (exp(-((2.0 * kk - 1.0) / N*1.0)) - 0.9) * 0.01
-                  kkk(kk,1:19)=inparticles(i,1:19)+h
-                  kkk(kk,20)=inparticles(i,20)
+                  kkk(kk,1:18)=inparticles(i,1:18)+h
+                  kkk(kk,19)=inparticles(i,19)
               end do
 
               outparticles(int(k):(int(k)+int(num_copies(i))-1),:)=kkk
@@ -492,14 +490,14 @@ contains
               allocate(kkk(num_copies(i),b) )
               do kk =1,j-1
                   h = 10 * (exp(-((2.0 * kk - 1.0) / N*1.0) )- 0.9) * 0.01
-                  kkk(kk,1:19)=inparticles(i,1:19)-h
-                  kkk(kk,20)=inparticles(i,20)
+                  kkk(kk,1:18)=inparticles(i,1:18)-h
+                  kkk(kk,19)=inparticles(i,19)
               end do
               kkk(j,:)=inparticles(i,:)
               do kk =(j+1),num_copies(i)
                   h=10 * (exp(-((2.0 * kk - 1.0) / N*1.0)) - 0.9) * 0.01
-                  kkk(kk,1:19)=inparticles(i,1:19)+h
-                  kkk(kk,20)=inparticles(i,20)
+                  kkk(kk,1:18)=inparticles(i,1:18)+h
+                  kkk(kk,19)=inparticles(i,19)
               end do
 
               outparticles(int(k):(int(k)+int(num_copies(i))-1),:)=kkk
@@ -531,22 +529,20 @@ contains
     character(len=8)    :: datestr,ppp
     integer :: i
     logical :: ldebug = .False.
-    ! do not use r_decay, N_leaf, agb2vod, taweff,D0,
-    real(r8),dimension(nlp)    ::Vcmax,q10,VJ_slope ,VN_slope,b_h2o,sif_alpha,sif_beta,Ksat_scalar,&
-                                             b_scalar,m_h2o,f_leaf,kc25,ko25,tau25,f_resp,f_decay,a,b,c,pfweight,pfweightupdate
-    real(r8),dimension(nlp)        :: NEP1,GPP1,SIF1,NPP1,LH1,SH1,Trans1,Evap1,Thetam1,COS_flux1, VOD1
+    real(r8),dimension(nlp)    ::Vcmax,q10,VJ_slope ,N_leaf,r_decay,b_h2o,sif_alpha,sif_beta,taweff,D0,Ksat_scalar,&
+                                             b_scalar,m_h2o,f_leaf,kc25,ko25,tau25,agb2vod,pfweight,pfweightupdate
+    real(r8),dimension(nlp)        :: NEP1,GPP1,SIF1,NPP1,LH1,SH1,Trans1,Evap1,Thetam1,COS_flux1
 
     Vcmax=PF%Vcmax(p,1)
     q10=PF%q10(p,1)
     VJ_slope=PF%VJ_slope(p,1)
-    !N_leaf=PF%N_leaf(p,1)
-    VN_slope=PF%VN_slope(p,1)
-    !r_decay=PF%r_decay(p,1)
+    N_leaf=PF%N_leaf(p,1)
+    r_decay=PF%r_decay(p,1)
     b_h2o=PF%b_h2o(p,1)
     sif_alpha=PF%sif_alpha(p,1)
     sif_beta=PF%sif_beta(p,1)
-    !taweff=PF%taweff(p,1)
-    !D0=PF%D0(p,1)
+    taweff=PF%taweff(p,1)
+    D0=PF%D0(p,1)
     Ksat_scalar=PF%Ksat_scalar(p,1)
     b_scalar=PF%b_scalar(p,1)
     m_h2o=PF%m_h2o(p,1)
@@ -554,14 +550,7 @@ contains
     kc25=PF%kc25(p,1)
     ko25=PF%ko25(p,1)
     tau25=PF%tau25(p,1)
-    !agb2vod=PF%agb2vod(p,1)
-
-    f_resp=PF%f_resp(p,1)
-    f_decay=PF%f_decay(p,1)
-    a=PF%a(p,1)
-    b=PF%b(p,1)
-    c=PF%c(p,1)
-
+    agb2vod=PF%agb2vod(p,1)
     pfweight=PF%pfweight(p,1)
     pfweightupdate=PF%pfweightupdate(p,1)
 
@@ -575,8 +564,6 @@ contains
     Trans1 = Trans9
     Evap1 = Evap9
     Thetam1 = Thetam9
-    ! 2023/07/04
-    VOD1 = VOD9
 
     ! 输出文件
     if(nhtfrq <0) then
@@ -610,14 +597,13 @@ contains
        call check(nf90_def_var(ncid,"Vcmax",nf90_double,(/dimid_site/),varid))
        call check(nf90_def_var(ncid,"q10",nf90_double,(/dimid_site/),varid))
        call check(nf90_def_var(ncid,"VJ_slope",nf90_double,(/dimid_site/),varid))
-       !call check(nf90_def_var(ncid,"N_leaf",nf90_double,(/dimid_site/),varid))
-       call check(nf90_def_var(ncid,"VN_slope",nf90_double,(/dimid_site/),varid))
-       !call check(nf90_def_var(ncid,"r_decay",nf90_double,(/dimid_site/),varid))
+       call check(nf90_def_var(ncid,"N_leaf",nf90_double,(/dimid_site/),varid))
+       call check(nf90_def_var(ncid,"r_decay",nf90_double,(/dimid_site/),varid))
        call check(nf90_def_var(ncid,"b_h2o",nf90_double,(/dimid_site/),varid))
        call check(nf90_def_var(ncid,"sif_alpha",nf90_double,(/dimid_site/),varid))
        call check(nf90_def_var(ncid,"sif_beta",nf90_double,(/dimid_site/),varid))
-       !call check(nf90_def_var(ncid,"taweff",nf90_double,(/dimid_site/),varid))
-       !call check(nf90_def_var(ncid,"D0",nf90_double,(/dimid_site/),varid))
+       call check(nf90_def_var(ncid,"taweff",nf90_double,(/dimid_site/),varid))
+       call check(nf90_def_var(ncid,"D0",nf90_double,(/dimid_site/),varid))
        call check(nf90_def_var(ncid,"Ksat_scalar",nf90_double,(/dimid_site/),varid))
        call check(nf90_def_var(ncid,"b_scalar",nf90_double,(/dimid_site/),varid))
        call check(nf90_def_var(ncid,"m_h2o",nf90_double,(/dimid_site/),varid))
@@ -625,14 +611,7 @@ contains
        call check(nf90_def_var(ncid,"kc25",nf90_double,(/dimid_site/),varid))
        call check(nf90_def_var(ncid,"ko25",nf90_double,(/dimid_site/),varid))
        call check(nf90_def_var(ncid,"tau25",nf90_double,(/dimid_site/),varid))
-       !call check(nf90_def_var(ncid,"agb2vod",nf90_double,(/dimid_site/),varid))
-
-       call check(nf90_def_var(ncid,"f_resp",nf90_double,(/dimid_site/),varid))
-       call check(nf90_def_var(ncid,"f_decay",nf90_double,(/dimid_site/),varid))
-       call check(nf90_def_var(ncid,"a",nf90_double,(/dimid_site/),varid))
-       call check(nf90_def_var(ncid,"b",nf90_double,(/dimid_site/),varid))
-       call check(nf90_def_var(ncid,"c",nf90_double,(/dimid_site/),varid))
-
+       call check(nf90_def_var(ncid,"agb2vod",nf90_double,(/dimid_site/),varid))
        call check(nf90_def_var(ncid,"pfweight",nf90_double,(/dimid_site/),varid))
        call check(nf90_def_var(ncid,"pfweightupdate",nf90_double,(/dimid_site/),varid))
 
@@ -676,11 +655,6 @@ contains
        call check(nf90_put_att(ncid,varid,"units","m/s"))
        call check(nf90_put_att(ncid,varid,"name","Evaporation"))
 
-       ! 2023/07/04
-       call check(nf90_def_var(ncid,"VOD",nf90_double,(/dimid_site/),varid))
-       call check(nf90_put_att(ncid,varid,"units","none"))
-       call check(nf90_put_att(ncid,varid,"name","Vegetation optical depth"))
-
        call check(nf90_enddef(ncid))
     end if
 
@@ -690,24 +664,20 @@ contains
     call check(nf90_put_var(ncid,varid,q10,start=(/p/),count=(/1/)))
     call check(nf90_inq_varid(ncid,"VJ_slope",varid))
     call check(nf90_put_var(ncid,varid,VJ_slope,start=(/p/),count=(/1/)))
-    !call check(nf90_inq_varid(ncid,"N_leaf",varid))
-    !call check(nf90_put_var(ncid,varid,N_leaf,start=(/p/),count=(/1/)))
-
-    call check(nf90_inq_varid(ncid,"VN_slope",varid))
-    call check(nf90_put_var(ncid,varid,VN_slope,start=(/p/),count=(/1/)))
-
-    !call check(nf90_inq_varid(ncid,"r_decay",varid))
-    !call check(nf90_put_var(ncid,varid,r_decay,start=(/p/),count=(/1/)))
+    call check(nf90_inq_varid(ncid,"N_leaf",varid))
+    call check(nf90_put_var(ncid,varid,N_leaf,start=(/p/),count=(/1/)))
+    call check(nf90_inq_varid(ncid,"r_decay",varid))
+    call check(nf90_put_var(ncid,varid,r_decay,start=(/p/),count=(/1/)))
     call check(nf90_inq_varid(ncid,"b_h2o",varid))
     call check(nf90_put_var(ncid,varid,b_h2o,start=(/p/),count=(/1/)))
     call check(nf90_inq_varid(ncid,"sif_alpha",varid))
     call check(nf90_put_var(ncid,varid,sif_alpha,start=(/p/),count=(/1/)))
     call check(nf90_inq_varid(ncid,"sif_beta",varid))
     call check(nf90_put_var(ncid,varid,sif_beta,start=(/p/),count=(/1/)))
-    !call check(nf90_inq_varid(ncid,"taweff",varid))
-    !call check(nf90_put_var(ncid,varid,taweff,start=(/p/),count=(/1/)))
-    !call check(nf90_inq_varid(ncid,"D0",varid))
-    !call check(nf90_put_var(ncid,varid,D0,start=(/p/),count=(/1/)))
+    call check(nf90_inq_varid(ncid,"taweff",varid))
+    call check(nf90_put_var(ncid,varid,taweff,start=(/p/),count=(/1/)))
+    call check(nf90_inq_varid(ncid,"D0",varid))
+    call check(nf90_put_var(ncid,varid,D0,start=(/p/),count=(/1/)))
     call check(nf90_inq_varid(ncid,"Ksat_scalar",varid))
     call check(nf90_put_var(ncid,varid,Ksat_scalar,start=(/p/),count=(/1/)))
     call check(nf90_inq_varid(ncid,"b_scalar",varid))
@@ -722,20 +692,8 @@ contains
     call check(nf90_put_var(ncid,varid,ko25,start=(/p/),count=(/1/)))
     call check(nf90_inq_varid(ncid,"tau25",varid))
     call check(nf90_put_var(ncid,varid,tau25,start=(/p/),count=(/1/)))
-    !call check(nf90_inq_varid(ncid,"agb2vod",varid))
-    !call check(nf90_put_var(ncid,varid,agb2vod,start=(/p/),count=(/1/)))
-    ! 2023/07/04
-    call check(nf90_inq_varid(ncid,"f_resp",varid))
-    call check(nf90_put_var(ncid,varid,f_resp,start=(/p/),count=(/1/)))
-    call check(nf90_inq_varid(ncid,"f_decay",varid))
-    call check(nf90_put_var(ncid,varid,f_decay,start=(/p/),count=(/1/)))
-    call check(nf90_inq_varid(ncid,"a",varid))
-    call check(nf90_put_var(ncid,varid,a,start=(/p/),count=(/1/)))
-    call check(nf90_inq_varid(ncid,"b",varid))
-    call check(nf90_put_var(ncid,varid,b,start=(/p/),count=(/1/)))
-    call check(nf90_inq_varid(ncid,"c",varid))
-    call check(nf90_put_var(ncid,varid,c,start=(/p/),count=(/1/)))
-
+    call check(nf90_inq_varid(ncid,"agb2vod",varid))
+    call check(nf90_put_var(ncid,varid,agb2vod,start=(/p/),count=(/1/)))
     call check(nf90_inq_varid(ncid,"pfweight",varid))
     call check(nf90_put_var(ncid,varid,pfweight,start=(/p/),count=(/1/)))
     call check(nf90_inq_varid(ncid,"pfweightupdate",varid))
@@ -761,9 +719,6 @@ contains
     call check(nf90_put_var(ncid,varid,Trans1,start=(/p/),count=(/1/)))
     call check(nf90_inq_varid(ncid,"Evap",varid))
     call check(nf90_put_var(ncid,varid,Evap1,start=(/p/),count=(/1/)))
-
-    call check(nf90_inq_varid(ncid,"VOD",varid))
-    call check(nf90_put_var(ncid,varid,VOD1,start=(/p/),count=(/1/)))
 
     call check(nf90_close(ncid))
 

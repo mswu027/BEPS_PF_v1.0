@@ -64,7 +64,6 @@ cat >! beps.stdin << EOF
    beps_site_path     = "$inputdata/beps_site/"
    site_bound_prefix  = "Site_boundary_data"
    lai_input          = 1        !! <0 : lai is simulated, >=0 : lai as forcing
-   SoilC_Mod          = 0        !! 0 : default soil carbon model, 1 : with soil carbon fraction model
    beps_lai_path      = "$inputdata/lai/"
    beps_lai_prefix    = "beps_lai_"
    beps_lai_site_prefix = "Site_lai_2010_2015_daily"

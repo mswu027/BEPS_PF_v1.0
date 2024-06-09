@@ -127,7 +127,7 @@ end subroutine
 
 
 
-subroutine Vcmax_Jmax(lai_o, clumping, Vcmax0, VJ_slope,slope_Vcmax_N, leaf_N, CosZs,&
+subroutine Vcmax_Jmax(lai_o, clumping, Vcmax0, VJ_slope,slope_Vcmax_N, leaf_N, CosZs,  &
                       Vcmax_sunlit, Vcmax_shaded, Jmax_sunlit, Jmax_shaded)
 implicit none
 

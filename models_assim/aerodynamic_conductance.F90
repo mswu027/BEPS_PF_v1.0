@@ -28,7 +28,7 @@ real(r8)  :: ustar  !friction velocity (m/s)
 real(r8)  :: L,Le
 real(r8)  :: uh     !wind speed at height h
 real(r8)  :: ud     !wind speed at height d
-real(r8)  :: u_50   ! wind speed at height 50 m, @mousong.wu, to correct the calculation of ustar 
+real(r8)  :: u_50   ! wind speed at height 50 m, @mousong.wu, to correct the calculation of ustar
                     ! from 2 m wind speed but the canopy height is around 30 m,which leads to negative value in log function.
 real(r8)  :: gamma1,Re,Nu,alfac,alfaw,ram,un_d,un_t,kh_u,z_50
 
@@ -61,7 +61,7 @@ else
    if(L>0.) then
       psi = 1.+5.*(z_50-d)*L
    else
-      psi = (1.-16.*(z_50-d)*L)**(-0.5) 
+      psi = (1.-16.*(z_50-d)*L)**(-0.5)
    end if
    psi = min(10.0,psi)
 
@@ -73,7 +73,7 @@ else
 
    !! wind speed at d ,taking as the mean wind speed inside a stand
    ud     = uh*exp(-gamma1*(1.-d/canopy_height_o))
-   
+
    !! Reynold's number
    Re     = (ud*0.1)/nu_lower
 
@@ -82,12 +82,12 @@ else
 
    !!leaf boudnary resistance
    rb_o   = min(40.,0.5*0.1/(alfaw*Nu))
-   
+
    uf     = ustar
    rm     = ram
    G_o_a  = 1./ram
    G_o_b  = 1./rb_o
-  
+
    kh_o   = 0.41*ustar*(canopy_height_o-canopy_height_o*0.8)/psi
    gamma1  = 0.1+lai_o**0.75
 
@@ -106,7 +106,8 @@ else
 
    gamma1 = 4.0
    kh_u=kh_o*exp(-gamma1*(1.-canopy_height_u/canopy_height_o))
-   ra_g=canopy_height_o/(gamma1* kh_o)*(exp(gamma1*(1.-canopy_height_o))-exp(gamma1*(1.-canopy_height_u/canopy_height_o)))
+   ! 2024/05/14 revisal
+   ra_g=canopy_height_o/(gamma1* kh_o)*(exp(gamma1*(1.-0.0/canopy_height_o))-exp(gamma1*(1.-canopy_height_u/canopy_height_o)))
    ra_g = ra_g+ra_u+ram
    ra_g = max(120.,ra_g)
 end if

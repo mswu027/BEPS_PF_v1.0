@@ -46,8 +46,8 @@ bld_dir=${basedir}/bld
 model_dir=${basedir}/models_assim
 ipt_dir=${basedir}/inputdata
 #-- run time configuration
-initial_yyyymmdd="20030101"
-ndays=30
+initial_yyyymmdd="20010701"
+ndays=60
 #-- ex
 external_nrlib=
 #--

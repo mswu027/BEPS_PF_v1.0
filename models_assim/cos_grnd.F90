@@ -43,6 +43,6 @@ subroutine cos_grnd(soilp,cos_soil)
 
     cos_soil_biotic = F_opt * (soil_S/S_opt)**a * exp(-a * (soil_S/S_opt -  1.))
 
-    cos_soil = - (cos_soil_abiotic + cos_soil_biotic)    ! uptake is positive, so emission is negative
+    cos_soil = cos_soil_abiotic + cos_soil_biotic
 
 end subroutine

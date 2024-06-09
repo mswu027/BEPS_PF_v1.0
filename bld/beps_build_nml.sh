@@ -132,17 +132,15 @@ cat <<EOF
    beps_site_path     = "$input_dir/beps_site/"
    site_bound_prefix  = "${site_bound_prefix}"
    lai_input          = 1        !! <0 : lai is simulated, >=0 : lai as forcing
-   SoilC_Mod          = 0        !! 0: default soil carbon model, 1: soil carbon fraction model
    beps_lai_path      = "$input_dir/lai/"
    beps_lai_prefix    = "beps_lai_"
    beps_lai_site_prefix = "${beps_lai_site_prefix}"
    beps_Vcmax_path    = "$input_dir/Vcmax/"
    beps_Vcmax_site_path = "$input_dir/beps_site/"
-   prior_para_prefix = "BEPS_optimized_para_20230714"
-   PF_prior_para_prefix = "BEPS_prior_parameter_paraPF_20230714"
+   prior_para_prefix = "BEPS_prior_parameter_128para_PF"
    beps_cpools        = "$input_dir/cpools/cpools_2010.nc"
    beps_PF_obs_path = "$input_dir/beps_site/"
-   prior_PF_obs_prefix = "US-Ne2_obsVOD_2001_2013"
+   prior_PF_obs_prefix = "US-Ne2_obs_2001_2013"
    beps_out_dir       = "$output_dir/"
    beps_rst_dir       = "$output_dir/"
 EOF

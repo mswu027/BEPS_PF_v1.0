@@ -75,10 +75,10 @@ ifeq ($(PLATFORM),iLab)
   INC_MPI    := $(MPIDIR)/intel64/include/
   LIB_MPI    := $(MPIDIR)/intel64/lib
 else
-  LIB_NETCDF := /usr/lib64
-  INC_NETCDF := /usr/include
-  MOD_NETCDF := /usr/include
-  MPIDIR     := /usr/local
+  LIB_NETCDF := /home/hl/netcdflib/lib
+  INC_NETCDF := /home/hl/netcdflib/include
+  MOD_NETCDF := /home/hl/netcdflib/include
+  MPIDIR     := /home/hl/netcdflib
   INC_MPI    := $(MPIDIR)/include
   LIB_MPI    := $(MPIDIR)/lib
   LDFLAGS     = $(shell $(LIB_NETCDF)/../bin/nf-config --flibs)
@@ -181,9 +181,6 @@ get_CO2.f90 \
 get_COS.f90 \
 inter_prg.f90 \
 MeatMod.f90 \
-MOD_MEND.f90 \
-MOD_MEND_TYPE.f90 \
-MOD_USRFS.f90 \
 meteoMod.f90 \
 mid_results.f90 \
 netRadiationMod.f90 \
