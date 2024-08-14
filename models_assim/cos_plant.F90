@@ -13,7 +13,7 @@ subroutine cos_plant(lc,cosa,convf,g_sw,g_b,vcmax,ffpa,f_soilwater,cos_assim)
 
     c4flag = 0.
 
-    if (lc==40 .or. lc==41 .or. lc==1001) c4flag = 1.0
+    if (lc==40 .or. lc==41) c4flag = 1.0
     g_sw = max(1.e-6,g_sw)
     g_b = max(1.e-6,g_b)
     gcosm = 1.40e3 * vcmax * 1.0e-6 * (1.0 + 5.33*c4flag) * ffpa * f_soilwater     ! mol/m2/s

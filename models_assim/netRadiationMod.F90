@@ -14,7 +14,7 @@ subroutine netRadiation(shortRad_df,shortRad_dir,CosZs,temp_o,temp_u,temp_g,lai_
                         albedo_v_o,albedo_n_o,albedo_v_u,albedo_n_u,albedo_v_g,albedo_n_g, &
                         netRad_o,netRad_u,netRad_g,netRadLeaf_o_sunlit,netRadLeaf_o_shaded,netRadLeaf_u_sunlit, &
                         netRadLeaf_u_shaded,netShortRadLeaf_o_sunlit,netShortRadLeaf_o_shaded,&
-                        netShortRadLeaf_u_sunlit, netShortRadLeaf_u_shaded)
+                        netShortRadLeaf_u_sunlit, netShortRadLeaf_u_shaded,fapar)
 use meteoMod
 use shr_kind_mod, only: r8=>shr_kind_r8
 use beps_con,only: zero,sb_constant=>sigma
@@ -32,7 +32,7 @@ real(r8),intent(out):: netRad_o,netRad_u,netRad_g ! net Radiation on over/unders
 real(r8),intent(out):: netRadLeaf_o_sunlit,netRadLeaf_o_shaded,netRadLeaf_u_sunlit,netRadLeaf_u_shaded !leaf levels for ET
 real(r8),intent(out):: netShortRadLeaf_o_sunlit,netShortRadLeaf_o_shaded,netShortRadLeaf_u_sunlit, netShortRadLeaf_u_shaded 
                        !! net shortwave radiation at leaf level for GPP. 
-
+real(r8) :: fapar ! fraction of absorbed photosynthetically active radiation
 real(r8) :: shortRad_global,netShortRad_o,netShortRad_u,netShortRad_g ! net short wave radiation
 real(r8) :: netShortRad_o_dir,netShortRad_o_df,netShortRad_u_dir,netShortRad_u_df,netShortRad_g_dir,netShortRad_g_df
 !real(r8) :: shortRad_dir,shortRad_df
@@ -46,6 +46,7 @@ real(r8) :: longRad_air,longRad_o,longRad_u,longRad_g   ! longwave radiation emi
 real(r8) :: cosQ_o,cosQ_u ! indicators to describe leaf distribution angles in canopy. slightly related with LAI
 real(r8) :: gap_o_dir,gap_u_dir,gap_o_df,gap_u_df !gap fraction of direct and diffuse radiation for over/unerstory (diffuse used for diffuse solar radiation and longwave radiation
 real(r8) :: gap_os_dir,gap_us_dir,gap_os_df,gap_us_df  ! considering stem
+!real(r8) :: fapar ! fraction of absorbed photosynthetically active radiation
 
 !calculate albedo of canopy in this step
 albedo_v_os  = albedo_v_o*(1.-percentArea_snow_o)+albedo_snow_v*percentArea_snow_o
@@ -95,6 +96,9 @@ gap_o_df     = exp(-0.5*clumping*lai_o/cosQ_o)
 gap_u_df     = exp(-0.5*clumping*lai_u/cosQ_u)
 gap_os_df    = exp(-0.5*clumping*lai_os/cosQ_o)
 gap_us_df    = exp(-0.5*clumping*lai_us/cosQ_u)
+
+!fpar_os = (1. - albedo_o) - (1. - albedo_u) * gap_os_dir
+!fpar_us = (1. - albedo_u) - (1. - albedo_g) * gap_us_dir
 
 !emissivity of each part
 call meteo_pack(temp_air,rh)
@@ -214,5 +218,8 @@ else
   netLongRadLeaf_u_shaded   = netLongRad_u
   netRadLeaf_u_shaded       = netShortRadLeaf_u_shaded + netLongRadLeaf_u_shaded
 end if
+
+! calculate fapar according to Chen 1996, adopted by MousongWU 2024
+fapar = 1. - albedo_o - (1. - albedo_g) * gap_o_dir
 
  end subroutine

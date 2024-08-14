@@ -213,7 +213,7 @@ end subroutine set_timemgr_init
 
 !=========================================================================================
 
-subroutine timemgr_init( )
+subroutine timemgr_init( disp_flag)
 
 
   !---------------------------------------------------------------------------------
@@ -222,6 +222,7 @@ subroutine timemgr_init( )
   ! Arguments
   !
   character(len=*), parameter :: sub = 'beps::timemgr_init'
+  integer, optional, intent(IN) :: disp_flag
   integer :: rc                            ! return code
   integer :: yr, mon, day, tod             ! Year, month, day, and second as integers
   type(ESMF_Time) :: start_date            ! start date for run
@@ -323,8 +324,8 @@ subroutine timemgr_init( )
   ! Print configuration summary to log file (stdout).
 
 !  if (masterproc) call timemgr_print()
-   if(myid == 0) call timemgr_print()     !! @J.Wang
-
+   !if(myid == 0) call timemgr_print()     !! @J.Wang
+   if(disp_flag == 0) call timemgr_print()
   timemgr_set = .true.
 
 end subroutine timemgr_init

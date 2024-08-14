@@ -35,7 +35,6 @@ module bepstype
      real(r8),pointer::  Snow(:)   ! Snow rate
      real(r8),pointer::  Swdr(:)   ! SW direct radiation
      real(r8),pointer::  Swdf(:)   ! SW diffuse radiation
-	 ! hu copy from VOD-version
      character(len=16) :: meteo_ref_yyyymmdd !--iLab::to consistenly handle tempooral settings
                                              !--      expected format yyyy-mm-dd
 #endif
@@ -120,6 +119,8 @@ module bepstype
 
      real(r8),pointer:: lai(:,:)     ! for photosynthesis
      real(r8),pointer:: Vcmax(:,:)   ! for data assimilation
+          ! 2024/03/29  add the canopy height
+     real(r8),pointer:: HeightC(:)
      !     character,pointer:: name(:)
   end type surf
 
@@ -130,7 +131,7 @@ module bepstype
      real(r8),pointer:: p_Vcmax(:,:)
      real(r8),pointer:: p_q10(:,:)
      real(r8),pointer:: p_VJ_slope(:,:)
-     real(r8),pointer:: p_N_leaf(:,:)  ! defined but not used!
+     real(r8),pointer:: p_N_leaf(:,:)
      real(r8),pointer:: p_r_decay(:,:)
      real(r8),pointer:: p_b_h2o(:,:)
      real(r8),pointer:: p_sif_alpha(:,:)
@@ -145,21 +146,12 @@ module bepstype
      real(r8),pointer:: p_ko25(:,:)
      real(r8),pointer:: p_tau25(:,:)
  !    real(r8),pointer:: p_f_lr
-     ! real(r8),pointer:: p_agb2vod(:,:)
-
-	 !! 2023/06/30 meaning?
-     real(r8),pointer:: p_f_resp(:,:)  ! related to soil_resp function
-     real(r8),pointer:: p_VN_slope(:,:)
-     real(r8),pointer:: p_f_decay(:,:)
-     real(r8),pointer:: p_bwb(:,:)
-     real(r8),pointer:: p_a(:,:)
-     real(r8),pointer:: p_b(:,:)
-     real(r8),pointer:: p_c(:,:)
+     real(r8),pointer:: p_agb2vod(:,:)
 
      real(r8),pointer:: u_Vcmax(:,:)
      real(r8),pointer:: u_q10(:,:)
      real(r8),pointer:: u_VJ_slope(:,:)
-     real(r8),pointer:: u_N_leaf(:,:)  ! defined but not used!
+     real(r8),pointer:: u_N_leaf(:,:)
      real(r8),pointer:: u_r_decay(:,:)
      real(r8),pointer:: u_b_h2o(:,:)
      real(r8),pointer:: u_sif_alpha(:,:)
@@ -174,16 +166,7 @@ module bepstype
      real(r8),pointer:: u_ko25(:,:)
      real(r8),pointer:: u_tau25(:,:)
 !     real(r8),pointer:: u_f_lr
-     !real(r8),pointer:: u_agb2vod(:,:)
-
-	 ! 2023/06/30 meaning?
-     real(r8),pointer:: u_f_resp(:,:)
-     real(r8),pointer:: u_VN_slope(:,:)
-     real(r8),pointer:: u_f_decay(:,:)
-     real(r8),pointer:: u_bwb(:,:)
-     real(r8),pointer:: u_a(:,:)
-     real(r8),pointer:: u_b(:,:)
-     real(r8),pointer:: u_c(:,:)
+     real(r8),pointer:: u_agb2vod(:,:)
 
   end type para
 
@@ -231,18 +214,9 @@ module bepstype
      real(r8),pointer:: ko25(:,:)
      real(r8),pointer:: tau25(:,:)
  !    real(r8),pointer:: p_f_lr
-     !real(r8),pointer:: agb2vod(:,:)
+     real(r8),pointer:: agb2vod(:,:)
      real(r8),pointer:: pfweight(:,:)
      real(r8),pointer:: pfweightupdate(:,:)
-
-	 !! 2023/06/30 meaning?
-     real(r8),pointer:: f_resp(:,:)
-     real(r8),pointer:: VN_slope(:,:)
-     real(r8),pointer:: f_decay(:,:)
-     real(r8),pointer:: bwb(:,:)
-     real(r8),pointer:: a(:,:)
-     real(r8),pointer:: b(:,:)
-     real(r8),pointer:: c(:,:)
 
 
   end type PF_para
@@ -251,12 +225,12 @@ module bepstype
 
   !******************for Particle Fliter observation/
   type,public::PF_obs0
-    ! real(r8),pointer:: obs_GPP(:)
-    real(r8),pointer:: obs_VOD(:) ! changed to VOD from obs_GPP @hulu 2023/06/30
+
+    real(r8),pointer:: obs_GPP(:)
 
   end type PF_obs0
 
-  type(PF_obs0),save,target,public:: PF_obs
+  type(PF_obs0),save,target,public:: PF_obs   
 
   !******************for Particle Fliter resample/
   type,public::PF_resample0
@@ -267,10 +241,9 @@ module bepstype
 
   end type PF_resample0
 
-  type(PF_resample0),save,target,public:: PF_resample
+  type(PF_resample0),save,target,public:: PF_resample   
 
-  !*********************************************************************************************
-
+  !*******************************************************************
   !------------------Soil Status----------
   !*******************************************************************
   type,public  :: soils
@@ -283,8 +256,6 @@ module bepstype
      real(r8),pointer  ::  psi_min(:,:)
      real(r8),pointer  ::  alpha(:,:)
      real(r8),pointer  ::  f_soilwater(:,:)
-
-     real(r8),pointer  ::  Sp(:,:)  !! 2023/06/30
 
 
      real(r8),pointer  ::  d_soil(:,:)
@@ -320,21 +291,6 @@ module bepstype
 
   type(soils),target,save,public :: soilstat
 
-  !*************************************************for C4 xiuli*******************************
-  !*************************************************param_gdd/
-  type,public::param_gdd
-
-    real(r8),pointer:: tt_veg(:,:)  ! thermal requirement of stage 1 of crop development (degree days).
-    real(r8),pointer:: tt_rep(:,:)  ! thermal requirement of stage 2 of crop development (degree days).
-    real(r8),pointer:: phot_type(:,:)  ! photoperiod yes=1 not=0
-    real(r8),pointer:: emer_doy(:,:)  ! emergence doy
-    real(r8),pointer:: har_doy(:,:)  ! harvest doy
-
-  end type param_gdd
-
-  type(param_gdd),target,save,public :: pgdd
-
-  !*************************************************for C4 xiuli*******************************
 
   !*********************************************************
   !-----------Interest Variables For output-----------------
@@ -371,13 +327,6 @@ module bepstype
      real(r8),pointer::  COS_fluxpft(:,:)
      real(r8),pointer::  COS_flux(:)
      real(r8),pointer::  NPP_yr_acc(:,:)
-     real(r8),pointer::  PWSpft(:,:)
-     real(r8),pointer::  PWS(:)
-     real(r8),pointer::  ETapft(:,:)
-     real(r8),pointer::  ETa(:)
-     real(r8),pointer::  fei_leaf(:)
-     real(r8),pointer::  fei_leafpft(:,:)
-
   end type res
 
   type(res),save,target,public:: output

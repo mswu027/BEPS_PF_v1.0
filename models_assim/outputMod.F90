@@ -118,7 +118,7 @@ contains
   end subroutine Init_output
 
   !! average variables according to user's definition
-  subroutine av_output(yr, mon, day, tod, kount, is_end_curr_month, ref_date, secs_since_ref)
+  subroutine av_output(yr, mon, day, tod, kount, is_end_curr_month, ref_date, secs_since_ref,p)
     implicit none
     !-- iLab::turned yr,mon,day,tod to arguments and added the further arguments
     integer, intent(in) :: yr,mon,day,tod
@@ -217,7 +217,7 @@ contains
           if (nscale == 0) then
              call write_output_global(yr, mon, day, tod)
           else
-             call write_output_site(yr, mon, day, tod, ref_date, secs_since_ref)
+             call write_output_site(yr, mon, day, tod, ref_date, secs_since_ref,p)
           end if
 
           NEP9   = 0.
@@ -297,7 +297,7 @@ contains
           if (nscale == 0) then
              call write_output_global(yr,mon,day,tod)
           else
-             call write_output_site(yr, mon, day, tod, ref_date, secs_since_ref)
+             call write_output_site(yr, mon, day, tod, ref_date, secs_since_ref,p)
           end if
 
           NEP9     = 0.
@@ -692,13 +692,11 @@ contains
   end subroutine write_output_global
 
 
-  subroutine write_output_site(yy,mm,dd,tod,ref_date,secs_since_ref)
-   !subroutine write_output_site(yy,mm,dd,tod,ref_date,secs_since_ref,p)
+  subroutine write_output_site(yy,mm,dd,tod,ref_date,secs_since_ref,p)
     use netcdf
     implicit none
     !--iLab::yy,mm,dd,tod turned into arguments
-    integer, intent(in) :: yy,mm,dd,tod
-    !integer, intent(in) :: yy,mm,dd,tod,p
+    integer, intent(in) :: yy,mm,dd,tod,p
     character(len=*), intent(in) :: ref_date
     real(r8), intent(in) :: secs_since_ref
     character(len=*), parameter :: sub = 'write_output_site'
@@ -709,8 +707,7 @@ contains
     integer   :: ierr
     integer   :: ncid,dimid_site,dimid_time,dimid_PFT,varid
     integer   :: nsite(nlp)
-    !character(len=8)    :: datestr,ppp
-    character(len=8)    :: datestr
+    character(len=8)    :: datestr,ppp
     character(len=255)  :: fln1,fln2,name,unit
     integer   :: nt,status
     integer   :: i
@@ -785,7 +782,7 @@ contains
     !--iLab::yy,mm,dd,tod are arguments now
     ! call get_prev_date(yy,mm,dd,tod)
     if(nhtfrq <0) then
-       datestr="US_Ne1"
+       datestr="FI_Fyy"
        !write(datestr,"(i8)") yy
        !write(datestr,"(i8)") yy*10000+mm*100+dd
        nt   = (secs_since_ref/3600+1)/(-nhtfrq)
@@ -802,9 +799,8 @@ contains
     if(ldebug) then
        write(*,*) "Writing out simulation file now!"
     endif
-    !write(ppp,"(i8)") p
-    !fln1  = trim(beps_out_dir)//"beps_site_"//trim(adjustl(ppp))//"_"//trim(datestr)//".nc"
-    fln1  = trim(beps_out_dir)//"beps_site_"//trim(datestr)//".nc"
+    write(ppp,"(i8)") p
+    fln1  = trim(beps_out_dir)//"beps_site_"//trim(adjustl(ppp))//"_"//trim(datestr)//".nc"
     status =  nf90_open(fln1,nf90_write,ncid)
     if(status .ne. nf90_noerr) then
 
