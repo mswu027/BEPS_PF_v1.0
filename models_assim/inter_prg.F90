@@ -2,7 +2,7 @@
 !! Fortran version: 3/5/2017 @J.Wang
 
 subroutine inter_prg(yr, mn, dy, tod, &
-     lai,lai_input,lc,clumping,Vcmax0,VJ_slope,f_leaf,p_kc25,p_ko25,p_tau25,sif_alpha,sif_beta,&
+     lai,lai_input,lc,clumping,Vcmax0,VJ_slope,N_leaf,bh2o,mh2o,f_leaf,p_kc25,p_ko25,p_tau25,sif_alpha,sif_beta,&
      param,meteo,CosZs,var_o,var_n,soilp,mid_res,daylen)
 use shr_kind_mod,only:r8=>shr_kind_r8
 !--iLab::restrict use of beps_time_manager to required entities  
@@ -19,7 +19,7 @@ implicit none
 !--iLab::added date-elements as argument to avoid 'call get_curr_date' further below
 integer, intent(in) :: yr,mn,dy,tod
 integer,intent(in)   ::lc
-real(r8),intent(in)  ::clumping,Vcmax0,VJ_slope,f_leaf,p_ko25,p_kc25,p_tau25,sif_alpha,sif_beta,CosZs,daylen   !!J.Wang
+real(r8),intent(in)  ::clumping,Vcmax0,VJ_slope,N_leaf,bh2o,mh2o,f_leaf,p_ko25,p_kc25,p_tau25,sif_alpha,sif_beta,CosZs,daylen   !!J.Wang
 real(r8),intent(in)  ::param(0:49)
 type(climatedata),intent(in) ::meteo
 real(r8),intent(in)  ::var_o(0:40)
@@ -112,7 +112,7 @@ real(r8)             :: Gc_o_sunlit,Gc_o_shaded,Gc_u_sunlit,Gc_u_shaded  ! the t
 real(r8)             :: Gww_o_sunlit,Gww_o_shaded,Gww_u_sunlit,Gww_u_shaded ! the total conductance for water from     the surface of the leaves to the reference height above the canopy
 real(r8)             :: Gh_o_sunlit,Gh_o_shaded,Gh_u_sunlit,Gh_u_shaded  !total conductance for heat transfer f    rom the leaf surface to the reference height above the canopy
 real(r8)             :: psychrometer
-real(r8)             :: R_o_sunlit,R_o_shaded,R_u_sunlit,R_u_shaded   !solar radiation absorbed by sunlit, s    haded leaves
+real(r8)             :: R_o_sunlit,R_o_shaded,R_u_sunlit,R_u_shaded,fapar   !solar radiation absorbed by sunlit, s    haded leaves
 real(r8)             :: Tco, Tcu,slope
 real(r8)             :: H_o_sunlit,H_o_shaded         !sensible heat flux from leaves
 real(r8)             :: LAI_o_sunlit,LAI_o_shaded,LAI_u_sunlit,LAI_u_shaded
@@ -163,8 +163,10 @@ canopyh_o   = param(29)  ! to be used for module aerodynamic_conductance
 canopyh_u   = param(30)
 height_wind_sp   = param(31)
 !height_wind_sp   = 30.
-m_h2o       = param(33)    ! used for photosynthesis
-b_h2o       = param(34)
+!m_h2o       = param(33)    ! used for photosynthesis
+!b_h2o       = param(34)
+m_h2o       = mh2o
+b_h2o       = bh2o
 
 !-- iLab::g2_h2o is *only* set from other routines in case 'CosZs>0.',
 !         so we *must* initialise it and have uncommented the initialiser
@@ -332,7 +334,8 @@ end do
 
 ! vcmax jmax module  by L. He
 slope_Vcmax_N      = param(47)
-leaf_N             = param(46)
+!leaf_N             = param(46)
+leaf_N             = N_leaf
 
 call Vcmax_Jmax(lai_o,clumping,Vcmax0,VJ_slope,slope_Vcmax_N,leaf_N,CosZs,Vcmax_sunlit,Vcmax_shaded,Jmax_sunlit,Jmax_shaded)
 ! temperatures of overstorey and understorey canopies
@@ -421,7 +424,8 @@ do kkk = 1,kloop           !sub-time iteration @J.Wang
                          LAI_o_sunlit,LAI_o_shaded,LAI_u_sunlit,LAI_u_shaded,clumping,temp_air,rh_air,alpha_v_sw(kkk),&
                          alpha_n_sw(kkk),percentArea_snow_o,percentArea_snow_u,Xg_snow(kkk),alpha_v_o,alpha_n_o,&
                          alpha_v_u,alpha_n_u,alpha_v_g,alpha_n_g,radiation_o,radiation_u,radiation_g,radiation_o_sun,&
-                         radiation_o_shaded,radiation_u_sun,radiation_u_shaded,R_o_sunlit,R_o_shaded,R_u_sunlit,R_u_shaded)
+                         radiation_o_shaded,radiation_u_sun,radiation_u_shaded,R_o_sunlit,R_o_shaded,R_u_sunlit,&
+                         R_u_shaded,fapar)
 
        ! photosynthesis module by B. Chen
        Gw_o_sunlit  = 1.0/(1.0/G_o_a+1.0/G_o_b+1.0/Gs_o_sunlit_old) !conductance of sunlit leaves of overstorey for water
@@ -757,9 +761,11 @@ end do       !END kkk iteration
 !          write(*,*) 'fAPAR = ', mid_res%fAPAR
     end if
     !lai = mid_res%lai_new 
+    ! empirical relationship between fAPAR and LAI, @Mousong.Wu, 201905
     mid_res%fAPAR = 1. - exp(-0.45*lai)    ! calculate fAPAR using the Lambert-Beer law, Benjamin Smith et al., 2008, &
-                                                 ! & Forest Ecology and Management, @Mousong.Wu, 201905
-   call cos_grnd(soilp,cos_soil,lc)        ! add lc,  @Huajie Zhu,20231217
+    ! implement the physical based fAPAR calculation, @Mousong.Wu, 2024
+    !mid_res%fAPAR = fapar
+   call cos_grnd(soilp,cos_soil)
    mid_res%COS_grnd = cos_soil             ! pmol/m2/s
 
     return

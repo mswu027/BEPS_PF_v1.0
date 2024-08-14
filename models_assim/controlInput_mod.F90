@@ -33,11 +33,11 @@ module controlInput_mod
   integer :: restart_frq
   integer :: meteo_input
   integer :: nscale,n_site
-  integer :: lai_input, SoilC_Mod, DALEC2
+  integer :: lai_input
   character(len=255) :: meteo_path,meteo_flnm_prefix,meteo_site_flnm_prefix,prior_PF_obs_prefix
   character(len=255) :: surface_data_path
   character(len=255) :: beps_yrdata_path
-  character(len=255) :: beps_site_path,site_bound_prefix,prior_para_prefix,PF_prior_para_prefix
+  character(len=255) :: beps_site_path,site_bound_prefix,prior_para_prefix
   character(len=255) :: beps_lai_path,beps_lai_prefix,beps_lai_site_prefix
   character(len=255) :: beps_Vcmax_path,beps_Vcmax_site_path
   character(len=255) :: beps_domain
@@ -56,9 +56,9 @@ contains
 
     namelist /NLS/ nlat,nlon,nscale,calendar,icdate,icsec,sim_type,sim_duration,nhtfrq,restart_frq, &
          meteo_input,meteo_path,meteo_flnm_prefix,meteo_site_flnm_prefix,surface_data_path,&
-         beps_yrdata_path,n_site,beps_site_path,site_bound_prefix,lai_input,SoilC_Mod,DALEC2,beps_lai_path,&
+         beps_yrdata_path,n_site,beps_site_path,site_bound_prefix,lai_input,beps_lai_path,&
          beps_lai_prefix,beps_lai_site_prefix,beps_Vcmax_path,beps_Vcmax_site_path,beps_domain,&
-         prior_para_prefix,PF_prior_para_prefix,beps_cpools,beps_PF_obs_path,prior_PF_obs_prefix,beps_out_dir,beps_rst_dir
+         prior_para_prefix,beps_cpools,beps_PF_obs_path,prior_PF_obs_prefix,beps_out_dir,beps_rst_dir
 
     !if(myid ==0) then
     open(5,file='beps.stdin',form='formatted')
@@ -117,7 +117,7 @@ contains
   end subroutine rdnamelist
 
   subroutine read_beps_domain(filname)
-
+    
     implicit none
     character(len=*),intent(in):: filname
     integer:: ncid,varid(2)
@@ -279,15 +279,13 @@ contains
 
   subroutine read_boundary_site()
     implicit none
-    integer  :: i,ncid,varid(25),ierr
+    integer  :: i,ncid,varid(20),ierr
     integer  :: lcno(nlp,PFT),stext(nlp)
     real(r8) :: laiyr(nlp,PFT),nppyr(nlp,PFT)
     real(r8) :: PCT_PFT(nlp,PFT)
     real(r8) :: longitude(nlp),latitude(nlp),sdp(nlp),st(nlp),sw(nlp),ci(nlp)
     real(r8) :: ccd(nlp,PFT),cfmd(nlp,PFT),cfsd(nlp,PFT),cm(nlp,PFT),cp(nlp,PFT),&
          cs(nlp,PFT),csm(nlp,PFT),csmd(nlp,PFT),cssd(nlp,PFT)
-
-    real(r8) :: tt_veg(nlp,PFT),tt_rep(nlp,PFT),phot_type(nlp,PFT),emer_doy(nlp,PFT),har_doy(nlp,PFT)
     !--iLab::avoid pointer
     ! type(surf),pointer :: p
     ! p => bound
@@ -323,15 +321,6 @@ contains
     call check(nf90_inq_varid(ncid,"csm",varid(18)))
     call check(nf90_inq_varid(ncid,"csmd",varid(19)))
     call check(nf90_inq_varid(ncid,"cssd",varid(20)))
-    !print *, 'check(nf90_inq_varid(ncid,"cssd",varid(20)))!'
-    !*****************************************************these are C4 Crop parameters  Xiuli*********************************
-    call check(nf90_inq_varid(ncid,"tt_veg",varid(21)))   !crop module 	 thermal requirement of stage 1 of crop development (degree days).
-    !print *, 'check(nf90_inq_varid(ncid,"tt_veg",varid(21)))!'
-    call check(nf90_inq_varid(ncid,"tt_rep",varid(22)))   !crop module 	 thermal requirement of stage 2 of crop development (degree days).
-    call check(nf90_inq_varid(ncid,"phot_type",varid(23)))  !crop module 	 photoperiod yes=1 not=0
-    call check(nf90_inq_varid(ncid,"emer_doy",varid(24)))  !crop module emergence doy
-    call check(nf90_inq_varid(ncid,"har_doy",varid(25)))  !crop module harvest doy
-    !*****************************************************these are C4 Crop parameters  Xiuli*********************************
 
     call check(nf90_get_var(ncid,varid(1),laiyr))
     call check(nf90_get_var(ncid,varid(2),nppyr))
@@ -353,18 +342,9 @@ contains
     call check(nf90_get_var(ncid,varid(18),csm))
     call check(nf90_get_var(ncid,varid(19),csmd))
     call check(nf90_get_var(ncid,varid(20),cssd))
-    !print *, 'check(nf90_get_var(ncid,varid(20),cssd))!'
-    !*****************************************************these are C4 Crop parameters  Xiuli*********************************
-    call check(nf90_get_var(ncid,varid(21),tt_veg))
-    !print *, 'check(nf90_get_var(ncid,varid(21),tt_veg))!'
-    call check(nf90_get_var(ncid,varid(22),tt_rep))
-    call check(nf90_get_var(ncid,varid(23),phot_type))
-    call check(nf90_get_var(ncid,varid(24),emer_doy))
-    call check(nf90_get_var(ncid,varid(25),har_doy))
-    !*****************************************************these are C4 Crop parameters  Xiuli*********************************
     call check(nf90_close(ncid))
     !end if
-    PCT_PFT = PCT_PFT * 1.0         !! convert fraction to %
+    PCT_PFT = PCT_PFT          !! convert fraction to %
     !call mpi_barrier(mpi_comm_world,ierr)
     !call mpi_scatterv(ci(1),dp,sp,MPI_real8,bound%clumping(1),npoints,MPI_real8,0,mpi_comm_world,ierr)
     !call mpi_scatterv(stext(1),dp,sp,mpi_integer,bound%stext(1),npoints,mpi_integer,0,mpi_comm_world,ierr)
@@ -390,7 +370,7 @@ contains
     !    call mpi_scatterv(csmd(1,i),dp,sp,MPI_real8,bound%csmd(1,i),npoints,MPI_real8,0,mpi_comm_world,ierr)
     !    call mpi_scatterv(cssd(1,i),dp,sp,MPI_real8,bound%cssd(1,i),npoints,MPI_real8,0,mpi_comm_world,ierr)
     !end do
-
+    
     !call mpi_barrier(mpi_comm_world,ierr)
     bound%clumping = ci
     bound%stext = stext
@@ -412,15 +392,6 @@ contains
     bound%csm = csm
     bound%csmd = csmd
     bound%cssd = cssd
-
-    !*****************************************************these are C4 Crop parameters  Xiuli*********************************
-    pgdd%tt_veg = tt_veg
-    pgdd%tt_rep= tt_rep
-    pgdd%phot_type= phot_type
-    pgdd%emer_doy= emer_doy
-    pgdd%har_doy= har_doy
-
-    !*****************************************************these are C4 Crop parameters  Xiuli*********************************
 
   end subroutine read_boundary_site
 
@@ -635,52 +606,7 @@ contains
     clim%Snow = snow
 
   end subroutine read_meteo_hourly
-
-!..... copy from VOD-version ...................
- subroutine read_meteo_site_reftime()
-    implicit none
-    integer          :: ncid,timevar_id
-    logical :: ldebug
-    character(len=255) :: fname
-    character(len=*), parameter :: method = 'read_meteo_site_reftime'
-    character(len=*), parameter :: time_unit_expected = "hours since YYYY-MM-DD"
-    character(len=128) :: time_unit
-    ldebug = .false.
-
-    if( len(trim(beps_site_path))+len(trim(meteo_site_flnm_prefix))+len('.nc') .gt.&
-         len(fname) ) then
-       write(*, '(a)') 'FATAL::INTERNAL-ERROR::'//method//':file name too long!'
-       stop
-    else
-       fname = trim(beps_site_path)//'/'//trim(meteo_site_flnm_prefix)//".nc"
-    endif
-    if(ldebug) then
-       write(*,'(a)') 'DEBUG::'//method//':reading meteo data ***'//trim(fname)//'***'
-    endif
-    call check(nf90_open(fname,nf90_nowrite,ncid))
-    call check(nf90_inq_varid(ncid,"time",timevar_id))
-    if(ldebug) then
-       write(*,'(a)') 'DEBUG::'//method//':data set identifier determined!'
-    endif
-
-    !-- iLab::get reference time in meteorological forcing
-    call check(nf90_get_att(ncid, timevar_id, "units", time_unit))
-    if(len(trim(time_unit)).ne.len(time_unit_expected)) then
-       write(*, '(a)') ' FATAL::'//method//': unexpected unit of time in met forcing '//&
-            '***'//trim(time_unit)//'***'
-       stop
-    else
-       !-- expected: "hours since yyyy-mm-dd"
-       clim%meteo_ref_yyyymmdd = time_unit(13:22)
-    endif
-
-    call check(nf90_close(ncid))
-    if(ldebug) then
-       write(*,'(a)') 'DEBUG::'//method//':NetCDF file closed again.'
-    endif
-  end subroutine read_meteo_site_reftime
- !............................................................
-
+  
   subroutine read_meteo_site(nd)
     implicit none
     !character(len=*) :: file_path,file_flnm_prefix
@@ -701,7 +627,6 @@ contains
     logical :: ldebug
     character(len=255) :: fname
     character(len=*), parameter :: method = 'read_meteo_site'
-    logical :: exist
     !--iLab::added missing initialisation
     ldebug = .false.
 
@@ -714,15 +639,6 @@ contains
     else
        fname = trim(beps_site_path)//'/'//trim(meteo_site_flnm_prefix)//".nc"
     endif
-
-	! copy from VOD-version 203/06/30
-	!-- iLab::added: stop in case meteo file is not present
-    inquire(FILE=fname, exist=exist)
-    if (.not.exist) then
-       write(*, '(a)') ' FATAL::'//method//': file ***'//trim(fname)//'*** does NOT exist'
-       stop
-    endif
-
     if(ldebug) then
        write(*,'(a)') 'DEBUG::'//method//':reading meteo data ***'//trim(fname)//'***'
     endif
@@ -848,7 +764,6 @@ contains
     logical :: ldebug
     character(len=255) :: fname
     character(len=*), parameter :: method = "read_lai_site"
-    logical :: exist
     !if(myid ==0) then
     ! day  = get_curr_calday()
     ! call get_curr_date(yr,mn,dd,tod)
@@ -866,15 +781,6 @@ contains
     if(ldebug) then
        write(*,*) "INFO::"//method//":Reading from file ***"//trim(fname)//'***'
     endif
-
-    ! copy from vod-version 2023/06/30
-    !-- iLab::added: stop in case LAI file is not present
-    inquire(FILE=fname, exist=exist)
-    if (.not.exist) then
-       write(*, '(a)') ' FATAL::'//method//': file ***'//trim(fname)//'*** does NOT exist'
-       stop
-    endif
-
     call check(nf90_open(fname,nf90_nowrite,ncid))
     call check(nf90_inq_varid(ncid,"lai",varid))
 
@@ -1077,37 +983,27 @@ contains
 
   subroutine read_prior_para()
     implicit none
-    integer  :: i,ncid,varid(48),ierr  !  2023/06/30 24 parameters
-    ! p means prior values; u means uncertainty
+    integer  :: i,ncid,varid(36),ierr
     real(r8) :: p_Vcmax(PFT,nlp),p_q10(PFT,nlp),p_VJ_slope(PFT,nlp), &
          p_N_leaf(PFT,nlp),p_r_decay(PFT,nlp),p_b_h2o(PFT,nlp),&
          p_sif_alpha(PFT,nlp),p_sif_beta(PFT,nlp),p_taweff(PFT,nlp),&
          p_D0(PFT,nlp)
     real(r8) :: p_Ksat_scalar(texture,nlp),p_b_scalar(texture,nlp)
     real(r8) :: p_m_h2o(PFT,nlp)
-    real(r8) :: p_f_leaf(PFT,nlp),p_kc25(PFT,nlp),p_ko25(PFT,nlp),p_tau25(PFT,nlp) ! p_agb2vod(PFT,nlp) -> not used
-
-    ! copy from vod-version 2023/06/30
-    real(r8) :: p_f_resp(PFT,nlp), p_VN_slope(PFT,nlp), p_f_decay(PFT,nlp),&
-                p_bwb(PFT,nlp),p_a(PFT,nlp),p_b(PFT,nlp),p_c(PFT,nlp)
-
+    real(r8) :: p_f_leaf(PFT,nlp),p_kc25(PFT,nlp),p_ko25(PFT,nlp),p_tau25(PFT,nlp),p_agb2vod(PFT,nlp)
+    
     real(r8) :: u_Vcmax(PFT,nlp),u_q10(PFT,nlp),u_VJ_slope(PFT,nlp),&
          u_N_leaf(PFT,nlp),u_r_decay(PFT,nlp),u_b_h2o(PFT,nlp),&
          u_sif_alpha(PFT,nlp),u_sif_beta(PFT,nlp),u_taweff(PFT,nlp),&
          u_D0(PFT,nlp)
     real(r8) :: u_Ksat_scalar(texture,nlp),u_b_scalar(texture,nlp)
     real(r8) :: u_m_h2o(PFT,nlp)
-    real(r8) :: u_f_leaf(PFT,nlp),u_kc25(PFT,nlp),u_ko25(PFT,nlp),u_tau25(PFT,nlp) ! u_agb2vod(PFT,nlp) -> not used
-
-    ! copy from vod-version 2023/06/30
-    real(r8) :: u_f_resp(PFT,nlp), u_VN_slope(PFT,nlp), u_f_decay(PFT,nlp), &
-                u_bwb(PFT,nlp),u_a(PFT,nlp),u_b(PFT,nlp),u_c(PFT,nlp)
+    real(r8) :: u_f_leaf(PFT,nlp),u_kc25(PFT,nlp),u_ko25(PFT,nlp),u_tau25(PFT,nlp),u_agb2vod(PFT,nlp)
 
     !--iLab::avoid pointer (see also below)
     ! type(para),pointer :: p
     character(len=255) :: fname
     character(len=*), parameter :: method = "read_prior_para"
-    logical :: exist  !copy from vod-version
 
     !--iLab::avoid pointer (see also below)
     ! p => assim
@@ -1137,47 +1033,28 @@ contains
     call check(nf90_inq_varid(ncid,"p_kc25",varid(15)))
     call check(nf90_inq_varid(ncid,"p_ko25",varid(16)))
     call check(nf90_inq_varid(ncid,"p_tau25",varid(17)))
-
     !call check(nf90_inq_varid(ncid,"p_f_lr",varid(14)))
-    ! 2023/06/30
-    !call check(nf90_inq_varid(ncid,"p_agb2vod",varid(18)))
-    call check(nf90_inq_varid(ncid,"p_f_resp",varid(18)))
-    call check(nf90_inq_varid(ncid,"p_VN_slope",varid(19)))
-    call check(nf90_inq_varid(ncid,"p_f_decay",varid(20)))
-    call check(nf90_inq_varid(ncid,"p_bwb",varid(21)))
-    call check(nf90_inq_varid(ncid,"p_a",varid(22)))
-    call check(nf90_inq_varid(ncid,"p_b",varid(23)))
-    call check(nf90_inq_varid(ncid,"p_c",varid(24)))
+    call check(nf90_inq_varid(ncid,"p_agb2vod",varid(18)))    
 
-
-    call check(nf90_inq_varid(ncid,"u_Vcmax",varid(25)))
-    call check(nf90_inq_varid(ncid,"u_q10",varid(26)))
-    call check(nf90_inq_varid(ncid,"u_VJ_slope",varid(27)))
-    call check(nf90_inq_varid(ncid,"u_N_leaf",varid(28)))
-    call check(nf90_inq_varid(ncid,"u_r_decay",varid(29)))
-    call check(nf90_inq_varid(ncid,"u_b_h2o",varid(30)))
-    call check(nf90_inq_varid(ncid,"u_sif_alpha",varid(31)))
-    call check(nf90_inq_varid(ncid,"u_sif_beta",varid(32)))
-    call check(nf90_inq_varid(ncid,"u_taweff",varid(33)))
-    call check(nf90_inq_varid(ncid,"u_D0",varid(34)))
-    call check(nf90_inq_varid(ncid,"u_Ksat_scalar",varid(35)))
-    call check(nf90_inq_varid(ncid,"u_b_scalar",varid(36)))
-    call check(nf90_inq_varid(ncid,"u_m_h2o",varid(37)))
-    call check(nf90_inq_varid(ncid,"u_f_leaf",varid(38)))
-    call check(nf90_inq_varid(ncid,"u_kc25",varid(39)))
-    call check(nf90_inq_varid(ncid,"u_ko25",varid(40)))
-    call check(nf90_inq_varid(ncid,"u_tau25",varid(41)))
-
+    call check(nf90_inq_varid(ncid,"u_Vcmax",varid(19)))
+    call check(nf90_inq_varid(ncid,"u_q10",varid(20)))
+    call check(nf90_inq_varid(ncid,"u_VJ_slope",varid(21)))
+    call check(nf90_inq_varid(ncid,"u_N_leaf",varid(22)))
+    call check(nf90_inq_varid(ncid,"u_r_decay",varid(23)))
+    call check(nf90_inq_varid(ncid,"u_b_h2o",varid(24)))
+    call check(nf90_inq_varid(ncid,"u_sif_alpha",varid(25)))
+    call check(nf90_inq_varid(ncid,"u_sif_beta",varid(26)))
+    call check(nf90_inq_varid(ncid,"u_taweff",varid(27)))
+    call check(nf90_inq_varid(ncid,"u_D0",varid(28)))
+    call check(nf90_inq_varid(ncid,"u_Ksat_scalar",varid(29)))
+    call check(nf90_inq_varid(ncid,"u_b_scalar",varid(30)))
+    call check(nf90_inq_varid(ncid,"u_m_h2o",varid(31)))
+    call check(nf90_inq_varid(ncid,"u_f_leaf",varid(32)))
+    call check(nf90_inq_varid(ncid,"u_kc25",varid(33)))
+    call check(nf90_inq_varid(ncid,"u_ko25",varid(34)))
+    call check(nf90_inq_varid(ncid,"u_tau25",varid(35)))
     !call check(nf90_inq_varid(ncid,"u_f_lr",varid(28)))
-    ! 2023/06/30
-    ! call check(nf90_inq_varid(ncid,"u_agb2vod",varid(36)))
-    call check(nf90_inq_varid(ncid,"u_f_resp",varid(42)))
-    call check(nf90_inq_varid(ncid,"u_VN_slope",varid(43)))
-    call check(nf90_inq_varid(ncid,"u_f_decay",varid(44)))
-    call check(nf90_inq_varid(ncid,"u_bwb",varid(45)))
-    call check(nf90_inq_varid(ncid,"u_a",varid(46)))
-    call check(nf90_inq_varid(ncid,"u_b",varid(47)))
-    call check(nf90_inq_varid(ncid,"u_c",varid(48)))
+    call check(nf90_inq_varid(ncid,"u_agb2vod",varid(36)))
 
     call check(nf90_get_var(ncid,varid(1),p_Vcmax))
     call check(nf90_get_var(ncid,varid(2),p_q10))
@@ -1187,7 +1064,7 @@ contains
     call check(nf90_get_var(ncid,varid(6),p_b_h2o))
     call check(nf90_get_var(ncid,varid(7),p_sif_alpha))
     call check(nf90_get_var(ncid,varid(8),p_sif_beta))
-    call check(nf90_get_var(ncid,varid(9),p_taweff))
+    call check(nf90_get_var(ncid,varid(9),p_taweff)) 
     call check(nf90_get_var(ncid,varid(10),p_D0))
     call check(nf90_get_var(ncid,varid(11),p_Ksat_scalar))
     call check(nf90_get_var(ncid,varid(12),p_b_scalar))
@@ -1197,46 +1074,26 @@ contains
     call check(nf90_get_var(ncid,varid(16),p_ko25))
     call check(nf90_get_var(ncid,varid(17),p_tau25))
    ! call check(nf90_get_var(ncid,varid(14),p_f_lr))
-
-   ! 2023/06/30
-   ! call check(nf90_get_var(ncid,varid(18),p_agb2vod))
-    call check(nf90_get_var(ncid,varid(18),p_f_resp))
-    call check(nf90_get_var(ncid,varid(19),p_VN_slope))
-    call check(nf90_get_var(ncid,varid(20),p_f_decay))
-    call check(nf90_get_var(ncid,varid(21),p_bwb))
-    call check(nf90_get_var(ncid,varid(22),p_a))
-    call check(nf90_get_var(ncid,varid(23),p_b))
-    call check(nf90_get_var(ncid,varid(24),p_c))
-
-
-    call check(nf90_get_var(ncid,varid(25),u_Vcmax))
-    call check(nf90_get_var(ncid,varid(26),u_q10))
-    call check(nf90_get_var(ncid,varid(27),u_VJ_slope))
-    call check(nf90_get_var(ncid,varid(28),u_N_leaf))
-    call check(nf90_get_var(ncid,varid(29),u_r_decay))
-    call check(nf90_get_var(ncid,varid(30),u_b_h2o))
-    call check(nf90_get_var(ncid,varid(31),u_sif_alpha))
-    call check(nf90_get_var(ncid,varid(32),u_sif_beta))
-    call check(nf90_get_var(ncid,varid(33),u_taweff))
-    call check(nf90_get_var(ncid,varid(34),u_D0))
-    call check(nf90_get_var(ncid,varid(35),u_Ksat_scalar))
-    call check(nf90_get_var(ncid,varid(36),u_b_scalar))
-    call check(nf90_get_var(ncid,varid(37),u_m_h2o))
-    call check(nf90_get_var(ncid,varid(38),u_f_leaf))
-    call check(nf90_get_var(ncid,varid(39),u_kc25))
-    call check(nf90_get_var(ncid,varid(40),u_ko25))
-    call check(nf90_get_var(ncid,varid(41),u_tau25))
+    call check(nf90_get_var(ncid,varid(18),p_agb2vod))
+    call check(nf90_get_var(ncid,varid(19),u_Vcmax))
+    call check(nf90_get_var(ncid,varid(20),u_q10))
+    call check(nf90_get_var(ncid,varid(21),u_VJ_slope))
+    call check(nf90_get_var(ncid,varid(22),u_N_leaf))
+    call check(nf90_get_var(ncid,varid(23),u_r_decay))
+    call check(nf90_get_var(ncid,varid(24),u_b_h2o))
+    call check(nf90_get_var(ncid,varid(25),u_sif_alpha))
+    call check(nf90_get_var(ncid,varid(26),u_sif_beta))
+    call check(nf90_get_var(ncid,varid(27),u_taweff))   
+    call check(nf90_get_var(ncid,varid(28),u_D0))
+    call check(nf90_get_var(ncid,varid(29),u_Ksat_scalar))
+    call check(nf90_get_var(ncid,varid(30),u_b_scalar))
+    call check(nf90_get_var(ncid,varid(31),u_m_h2o))
+    call check(nf90_get_var(ncid,varid(32),u_f_leaf))
+    call check(nf90_get_var(ncid,varid(33),u_kc25))
+    call check(nf90_get_var(ncid,varid(34),u_ko25))
+    call check(nf90_get_var(ncid,varid(35),u_tau25))
     !call check(nf90_get_var(ncid,varid(29),u_f_lr))
-
-    ! 2023/06/30
-    ! call check(nf90_get_var(ncid,varid(36),u_agb2vod))
-    call check(nf90_get_var(ncid,varid(42),u_f_resp))
-    call check(nf90_get_var(ncid,varid(43),u_VN_slope))
-    call check(nf90_get_var(ncid,varid(44),u_f_decay))
-    call check(nf90_get_var(ncid,varid(45),u_bwb))
-    call check(nf90_get_var(ncid,varid(46),u_a))
-    call check(nf90_get_var(ncid,varid(47),u_b))
-    call check(nf90_get_var(ncid,varid(48),u_c))
+    call check(nf90_get_var(ncid,varid(36),u_agb2vod))
 
     call check(nf90_close(ncid))
 
@@ -1258,17 +1115,7 @@ contains
     assim%p_ko25 = p_ko25
     assim%p_tau25 = p_tau25
    ! assim%p_f_lr = p_f_lr
-
-   ! 2023/06/30
-   ! assim%p_agb2vod = p_agb2vod
-    assim%p_f_resp = p_f_resp
-    assim%p_VN_slope = p_VN_slope
-    assim%p_f_decay = p_f_decay
-    assim%p_bwb = p_bwb
-    assim%p_a = p_a
-    assim%p_b = p_b
-    assim%p_c = p_c
-
+    assim%p_agb2vod = p_agb2vod
     assim%u_Vcmax = u_Vcmax
     assim%u_q10 = u_q10
     assim%u_VJ_slope = u_VJ_slope
@@ -1287,16 +1134,7 @@ contains
     assim%u_ko25 = u_ko25
     assim%u_tau25 = u_tau25
     !assim%u_f_lr = u_f_lr
-
-    ! 2023/06/30
-    ! assim%u_agb2vod = u_agb2vod
-    assim%u_f_resp = u_f_resp
-    assim%u_VN_slope = u_VN_slope
-    assim%u_f_decay = u_f_decay
-    assim%u_bwb = u_bwb
-    assim%u_a = u_a
-    assim%u_b = u_b
-    assim%u_c = u_c
+    assim%u_agb2vod = u_agb2vod
 
   end subroutine read_prior_para
 
@@ -1305,7 +1143,7 @@ contains
       real :: len
       !real :: my_random
       real :: t
-
+      
       !write(*,*) 'lbound=', lbound
       !write(*,*) 'ubound=', ubound
       len=ubound-lbound  !计算范围大小
@@ -1317,32 +1155,24 @@ contains
 
   subroutine Create_PF_para(j,ii,pl)
     implicit none
-    integer  :: i,ncid,varid(48),ierr,m,n  ! for vod, 48 parameters
+    integer  :: i,ncid,varid(36),ierr,m,n
     integer, intent(in) :: j,ii,pl
-  ! ub means upper boundary; lb means lower boundary
-    real(r8) :: ub_Vcmax(PFT,nlp),ub_q10(PFT,nlp),ub_VJ_slope(PFT,nlp), &
-         ub_N_leaf(PFT,nlp),ub_r_decay(PFT,nlp),ub_b_h2o(PFT,nlp),&
-         ub_sif_alpha(PFT,nlp),ub_sif_beta(PFT,nlp),ub_taweff(PFT,nlp),&
-         ub_D0(PFT,nlp)
-    real(r8) :: ub_Ksat_scalar(texture,nlp),ub_b_scalar(texture,nlp)
-    real(r8) :: ub_m_h2o(PFT,nlp)
-    real(r8) :: ub_f_leaf(PFT,nlp),ub_kc25(PFT,nlp),ub_ko25(PFT,nlp),ub_tau25(PFT,nlp)  ! p_agb2vod(PFT,nlp)
 
-    ! copy from vod-version 2023/06/30
-    real(r8) :: ub_f_resp(PFT,nlp), ub_VN_slope(PFT,nlp), ub_f_decay(PFT,nlp), ub_bwb(PFT,nlp),&
-                ub_a(PFT,nlp),ub_b(PFT,nlp),ub_c(PFT,nlp)
-
-    real(r8) :: lb_Vcmax(PFT,nlp),lb_q10(PFT,nlp),lb_VJ_slope(PFT,nlp),&
-         lb_N_leaf(PFT,nlp),lb_r_decay(PFT,nlp),lb_b_h2o(PFT,nlp),&
-         lb_sif_alpha(PFT,nlp),lb_sif_beta(PFT,nlp),lb_taweff(PFT,nlp),&
-         lb_D0(PFT,nlp)
-    real(r8) :: lb_Ksat_scalar(texture,nlp),lb_b_scalar(texture,nlp)
-    real(r8) :: lb_m_h2o(PFT,nlp)
-    real(r8) :: lb_f_leaf(PFT,nlp),lb_kc25(PFT,nlp),lb_ko25(PFT,nlp),lb_tau25(PFT,nlp) ! u_agb2vod(PFT,nlp)
-
-    ! copy from vod-version 2023/06/30
-    real(r8) :: lb_f_resp(PFT,nlp), lb_VN_slope(PFT,nlp), lb_f_decay(PFT,nlp), lb_bwb(PFT,nlp),&
-                lb_a(PFT,nlp),lb_b(PFT,nlp),lb_c(PFT,nlp)
+    real(r8) :: p_Vcmax(PFT,nlp),p_q10(PFT,nlp),p_VJ_slope(PFT,nlp), &
+         p_N_leaf(PFT,nlp),p_r_decay(PFT,nlp),p_b_h2o(PFT,nlp),&
+         p_sif_alpha(PFT,nlp),p_sif_beta(PFT,nlp),p_taweff(PFT,nlp),&
+         p_D0(PFT,nlp)
+    real(r8) :: p_Ksat_scalar(texture,nlp),p_b_scalar(texture,nlp)
+    real(r8) :: p_m_h2o(PFT,nlp)
+    real(r8) :: p_f_leaf(PFT,nlp),p_kc25(PFT,nlp),p_ko25(PFT,nlp),p_tau25(PFT,nlp),p_agb2vod(PFT,nlp)
+    
+    real(r8) :: u_Vcmax(PFT,nlp),u_q10(PFT,nlp),u_VJ_slope(PFT,nlp),&
+         u_N_leaf(PFT,nlp),u_r_decay(PFT,nlp),u_b_h2o(PFT,nlp),&
+         u_sif_alpha(PFT,nlp),u_sif_beta(PFT,nlp),u_taweff(PFT,nlp),&
+         u_D0(PFT,nlp)
+    real(r8) :: u_Ksat_scalar(texture,nlp),u_b_scalar(texture,nlp)
+    real(r8) :: u_m_h2o(PFT,nlp)
+    real(r8) :: u_f_leaf(PFT,nlp),u_kc25(PFT,nlp),u_ko25(PFT,nlp),u_tau25(PFT,nlp),u_agb2vod(PFT,nlp)
 
     real(r8) :: Vcmax(parloop,nlp),q10(parloop,nlp),VJ_slope(parloop,nlp),N_leaf(parloop,nlp),&
                 r_decay(parloop,nlp),b_h2o(parloop,nlp),&
@@ -1350,11 +1180,8 @@ contains
     real(r8) :: Ksat_scalar(parloop,nlp),b_scalar(parloop,nlp)
     real(r8) :: m_h2o(parloop,nlp)
     real(r8) :: f_leaf(parloop,nlp),kc25(parloop,nlp),ko25(parloop,nlp),tau25(parloop,nlp),&
-                pfweight(parloop,nlp)    ! agb2vod(parloop,nlp)
-    ! 2023/06/30
-    real(r8) :: f_resp(parloop,nlp), VN_slope(parloop,nlp), f_decay(parloop,nlp), bwb(parloop,nlp),&
-                a(parloop,nlp),b(parloop,nlp),c(parloop,nlp)
-
+                agb2vod(parloop,nlp),pfweight(parloop,nlp)
+    
     !real(r8) :: Vcmax(PFT,nlp),q10(PFT,nlp),VJ_slope(PFT,nlp), &
     !     N_leaf(PFT,nlp),r_decay(PFT,nlp),b_h2o(PFT,nlp),&
     !     sif_alpha(PFT,nlp),sif_beta(PFT,nlp),taweff(PFT,nlp),&
@@ -1370,129 +1197,95 @@ contains
     !--iLab::avoid pointer (see also below)
     !p => PF
 
-    if( len(trim(beps_site_path))+len(trim(PF_prior_para_prefix))+len('.nc') .gt.&
+    if( len(trim(beps_site_path))+len(trim(prior_para_prefix))+len('.nc') .gt.&
          len(fname) ) then
        write(*, '(a)') 'FATAL::INTERNAL-ERROR::'//method//':file name too long!'
        stop
     else
-       fname = trim(beps_site_path)//trim(PF_prior_para_prefix)//".nc"
+       fname = trim(beps_site_path)//trim(prior_para_prefix)//".nc"
     endif
     call check(nf90_open(fname,nf90_nowrite,ncid))
-    call check(nf90_inq_varid(ncid,"ub_Vcmax",varid(1)))
-    call check(nf90_inq_varid(ncid,"ub_q10",varid(2)))
-    call check(nf90_inq_varid(ncid,"ub_VJ_slope",varid(3)))
-    call check(nf90_inq_varid(ncid,"ub_N_leaf",varid(4)))
-    call check(nf90_inq_varid(ncid,"ub_r_decay",varid(5)))
-    call check(nf90_inq_varid(ncid,"ub_b_h2o",varid(6)))
-    call check(nf90_inq_varid(ncid,"ub_sif_alpha",varid(7)))
-    call check(nf90_inq_varid(ncid,"ub_sif_beta",varid(8)))
-    call check(nf90_inq_varid(ncid,"ub_taweff",varid(9)))
-    call check(nf90_inq_varid(ncid,"ub_D0",varid(10)))
-    call check(nf90_inq_varid(ncid,"ub_Ksat_scalar",varid(11)))
-    call check(nf90_inq_varid(ncid,"ub_b_scalar",varid(12)))
-    call check(nf90_inq_varid(ncid,"ub_m_h2o",varid(13)))
-    call check(nf90_inq_varid(ncid,"ub_f_leaf",varid(14)))
-    call check(nf90_inq_varid(ncid,"ub_kc25",varid(15)))
-    call check(nf90_inq_varid(ncid,"ub_ko25",varid(16)))
-    call check(nf90_inq_varid(ncid,"ub_tau25",varid(17)))
+    call check(nf90_inq_varid(ncid,"p_Vcmax",varid(1)))
+    call check(nf90_inq_varid(ncid,"p_q10",varid(2)))
+    call check(nf90_inq_varid(ncid,"p_VJ_slope",varid(3)))
+    call check(nf90_inq_varid(ncid,"p_N_leaf",varid(4)))
+    call check(nf90_inq_varid(ncid,"p_r_decay",varid(5)))
+    call check(nf90_inq_varid(ncid,"p_b_h2o",varid(6)))
+    call check(nf90_inq_varid(ncid,"p_sif_alpha",varid(7)))
+    call check(nf90_inq_varid(ncid,"p_sif_beta",varid(8)))
+    call check(nf90_inq_varid(ncid,"p_taweff",varid(9)))
+    call check(nf90_inq_varid(ncid,"p_D0",varid(10)))
+    call check(nf90_inq_varid(ncid,"p_Ksat_scalar",varid(11)))
+    call check(nf90_inq_varid(ncid,"p_b_scalar",varid(12)))
+    call check(nf90_inq_varid(ncid,"p_m_h2o",varid(13)))
+    call check(nf90_inq_varid(ncid,"p_f_leaf",varid(14)))
+    call check(nf90_inq_varid(ncid,"p_kc25",varid(15)))
+    call check(nf90_inq_varid(ncid,"p_ko25",varid(16)))
+    call check(nf90_inq_varid(ncid,"p_tau25",varid(17)))
     !call check(nf90_inq_varid(ncid,"p_f_lr",varid(14)))
-	! 2023/06/30
-    !call check(nf90_inq_varid(ncid,"p_agb2vod",varid(18)))
-    call check(nf90_inq_varid(ncid,"ub_f_resp",varid(18)))
-    call check(nf90_inq_varid(ncid,"ub_VN_slope",varid(19)))
-    call check(nf90_inq_varid(ncid,"ub_f_decay",varid(20)))
-    call check(nf90_inq_varid(ncid,"ub_bwb",varid(21)))
-    call check(nf90_inq_varid(ncid,"ub_a",varid(22)))
-    call check(nf90_inq_varid(ncid,"ub_b",varid(23)))
-    call check(nf90_inq_varid(ncid,"ub_c",varid(24)))
+    call check(nf90_inq_varid(ncid,"p_agb2vod",varid(18)))    
 
-    call check(nf90_inq_varid(ncid,"lb_Vcmax",varid(25)))
-    call check(nf90_inq_varid(ncid,"lb_q10",varid(26)))
-    call check(nf90_inq_varid(ncid,"lb_VJ_slope",varid(27)))
-    call check(nf90_inq_varid(ncid,"lb_N_leaf",varid(28)))
-    call check(nf90_inq_varid(ncid,"lb_r_decay",varid(29)))
-    call check(nf90_inq_varid(ncid,"lb_b_h2o",varid(30)))
-    call check(nf90_inq_varid(ncid,"lb_sif_alpha",varid(31)))
-    call check(nf90_inq_varid(ncid,"lb_sif_beta",varid(32)))
-    call check(nf90_inq_varid(ncid,"lb_taweff",varid(33)))
-    call check(nf90_inq_varid(ncid,"lb_D0",varid(34)))
-    call check(nf90_inq_varid(ncid,"lb_Ksat_scalar",varid(35)))
-    call check(nf90_inq_varid(ncid,"lb_b_scalar",varid(36)))
-    call check(nf90_inq_varid(ncid,"lb_m_h2o",varid(37)))
-    call check(nf90_inq_varid(ncid,"lb_f_leaf",varid(38)))
-    call check(nf90_inq_varid(ncid,"lb_kc25",varid(39)))
-    call check(nf90_inq_varid(ncid,"lb_ko25",varid(40)))
-    call check(nf90_inq_varid(ncid,"lb_tau25",varid(41)))
+    call check(nf90_inq_varid(ncid,"u_Vcmax",varid(19)))
+    call check(nf90_inq_varid(ncid,"u_q10",varid(20)))
+    call check(nf90_inq_varid(ncid,"u_VJ_slope",varid(21)))
+    call check(nf90_inq_varid(ncid,"u_N_leaf",varid(22)))
+    call check(nf90_inq_varid(ncid,"u_r_decay",varid(23)))
+    call check(nf90_inq_varid(ncid,"u_b_h2o",varid(24)))
+    call check(nf90_inq_varid(ncid,"u_sif_alpha",varid(25)))
+    call check(nf90_inq_varid(ncid,"u_sif_beta",varid(26)))
+    call check(nf90_inq_varid(ncid,"u_taweff",varid(27)))
+    call check(nf90_inq_varid(ncid,"u_D0",varid(28)))
+    call check(nf90_inq_varid(ncid,"u_Ksat_scalar",varid(29)))
+    call check(nf90_inq_varid(ncid,"u_b_scalar",varid(30)))
+    call check(nf90_inq_varid(ncid,"u_m_h2o",varid(31)))
+    call check(nf90_inq_varid(ncid,"u_f_leaf",varid(32)))
+    call check(nf90_inq_varid(ncid,"u_kc25",varid(33)))
+    call check(nf90_inq_varid(ncid,"u_ko25",varid(34)))
+    call check(nf90_inq_varid(ncid,"u_tau25",varid(35)))
     !call check(nf90_inq_varid(ncid,"u_f_lr",varid(28)))
-	! 2023/06/30
-    !call check(nf90_inq_varid(ncid,"u_agb2vod",varid(36)))
-    call check(nf90_inq_varid(ncid,"lb_f_resp",varid(42)))
-    call check(nf90_inq_varid(ncid,"lb_VN_slope",varid(43)))
-    call check(nf90_inq_varid(ncid,"lb_f_decay",varid(44)))
-    call check(nf90_inq_varid(ncid,"lb_bwb",varid(45)))
-    call check(nf90_inq_varid(ncid,"lb_a",varid(46)))
-    call check(nf90_inq_varid(ncid,"lb_b",varid(47)))
-    call check(nf90_inq_varid(ncid,"lb_c",varid(48)))
+    call check(nf90_inq_varid(ncid,"u_agb2vod",varid(36)))
 
-
-    call check(nf90_get_var(ncid,varid(1),ub_Vcmax))
-    call check(nf90_get_var(ncid,varid(2),ub_q10))
-    call check(nf90_get_var(ncid,varid(3),ub_VJ_slope))
-    call check(nf90_get_var(ncid,varid(4),ub_N_leaf))
-    call check(nf90_get_var(ncid,varid(5),ub_r_decay))
-    call check(nf90_get_var(ncid,varid(6),ub_b_h2o))
-    call check(nf90_get_var(ncid,varid(7),ub_sif_alpha))
-    call check(nf90_get_var(ncid,varid(8),ub_sif_beta))
-    call check(nf90_get_var(ncid,varid(9),ub_taweff))
-    call check(nf90_get_var(ncid,varid(10),ub_D0))
-    call check(nf90_get_var(ncid,varid(11),ub_Ksat_scalar))
-    call check(nf90_get_var(ncid,varid(12),ub_b_scalar))
-    call check(nf90_get_var(ncid,varid(13),ub_m_h2o))
-    call check(nf90_get_var(ncid,varid(14),ub_f_leaf))
-    call check(nf90_get_var(ncid,varid(15),ub_kc25))
-    call check(nf90_get_var(ncid,varid(16),ub_ko25))
-    call check(nf90_get_var(ncid,varid(17),ub_tau25))
+    call check(nf90_get_var(ncid,varid(1),p_Vcmax))
+    call check(nf90_get_var(ncid,varid(2),p_q10))
+    call check(nf90_get_var(ncid,varid(3),p_VJ_slope))
+    call check(nf90_get_var(ncid,varid(4),p_N_leaf))
+    call check(nf90_get_var(ncid,varid(5),p_r_decay))
+    call check(nf90_get_var(ncid,varid(6),p_b_h2o))
+    call check(nf90_get_var(ncid,varid(7),p_sif_alpha))
+    call check(nf90_get_var(ncid,varid(8),p_sif_beta))
+    call check(nf90_get_var(ncid,varid(9),p_taweff)) 
+    call check(nf90_get_var(ncid,varid(10),p_D0))
+    call check(nf90_get_var(ncid,varid(11),p_Ksat_scalar))
+    call check(nf90_get_var(ncid,varid(12),p_b_scalar))
+    call check(nf90_get_var(ncid,varid(13),p_m_h2o))
+    call check(nf90_get_var(ncid,varid(14),p_f_leaf))
+    call check(nf90_get_var(ncid,varid(15),p_kc25))
+    call check(nf90_get_var(ncid,varid(16),p_ko25))
+    call check(nf90_get_var(ncid,varid(17),p_tau25))
    ! call check(nf90_get_var(ncid,varid(14),p_f_lr))
-   ! 2023/06/30
-   ! call check(nf90_get_var(ncid,varid(18),p_agb2vod))
-    call check(nf90_get_var(ncid,varid(18),ub_f_resp))
-    call check(nf90_get_var(ncid,varid(19),ub_VN_slope))
-    call check(nf90_get_var(ncid,varid(20),ub_f_decay))
-    call check(nf90_get_var(ncid,varid(21),ub_bwb))
-    call check(nf90_get_var(ncid,varid(22),ub_a))
-    call check(nf90_get_var(ncid,varid(23),ub_b))
-    call check(nf90_get_var(ncid,varid(24),ub_c))
-
-    call check(nf90_get_var(ncid,varid(25),lb_Vcmax))
-    call check(nf90_get_var(ncid,varid(26),lb_q10))
-    call check(nf90_get_var(ncid,varid(27),lb_VJ_slope))
-    call check(nf90_get_var(ncid,varid(28),lb_N_leaf))
-    call check(nf90_get_var(ncid,varid(29),lb_r_decay))
-    call check(nf90_get_var(ncid,varid(30),lb_b_h2o))
-    call check(nf90_get_var(ncid,varid(31),lb_sif_alpha))
-    call check(nf90_get_var(ncid,varid(32),lb_sif_beta))
-    call check(nf90_get_var(ncid,varid(33),lb_taweff))
-    call check(nf90_get_var(ncid,varid(34),lb_D0))
-    call check(nf90_get_var(ncid,varid(35),lb_Ksat_scalar))
-    call check(nf90_get_var(ncid,varid(36),lb_b_scalar))
-    call check(nf90_get_var(ncid,varid(37),lb_m_h2o))
-    call check(nf90_get_var(ncid,varid(38),lb_f_leaf))
-    call check(nf90_get_var(ncid,varid(39),lb_kc25))
-    call check(nf90_get_var(ncid,varid(40),lb_ko25))
-    call check(nf90_get_var(ncid,varid(41),lb_tau25))
+    call check(nf90_get_var(ncid,varid(18),p_agb2vod))
+    call check(nf90_get_var(ncid,varid(19),u_Vcmax))
+    call check(nf90_get_var(ncid,varid(20),u_q10))
+    call check(nf90_get_var(ncid,varid(21),u_VJ_slope))
+    call check(nf90_get_var(ncid,varid(22),u_N_leaf))
+    call check(nf90_get_var(ncid,varid(23),u_r_decay))
+    call check(nf90_get_var(ncid,varid(24),u_b_h2o))
+    call check(nf90_get_var(ncid,varid(25),u_sif_alpha))
+    call check(nf90_get_var(ncid,varid(26),u_sif_beta))
+    call check(nf90_get_var(ncid,varid(27),u_taweff))   
+    call check(nf90_get_var(ncid,varid(28),u_D0))
+    call check(nf90_get_var(ncid,varid(29),u_Ksat_scalar))
+    call check(nf90_get_var(ncid,varid(30),u_b_scalar))
+    call check(nf90_get_var(ncid,varid(31),u_m_h2o))
+    call check(nf90_get_var(ncid,varid(32),u_f_leaf))
+    call check(nf90_get_var(ncid,varid(33),u_kc25))
+    call check(nf90_get_var(ncid,varid(34),u_ko25))
+    call check(nf90_get_var(ncid,varid(35),u_tau25))
     !call check(nf90_get_var(ncid,varid(29),u_f_lr))
-	! 2023/06/30
-    ! call check(nf90_get_var(ncid,varid(36),u_agb2vod))
-    call check(nf90_get_var(ncid,varid(42),lb_f_resp))
-    call check(nf90_get_var(ncid,varid(43),lb_VN_slope))
-    call check(nf90_get_var(ncid,varid(44),lb_f_decay))
-    call check(nf90_get_var(ncid,varid(45),lb_bwb))
-    call check(nf90_get_var(ncid,varid(46),lb_a))
-    call check(nf90_get_var(ncid,varid(47),lb_b))
-    call check(nf90_get_var(ncid,varid(48),lb_c))
+    call check(nf90_get_var(ncid,varid(36),u_agb2vod))
 
     call check(nf90_close(ncid))
-
+    
     !write(*,*) 'p_Vcmax=', p_Vcmax
     !write(*,*) 'p_Vcmax dim1=', size(p_Vcmax,dim=1)
     !write(*,*) 'p_Vcmax dim2=', size(p_Vcmax,dim=2)
@@ -1505,37 +1298,29 @@ contains
       !write(*,*) 'p_Vcmax(j,m)=', p_Vcmax(j,m)
       !write(*,*) 'u_Vcmax(j,m)=', u_Vcmax(j,m)
       !write(*,*) 'PF%Vcmax=', PF%Vcmax(n,m)
-      PF%Vcmax(n,m) = my_random(lb_Vcmax(j,m),ub_Vcmax(j,m))
+      PF%Vcmax(n,m) = my_random(p_Vcmax(j,m),u_Vcmax(j,m))
       !write(*,*) 'PF%Vcmax=', PF%Vcmax(n,m)
-      PF%q10(n,m) = my_random(lb_q10(j,m),ub_q10(j,m))
-      PF%VJ_slope(n,m) = my_random(lb_VJ_slope(j,m),ub_VJ_slope(j,m))
+      PF%q10(n,m) = my_random(p_q10(j,m),+u_q10(j,m))
+      PF%VJ_slope(n,m) = my_random(p_VJ_slope(j,m),u_VJ_slope(j,m))
       !write(*,*) 'p_N_leaf(j,m)=', p_N_leaf(j,m)
       !write(*,*) 'u_N_leaf(j,m)=', u_N_leaf(j,m)
-      PF%N_leaf(n,m) = my_random(lb_N_leaf(j,m),ub_N_leaf(j,m))
-      PF%r_decay(n,m) =  my_random(lb_r_decay(j,m),ub_r_decay(j,m))
-      PF%b_h2o(n,m) = my_random(lb_b_h2o(j,m),ub_b_h2o(j,m))
-      PF%sif_alpha(n,m) = my_random(lb_sif_alpha(j,m),ub_sif_alpha(j,m))
-      PF%sif_beta(n,m) =  my_random(lb_sif_beta(j,m),ub_sif_beta(j,m))
-      PF%taweff(n,m) =  my_random(lb_taweff(j,m),ub_taweff(j,m))
-      PF%D0(n,m) = my_random(lb_D0(j,m),ub_D0(j,m))
-      PF%Ksat_scalar(n,m) = my_random(lb_Ksat_scalar(ii,m),ub_Ksat_scalar(ii,m))
-      PF%b_scalar(n,m) = my_random(lb_b_scalar(ii,m),ub_b_scalar(ii,m))
-      PF%m_h2o(n,m) =  my_random(lb_m_h2o(j,m),ub_m_h2o(j,m))
-      PF%f_leaf(n,m) =  my_random(lb_f_leaf(j,m),ub_f_leaf(j,m))
-      PF%kc25(n,m) =  my_random(lb_kc25(j,m),ub_kc25(j,m))
-      PF%ko25(n,m) = my_random(lb_ko25(j,m),ub_ko25(j,m))
-      PF%tau25(n,m) =  my_random(lb_tau25(j,m),ub_tau25(j,m))
+      PF%N_leaf(n,m) = my_random(p_N_leaf(j,m),u_N_leaf(j,m))
+      PF%r_decay(n,m) =  my_random(p_r_decay(j,m),u_r_decay(j,m))
+      PF%b_h2o(n,m) = my_random(p_b_h2o(j,m),u_b_h2o(j,m))
+      PF%sif_alpha(n,m) = my_random(p_sif_alpha(j,m),u_sif_alpha(j,m))
+      PF%sif_beta(n,m) =  my_random(p_sif_beta(j,m),u_sif_beta(j,m))
+      PF%taweff(n,m) =  my_random(p_taweff(j,m),u_taweff(j,m))
+      PF%D0(n,m) = my_random(p_D0(j,m),u_D0(j,m))
+      PF%Ksat_scalar(n,m) = my_random(p_Ksat_scalar(ii,m),u_Ksat_scalar(ii,m))
+      PF%b_scalar(n,m) = my_random(p_b_scalar(ii,m),u_b_scalar(ii,m))
+      PF%m_h2o(n,m) =  my_random(p_m_h2o(j,m),u_m_h2o(j,m))
+      PF%f_leaf(n,m) =  my_random(p_f_leaf(j,m),u_f_leaf(j,m))
+      PF%kc25(n,m) =  my_random(p_kc25(j,m),u_kc25(j,m))
+      PF%ko25(n,m) = my_random(p_ko25(j,m),u_ko25(j,m))
+      PF%tau25(n,m) =  my_random(p_tau25(j,m),u_tau25(j,m))
       ! assim%p_f_lr = p_f_lr
-      ! PF%agb2vod(n,m) =  my_random(p_agb2vod(j,m),u_agb2vod(j,m))   not used
+      PF%agb2vod(n,m) =  my_random(p_agb2vod(j,m),u_agb2vod(j,m))
       PF%pfweight(n,m) =  1./parloop
-      ! 2023/06/30
-      PF%f_resp(n,m) = my_random(lb_f_resp(j,m),ub_f_resp(j,m))
-      PF%VN_slope(n,m) = my_random(lb_VN_slope(j,m),ub_VN_slope(j,m))
-      PF%f_decay(n,m) = my_random(lb_f_decay(j,m),ub_f_decay(j,m))
-      PF%bwb(n,m) = my_random(lb_bwb(j,m),ub_bwb(j,m))
-      PF%a(n,m) = my_random(lb_a(j,m),ub_a(j,m))
-      PF%b(n,m) = my_random(lb_b(j,m),ub_b(j,m))
-      PF%c(n,m) = my_random(lb_c(j,m),ub_c(j,m))
      end do
     end do
 
@@ -1561,269 +1346,6 @@ contains
 
   end subroutine Create_PF_para
 
-    subroutine Create_PF_para_normal(j,ii,pl)
-    implicit none
-    integer  :: i,ncid,varid(48),ierr,m,n
-    integer, intent(in) :: j,ii,pl
-    real(r8) :: pi,temp_num, mean=0.5, sd=0.25
-
-    real(r8) :: ub_Vcmax(PFT,nlp),ub_q10(PFT,nlp),ub_VJ_slope(PFT,nlp), &
-         ub_N_leaf(PFT,nlp),ub_r_decay(PFT,nlp),ub_b_h2o(PFT,nlp),&
-         ub_sif_alpha(PFT,nlp),ub_sif_beta(PFT,nlp),ub_taweff(PFT,nlp),&
-         ub_D0(PFT,nlp)
-    real(r8) :: ub_Ksat_scalar(texture,nlp),ub_b_scalar(texture,nlp)
-    real(r8) :: ub_m_h2o(PFT,nlp)
-    real(r8) :: ub_f_leaf(PFT,nlp),ub_kc25(PFT,nlp),ub_ko25(PFT,nlp),ub_tau25(PFT,nlp)  ! p_agb2vod(PFT,nlp)
-
-	! 2023/06/30
-    real(r8) :: ub_f_resp(PFT,nlp), ub_VN_slope(PFT,nlp), ub_f_decay(PFT,nlp), ub_bwb(PFT,nlp),&
-               ub_a(PFT,nlp),ub_b(PFT,nlp),ub_c(PFT,nlp)
-
-
-    real(r8) :: lb_Vcmax(PFT,nlp),lb_q10(PFT,nlp),lb_VJ_slope(PFT,nlp),&
-         lb_N_leaf(PFT,nlp),lb_r_decay(PFT,nlp),lb_b_h2o(PFT,nlp),&
-         lb_sif_alpha(PFT,nlp),lb_sif_beta(PFT,nlp),lb_taweff(PFT,nlp),&
-         lb_D0(PFT,nlp)
-    real(r8) :: lb_Ksat_scalar(texture,nlp),lb_b_scalar(texture,nlp)
-    real(r8) :: lb_m_h2o(PFT,nlp)
-    real(r8) :: lb_f_leaf(PFT,nlp),lb_kc25(PFT,nlp),lb_ko25(PFT,nlp),lb_tau25(PFT,nlp) !,u_agb2vod(PFT,nlp)
-
-    ! 2023/06/30
-    real(r8) :: lb_f_resp(PFT,nlp), lb_VN_slope(PFT,nlp), lb_f_decay(PFT,nlp), lb_bwb(PFT,nlp),&
-                lb_a(PFT,nlp),lb_b(PFT,nlp),lb_c(PFT,nlp)
-
-    real(r8) :: Vcmax(parloop,nlp),q10(parloop,nlp),VJ_slope(parloop,nlp),N_leaf(parloop,nlp),&
-                r_decay(parloop,nlp),b_h2o(parloop,nlp),&
-                sif_alpha(parloop,nlp),sif_beta(parloop,nlp),taweff(parloop,nlp),D0(parloop,nlp)
-    real(r8) :: Ksat_scalar(parloop,nlp),b_scalar(parloop,nlp)
-    real(r8) :: m_h2o(parloop,nlp)
-    real(r8) :: f_leaf(parloop,nlp),kc25(parloop,nlp),ko25(parloop,nlp),tau25(parloop,nlp),&
-                pfweight(parloop,nlp)  ! agb2vod(parloop,nlp)
-    real(r8) :: array(parloop)
-
-    ! 2023/06/30
-    real(r8) :: f_resp(parloop,nlp), VN_slope(parloop,nlp), f_decay(parloop,nlp), bwb(parloop,nlp),&
-                a(parloop,nlp),b(parloop,nlp),c(parloop,nlp)
-
-    !real(r8) :: Vcmax(PFT,nlp),q10(PFT,nlp),VJ_slope(PFT,nlp), &
-    !     N_leaf(PFT,nlp),r_decay(PFT,nlp),b_h2o(PFT,nlp),&
-    !     sif_alpha(PFT,nlp),sif_beta(PFT,nlp),taweff(PFT,nlp),&
-    !     D0(PFT,nlp)
-    !real(r8) :: Ksat_scalar(texture,nlp),b_scalar(texture,nlp)
-    !real(r8) :: m_h2o(PFT,nlp)
-    !real(r8) :: f_leaf(nlp),kc25(nlp),ko25(nlp),tau25(nlp),agb2vod(nlp)
-    !--iLab::avoid pointer (see also below)
-    !type(PF_para),pointer :: p
-    character(len=255) :: fname
-    character(len=*), parameter :: method = "Create_PF_para"
-
-    !--iLab::avoid pointer (see also below)
-    !p => PF
-
-    if( len(trim(beps_site_path))+len(trim(PF_prior_para_prefix))+len('.nc') .gt.&
-         len(fname) ) then
-       write(*, '(a)') 'FATAL::INTERNAL-ERROR::'//method//':file name too long!'
-       stop
-    else
-       fname = trim(beps_site_path)//trim(PF_prior_para_prefix)//".nc"
-    endif
-    call check(nf90_open(fname,nf90_nowrite,ncid))
-    call check(nf90_inq_varid(ncid,"ub_Vcmax",varid(1)))
-    call check(nf90_inq_varid(ncid,"ub_q10",varid(2)))
-    call check(nf90_inq_varid(ncid,"ub_VJ_slope",varid(3)))
-    call check(nf90_inq_varid(ncid,"ub_N_leaf",varid(4)))
-    call check(nf90_inq_varid(ncid,"ub_r_decay",varid(5)))
-    call check(nf90_inq_varid(ncid,"ub_b_h2o",varid(6)))
-    call check(nf90_inq_varid(ncid,"ub_sif_alpha",varid(7)))
-    call check(nf90_inq_varid(ncid,"ub_sif_beta",varid(8)))
-    call check(nf90_inq_varid(ncid,"ub_taweff",varid(9)))
-    call check(nf90_inq_varid(ncid,"ub_D0",varid(10)))
-    call check(nf90_inq_varid(ncid,"ub_Ksat_scalar",varid(11)))
-    call check(nf90_inq_varid(ncid,"ub_b_scalar",varid(12)))
-    call check(nf90_inq_varid(ncid,"ub_m_h2o",varid(13)))
-    call check(nf90_inq_varid(ncid,"ub_f_leaf",varid(14)))
-    call check(nf90_inq_varid(ncid,"ub_kc25",varid(15)))
-    call check(nf90_inq_varid(ncid,"ub_ko25",varid(16)))
-    call check(nf90_inq_varid(ncid,"ub_tau25",varid(17)))
-    !call check(nf90_inq_varid(ncid,"p_f_lr",varid(14)))
-
-	! 2023/06/30
-    ! call check(nf90_inq_varid(ncid,"p_agb2vod",varid(18)))
-    call check(nf90_inq_varid(ncid,"ub_f_resp",varid(18)))
-    call check(nf90_inq_varid(ncid,"ub_VN_slope",varid(19)))
-    call check(nf90_inq_varid(ncid,"ub_f_decay",varid(20)))
-    call check(nf90_inq_varid(ncid,"ub_bwb",varid(21)))
-    call check(nf90_inq_varid(ncid,"ub_a",varid(22)))
-    call check(nf90_inq_varid(ncid,"ub_b",varid(23)))
-    call check(nf90_inq_varid(ncid,"ub_c",varid(24)))
-
-    call check(nf90_inq_varid(ncid,"lb_Vcmax",varid(25)))
-    call check(nf90_inq_varid(ncid,"lb_q10",varid(26)))
-    call check(nf90_inq_varid(ncid,"lb_VJ_slope",varid(27)))
-    call check(nf90_inq_varid(ncid,"lb_N_leaf",varid(28)))
-    call check(nf90_inq_varid(ncid,"lb_r_decay",varid(29)))
-    call check(nf90_inq_varid(ncid,"lb_b_h2o",varid(30)))
-    call check(nf90_inq_varid(ncid,"lb_sif_alpha",varid(31)))
-    call check(nf90_inq_varid(ncid,"lb_sif_beta",varid(32)))
-    call check(nf90_inq_varid(ncid,"lb_taweff",varid(33)))
-    call check(nf90_inq_varid(ncid,"lb_D0",varid(34)))
-    call check(nf90_inq_varid(ncid,"lb_Ksat_scalar",varid(35)))
-    call check(nf90_inq_varid(ncid,"lb_b_scalar",varid(36)))
-    call check(nf90_inq_varid(ncid,"lb_m_h2o",varid(37)))
-    call check(nf90_inq_varid(ncid,"lb_f_leaf",varid(38)))
-    call check(nf90_inq_varid(ncid,"lb_kc25",varid(39)))
-    call check(nf90_inq_varid(ncid,"lb_ko25",varid(40)))
-    call check(nf90_inq_varid(ncid,"lb_tau25",varid(41)))
-    ! call check(nf90_inq_varid(ncid,"u_f_lr",varid(28)))
-	! 2023/06/30
-    ! call check(nf90_inq_varid(ncid,"u_agb2vod",varid(36)))
-    call check(nf90_inq_varid(ncid,"lb_f_resp",varid(42)))
-    call check(nf90_inq_varid(ncid,"lb_VN_slope",varid(43)))
-    call check(nf90_inq_varid(ncid,"lb_f_decay",varid(44)))
-    call check(nf90_inq_varid(ncid,"lb_bwb",varid(45)))
-    call check(nf90_inq_varid(ncid,"lb_a",varid(46)))
-    call check(nf90_inq_varid(ncid,"lb_b",varid(47)))
-    call check(nf90_inq_varid(ncid,"lb_c",varid(48)))
-
-    call check(nf90_get_var(ncid,varid(1),ub_Vcmax))
-    call check(nf90_get_var(ncid,varid(2),ub_q10))
-    call check(nf90_get_var(ncid,varid(3),ub_VJ_slope))
-    call check(nf90_get_var(ncid,varid(4),ub_N_leaf))
-    call check(nf90_get_var(ncid,varid(5),ub_r_decay))
-    call check(nf90_get_var(ncid,varid(6),ub_b_h2o))
-    call check(nf90_get_var(ncid,varid(7),ub_sif_alpha))
-    call check(nf90_get_var(ncid,varid(8),ub_sif_beta))
-    call check(nf90_get_var(ncid,varid(9),ub_taweff))
-    call check(nf90_get_var(ncid,varid(10),ub_D0))
-    call check(nf90_get_var(ncid,varid(11),ub_Ksat_scalar))
-    call check(nf90_get_var(ncid,varid(12),ub_b_scalar))
-    call check(nf90_get_var(ncid,varid(13),ub_m_h2o))
-    call check(nf90_get_var(ncid,varid(14),ub_f_leaf))
-    call check(nf90_get_var(ncid,varid(15),ub_kc25))
-    call check(nf90_get_var(ncid,varid(16),ub_ko25))
-    call check(nf90_get_var(ncid,varid(17),ub_tau25))
-   ! call check(nf90_get_var(ncid,varid(14),p_f_lr))
-   ! 2023/06/30
-   ! call check(nf90_get_var(ncid,varid(18),p_agb2vod))
-    call check(nf90_get_var(ncid,varid(18),ub_f_resp))
-    call check(nf90_get_var(ncid,varid(19),ub_VN_slope))
-    call check(nf90_get_var(ncid,varid(20),ub_f_decay))
-    call check(nf90_get_var(ncid,varid(21),ub_bwb))
-    call check(nf90_get_var(ncid,varid(22),ub_a))
-    call check(nf90_get_var(ncid,varid(23),ub_b))
-    call check(nf90_get_var(ncid,varid(24),ub_c))
-
-
-    call check(nf90_get_var(ncid,varid(25),lb_Vcmax))
-    call check(nf90_get_var(ncid,varid(26),lb_q10))
-    call check(nf90_get_var(ncid,varid(27),lb_VJ_slope))
-    call check(nf90_get_var(ncid,varid(28),lb_N_leaf))
-    call check(nf90_get_var(ncid,varid(29),lb_r_decay))
-    call check(nf90_get_var(ncid,varid(30),lb_b_h2o))
-    call check(nf90_get_var(ncid,varid(31),lb_sif_alpha))
-    call check(nf90_get_var(ncid,varid(32),lb_sif_beta))
-    call check(nf90_get_var(ncid,varid(33),lb_taweff))
-    call check(nf90_get_var(ncid,varid(34),lb_D0))
-    call check(nf90_get_var(ncid,varid(35),lb_Ksat_scalar))
-    call check(nf90_get_var(ncid,varid(36),lb_b_scalar))
-    call check(nf90_get_var(ncid,varid(37),lb_m_h2o))
-    call check(nf90_get_var(ncid,varid(38),lb_f_leaf))
-    call check(nf90_get_var(ncid,varid(39),lb_kc25))
-    call check(nf90_get_var(ncid,varid(40),lb_ko25))
-    call check(nf90_get_var(ncid,varid(41),lb_tau25))
-    !call check(nf90_get_var(ncid,varid(29),u_f_lr))
-	! 2023/06/30
-    ! call check(nf90_get_var(ncid,varid(36),u_agb2vod))
-    call check(nf90_get_var(ncid,varid(42),lb_f_resp))
-    call check(nf90_get_var(ncid,varid(43),lb_VN_slope))
-    call check(nf90_get_var(ncid,varid(44),lb_f_decay))
-    call check(nf90_get_var(ncid,varid(45),lb_bwb))
-    call check(nf90_get_var(ncid,varid(46),lb_a))
-    call check(nf90_get_var(ncid,varid(47),lb_b))
-    call check(nf90_get_var(ncid,varid(48),lb_c))
-
-    call check(nf90_close(ncid))
-
-    !write(*,*) 'p_Vcmax=', p_Vcmax
-    !write(*,*) 'p_Vcmax dim1=', size(p_Vcmax,dim=1)
-    !write(*,*) 'p_Vcmax dim2=', size(p_Vcmax,dim=2)
-
-    !write(*,*) 'pf%Vcmax dim1=', size(PF%Vcmax,dim=1)
-
-    call random_seed() !库函数，生成随机数前调用
-    call random_number(array) ! Uniform distribution
-
-    ! Now convert to normal distribution
-    DO i = 1, n-1, 2
-       temp_num = sd * SQRT(-2.0*LOG(array(i))) * COS(2*pi*array(i+1)) + mean
-       array(i+1) = sd * SQRT(-2.0*LOG(array(i))) * SIN(2*pi*array(i+1)) + mean
-       array(i) = temp_num
-    END DO
-
-    do m=1,nlp
-     do n=1,parloop
-      !write(*,*) 'p_Vcmax(j,m)=', p_Vcmax(j,m)
-      !write(*,*) 'u_Vcmax(j,m)=', u_Vcmax(j,m)
-      !write(*,*) 'PF%Vcmax=', PF%Vcmax(n,m)
-      PF%Vcmax(n,m) = lb_Vcmax(j,m)+(ub_Vcmax(j,m)-lb_Vcmax(j,m))*array(n)
-      !write(*,*) 'PF%Vcmax=', PF%Vcmax(n,m)
-      PF%q10(n,m) = lb_q10(j,m)+(ub_q10(j,m)-lb_q10(j,m))*array(n)
-      PF%VJ_slope(n,m) = lb_VJ_slope(j,m)+(ub_VJ_slope(j,m)-lb_VJ_slope(j,m))*array(n)
-      !write(*,*) 'p_N_leaf(j,m)=', p_N_leaf(j,m)
-      !write(*,*) 'u_N_leaf(j,m)=', u_N_leaf(j,m)
-      PF%N_leaf(n,m) = lb_N_leaf(j,m)+(ub_N_leaf(j,m)-lb_N_leaf(j,m))*array(n)
-      PF%r_decay(n,m) =  lb_r_decay(j,m)+(ub_r_decay(j,m)-lb_r_decay(j,m))*array(n)
-      PF%b_h2o(n,m) = lb_b_h2o(j,m)+(ub_b_h2o(j,m)-lb_b_h2o(j,m))*array(n)
-      PF%sif_alpha(n,m) = lb_sif_alpha(j,m)+(ub_sif_alpha(j,m)-lb_sif_alpha(j,m))*array(n)
-      PF%sif_beta(n,m) =  lb_sif_beta(j,m)+(ub_sif_beta(j,m)-lb_sif_beta(j,m))*array(n)
-      PF%taweff(n,m) =  lb_taweff(j,m)+(ub_taweff(j,m)-lb_taweff(j,m))*array(n)
-      PF%D0(n,m) = lb_D0(j,m)+(ub_D0(j,m)-lb_D0(j,m))*array(n)
-      PF%Ksat_scalar(n,m) = lb_Ksat_scalar(ii,m)+(ub_Ksat_scalar(ii,m)-lb_Ksat_scalar(ii,m))*array(n)
-      PF%b_scalar(n,m) = lb_b_scalar(ii,m)+(ub_b_scalar(ii,m)-lb_b_scalar(ii,m))*array(n)
-      PF%m_h2o(n,m) =  lb_m_h2o(j,m)+(ub_m_h2o(j,m)-lb_m_h2o(j,m))*array(n)
-      PF%f_leaf(n,m) =  lb_f_leaf(j,m)+(ub_f_leaf(j,m)-lb_f_leaf(j,m))*array(n)
-      PF%kc25(n,m) =  lb_kc25(j,m)+(ub_kc25(j,m)-lb_kc25(j,m))*array(n)
-      PF%ko25(n,m) = lb_ko25(j,m)+(ub_ko25(j,m)-lb_ko25(j,m))*array(n)
-      PF%tau25(n,m) =  lb_tau25(j,m)+(ub_tau25(j,m)-lb_tau25(j,m))*array(n)
-      ! assim%p_f_lr = p_f_lr
-      ! PF%agb2vod(n,m) =  p_agb2vod(j,m)+(u_agb2vod(j,m)-p_agb2vod(j,m))*array(n)   not used
-      PF%pfweight(n,m) =  1./parloop
-      ! 2023/06/30
-      PF%f_resp(n,m) = lb_f_resp(j,m)+(ub_f_resp(j,m)-lb_f_resp(j,m))*array(n)
-      PF%VN_slope(n,m) = lb_VN_slope(j,m)+(ub_VN_slope(j,m)-lb_VN_slope(j,m))*array(n)
-      PF%f_decay(n,m) = lb_f_decay(j,m)+(ub_f_decay(j,m)-lb_f_decay(j,m))*array(n)
-      PF%bwb(n,m) = lb_bwb(j,m)+(ub_bwb(j,m)-lb_bwb(j,m))*array(n)
-      PF%a(n,m) = lb_a(j,m)+(ub_a(j,m)-lb_a(j,m))*array(n)
-      PF%b(n,m) = lb_b(j,m)+(ub_b(j,m)-lb_b(j,m))*array(n)
-      PF%c(n,m) = lb_c(j,m)+(ub_c(j,m)-lb_c(j,m))*array(n)
-
-
-
-     end do
-    end do
-
-    !PF%Vcmax = my_random(p_Vcmax(j)-u_Vcmax(j),p_Vcmax(j)+u_Vcmax(j))
-    !PF%q10 = my_random(p_q10(j)-u_q10(j),p_q10(j)+u_q10(j))
-    !PF%VJ_slope = my_random(p_VJ_slope(j)-u_VJ_slope(j),p_VJ_slope(j)+u_VJ_slope(j))
-    !PF%N_leaf = my_random(p_N_leaf(j)-u_N_leaf(j),p_N_leaf(j)+u_N_leaf(j))
-    !PF%r_decay = my_random(p_r_decay(j)-u_r_decay(j),p_r_decay(j)+u_r_decay(j))
-    !PF%b_h2o = my_random(p_b_h2o(j)-u_b_h2o(j),p_b_h2o(j)+u_b_h2o(j))
-    !PF%sif_alpha = my_random(p_sif_alpha(j)-u_sif_alpha(j),p_sif_alpha(j)+u_sif_alpha(j))
-    !PF%sif_beta = my_random(p_sif_beta(j)-u_sif_beta(j),p_sif_beta(j)+u_sif_beta(j))
-    !PF%taweff = my_random(p_taweff(j)-u_taweff(j),p_taweff(j)+u_taweff(j))
-    !PF%D0 = my_random(p_D0(j)-u_D0(j),p_D0(j)+u_D0(j))
-    !PF%Ksat_scalar = my_random(p_Ksat_scalar(ii)-u_Ksat_scalar(ii),p_Ksat_scalar(ii)+u_Ksat_scalar(ii))
-    !PF%b_scalar = my_random(p_b_scalar(ii)-u_b_scalar(ii),p_b_scalar(ii)+u_b_scalar(ii))
-    !PF%m_h2o = my_random(p_m_h2o(j)-u_m_h2o(j),p_m_h2o(j)+u_m_h2o(j))
-    !PF%f_leaf = my_random(p_f_leaf(j)-u_f_leaf(j),p_f_leaf(j)+u_f_leaf(j))
-    !PF%kc25 = my_random(p_kc25(j)-u_kc25(j),p_kc25(j)+u_kc25(j))
-    !PF%ko25 = my_random(p_ko25(j)-u_ko25(j),p_ko25(j)+u_ko25(j))
-    !PF%tau25 = my_random(p_tau25(j)-u_tau25(j),p_tau25(j)+u_tau25(j))
-   ! assim%p_f_lr = p_f_lr
-    !PF%agb2vod = my_random(p_agb2vod-u_agb2vod,p_agb2vod+u_agb2vod)
-
-  end subroutine Create_PF_para_normal
-
   subroutine read_PF_obs(nd)
     implicit none
 
@@ -1834,7 +1356,7 @@ contains
     integer          :: i
     !--iLab::avoid pointer (see also below)
     ! type(forc),pointer :: p
-    real(r8)           :: obs_VOD(nlp) ! changed to obs_VOD from obs_GPP
+    real(r8)           :: obs_GPP(nlp)
     !character(len=6)   :: monstr
     character(len=8)   :: datestr
     character(len=4)   :: yrstr
@@ -1857,14 +1379,13 @@ contains
     !write(*,*) "nf90_open"
     call check(nf90_open(fname,nf90_nowrite,ncid))
     !write(*,*) "nf90_open"
-    call check(nf90_inq_varid(ncid,"obs_VOD",varid))
+    call check(nf90_inq_varid(ncid,"obs_GPP",varid))
     !write(*,*) "nf90_inq_varid"
-    call check(nf90_get_var(ncid,varid,obs_VOD,start=(/1,nd/),count=(/nlp,1/)))
+    call check(nf90_get_var(ncid,varid,obs_GPP,start=(/1,nd/),count=(/nlp,1/)))
     !write(*,*) "nf90_get_var"
     call check(nf90_close(ncid))
 
-    ! PF_obs%obs_GPP = obs_GPP
-    PF_obs%obs_VOD = obs_VOD
+    PF_obs%obs_GPP = obs_GPP !g C/m2/h
 
   end subroutine read_PF_obs
 

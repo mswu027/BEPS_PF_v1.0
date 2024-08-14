@@ -42,14 +42,13 @@ Delta = 0.006918-0.399912*cos(day*2.0*PI/doy)+0.070257*sin(day*2.0*PI/doy) &
 
 !! longitude 0.5~359.5  => -179.5~179.5
 
-!if(lon > 180 .and. lon < 360) then
-!     lon1 = lon - 360.
-!else
-!     lon1 = lon
-!end if
-lon1=lon
-hr=hour
-!hr    = hour + lon1/15.0   !convert local time to UTC, but don"t need for xiuli
+if(lon > 180 .and. lon < 360) then
+     lon1 = lon - 360.
+else
+     lon1 = lon
+end if
+
+hr    = hour + lon1/15.0
 if(hr > 24) hr = 24 - hr
 if(hr < 0 ) hr = 24 + hr
 

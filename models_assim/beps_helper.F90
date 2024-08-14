@@ -89,11 +89,6 @@ CONTAINS
     real(r8) :: p1,p2
     real(r8) :: tune ! tune/2 >= min(p1,p2) - fominef
     fominef_ss = min(p1,p2)-0.5*tune*exp(-abs(p1-p2)/tune)
-    if (abs(p1-p2)/tune > 100.0) then
-        fominef_ss = min(p1,p2)
-    else
-        fominef_ss = min(p1,p2)-0.5*tune*exp(-abs(p1-p2)/tune)
-    end if
   end function fominef_ss
 
  real function fomaxef_ss(p1,p2,tune)

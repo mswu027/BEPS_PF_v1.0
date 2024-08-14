@@ -7,23 +7,22 @@ MODULE MOD_MEND
     
     USE MOD_MEND_TYPE
     USE MOD_USRFS
-    use shr_kind_mod, only: r8=>shr_kind_r8
     IMPLICIT NONE
 
-    !PRIVATE:: subMEND_INI
-    !PRIVATE:: subMEND_output
-    !PRIVATE:: subMEND_output_rate
-    !PRIVATE:: subMEND_RUN
-    !PRIVATE:: subMEND
-    !PRIVATE:: subMEND_PAR
-    !PRIVATE:: sOUT_OPT_h
+    PRIVATE:: subMEND_INI
+    PRIVATE:: subMEND_output
+    PRIVATE:: subMEND_output_rate
+    PRIVATE:: subMEND_RUN
+    PRIVATE:: subMEND
+    PRIVATE:: subMEND_PAR
+    PRIVATE:: sOUT_OPT_h
     
-    !PUBLIC :: sINP_Read
-    !PUBLIC :: sOUT_Day2Mon
-    !PUBLIC :: sOUT_OPT
-    !PUBLIC :: sOUT_ALL_tscale
+    PUBLIC :: sINP_Read
+    PUBLIC :: sOUT_Day2Mon
+    PUBLIC :: sOUT_OPT
+    PUBLIC :: sOUT_ALL_tscale
     
-    !PUBLIC:: fMEND_OBJ
+    PUBLIC:: fMEND_OBJ
     PUBLIC:: fV_MM     !!Michaelis-Menten Kinetics
     PUBLIC:: fAds      !!adsorption-desorption
     
@@ -72,48 +71,65 @@ SUBROUTINE subMEND_INI(sINI)
     !!LOCAL VARIABLES:
     TYPE(sMEND_INP):: sINP
     INTEGER, PARAMETER :: nProp = 13 !# of soil properties
-    REAL(r8) dINI(nProp)
+    REAL(8) dINI(nProp)
     !INTEGER nObs_time, nObs_var, nObs_col != nSoil*nSubstrate*nObs_var  !# of columns in observation data file
 
     INTEGER i, j, k!, lp
-    !INTEGER ifini!, ifobs  
-    REAL(r8) frISO(const_nISO), frISOadd(const_nISO)
-    REAL(r8) rLig_Cel(2) !proportion of Lignin and Cellulose in POC
-    REAL(r8) rQOC !proportion of QOC in total MOC
+    INTEGER ifini!, ifobs  
+    REAL(8) frISO(const_nISO), frISOadd(const_nISO)
+    REAL(8) rLig_Cel(2) !proportion of Lignin and Cellulose in POC
+    REAL(8) rQOC !proportion of QOC in total MOC
 
-    !CHARACTER(len = 100) sRead!!propName(nProp) !name of 10 properties 
-    !INTEGER iRead  !!iTemp
-    !REAL(r8) rRead  !!rTemp
+    CHARACTER(len = 100) sRead!!propName(nProp) !name of 10 properties 
+    INTEGER iRead  !!iTemp
+    REAL(8) rRead  !!rTemp
     
     rLig_Cel = (/sINI%LCI0, 1.0 - sINI%LCI0/) !proportion of Lignin and Cellulose in POC
-    rQOC = 0.01 !proportion of QOC in total MOC
-    dINI = (/7.98, 0.88, 3.32, 4.65, 0.17, 0.10, 0.0003, 0.0003, 0.0003, 510., 350., 140., 10./)
+    rQOC = 0.01d0 !proportion of QOC in total MOC
+
+    !ifini = 1
+    !ifobs = 2
+!    sRead = trim(sINI%dirinp_case)//trim(sINI%SOIL_INI_file)
+!    open(unit = ifini, file = sRead, status = 'old')
+!    do i = 1, 3
+!        read(ifini, *) sRead !head: !!ID	Property	 Value
+!    end do
+!    do j = 1, nProp
+!        read(ifini, *) iRead, sRead, dINI(j)
+!    end do
+!    close(ifini)
+    dINI = (/7.98, 0.88, 3.32, 4.65, 0.17, 0.10, 0.0003, 0.0003, 0.0003, 510, 350, 140, 10/)
     ! SOC, TON, POC, MOC, MBC, DOC, EP1, EP2, EM, Sand, Silt, Clay, Depth
     ! units: clay, sand, silt, 1/1000; SOC, TON, POC, MOC, MBC, mgC/g soil; Depth, cm
-    frISO(2) = const_Rstd(1)/(1.0 + const_Rstd(1)) !standard ratio of C14/C12 - 1e-12
-    frISO(1) = 1. - frISO(2) !e.g., C12 
+    frISO(2) = const_Rstd(1)/(1d0 + const_Rstd(1)) !standard ratio of C14/C12 - 1e-12
+    frISO(1) = 1d0 - frISO(2) !e.g., C12 
     sINI % r0 = 0.1
 
 !! sINP%CPOOL        !carbon pools
     sINI % soilDepth = dINI(13)  !![cm], soil depth
     sINP % CPOOL % POC = dINI(3) * rLig_Cel ![mg C/g soil],Particulate Organic Carbon, size of {} determined by nPOC, !(/DBLE(0.958), DBLE(2.290)/)  !reshape((/DBLE(0.958), DBLE(2.290)/),shape(sINP%CPOOL%POC))
-    sINP % CPOOL % MOC = dINI(4)*(1.0 - rQOC) ![mg C/g soil],Mineral Associate Organic Carbon  !DBLE(27.868) 
+    sINP % CPOOL % MOC = dINI(4)*(1.d0 - rQOC) ![mg C/g soil],Mineral Associate Organic Carbon  !DBLE(27.868) 
     sINP % CPOOL % QOC = dINI(4) * rQOC ![mg C/g soil],adsorbed phase of DOC  !DBLE(0.100)
     sINP % CPOOL % MBC = dINI(5) ![mg C/g soil],Microbial Biomass Carbon  !DBLE(0.640) 
     sINP % CPOOL % DOC = dINI(6) ![mg C/g soil],Dissolved Organic Carbon     !DBLE(0.210)  
     sINP % CPOOL % MBCA = sINP % CPOOL % MBC * sINI % r0 ![mg C/g soil],Active Microbial Biomass Carbon  !DBLE(0.640) 
-    sINP % CPOOL % MBCD = sINP % CPOOL % MBC * (1.0 - sINI % r0) ![mg C/g soil],Active Microbial Biomass Carbon  !DBLE(0.640) 
+    sINP % CPOOL % MBCD = sINP % CPOOL % MBC * (1.d0 - sINI % r0) ![mg C/g soil],Active Microbial Biomass Carbon  !DBLE(0.640) 
     sINP % CPOOL % ENZP = (/dINI(7),dINI(8)/)!!(/1.1d-3, 1.1d-3/) ![mg C/g soil],ENZyme for POC        !reshape((/DBLE(1.1d-3),DBLE(1.1d-3)/),shape(sINP%CPOOL%ENZP))   
     sINP % CPOOL % ENZM = dINI(9) !!1.4d-3 ![mg C/g soil],Enzyme for MAOC  
-    sINP % CPOOL % CO2 = 0. ![mg C/g soil],CO2 in the soil
+    sINP % CPOOL % CO2 = 0d0 ![mg C/g soil],CO2 in the soil
     sINP % CPOOL % SOC = sum(sINP % CPOOL % POC) + sINP % CPOOL % MOC + sINP % CPOOL % QOC
 !!     END TYPE sMEND_INP
     do j = 1, const_nPOC
         sINP % CPOOLIFR % POC(j) = frISO
         sINP % CPOOLIFR % ENZP(j) = frISO
+
         sINP % CPOOLI % POC(j) = sINP % CPOOLIFR % POC(j) * sINP % CPOOL % POC(j)
         sINP % CPOOLI % ENZP(j) = sINP % CPOOLIFR % ENZP(j) * sINP % CPOOL % ENZP(j)
+
+!!        sINP % CADDI % POCadd(j) = sINP % CADD % POCadd(j) * frISOadd
     end do
+
+!!    sINP % CADDI % DOCadd = sINP % CADD % DOCadd * frISOadd
 
     sINP % CPOOLIFR % MOC = frISO
     sINP % CPOOLIFR % ENZM = frISO
@@ -123,6 +139,9 @@ SUBROUTINE subMEND_INI(sINI)
     sINP % CPOOLIFR % MBCA = frISO
     sINP % CPOOLIFR % MBCD = frISO
     sINP % CPOOLIFR % CO2 = frISO
+
+    !     print*, "C12 added = ",sINP%CADDI(1)
+    !     print*, "C14 added = ",sINP%CADDI(2) 
 
     sINP % CPOOLI % MOC = sINP % CPOOLIFR % MOC * sINP % CPOOL % MOC
     sINP % CPOOLI % ENZM = sINP % CPOOLIFR % ENZM * sINP % CPOOL % ENZM
@@ -158,12 +177,42 @@ SUBROUTINE subMEND_INI(sINI)
         sINP % CPOOLI_SIG(j) % SOC = fPermil(0, const_Rstd(j), sINP % CPOOLI(1) % SOC, sINP % CPOOLI(j + 1) % SOC)
     end do !j = 1, const_nISO - 1
 
+!    if (sINI % iModel .eq. 0) then !output results for model simulation
+!        write(sINI%iFout_VAR_hour, '(i10,13e20.3,13e20.3,13e20.3)') &
+!                    0, sINP % CPOOL,sINP % CPOOLI(1),sINP % CPOOLI(2)
+!    end if
+
     sINI % sINP = sINP
 
 END SUBROUTINE subMEND_INI
 
 !-----------------------------------------------------------------------------
-SUBROUTINE subMEND_output_rate(sINI, sPAR, sINP, sOUT)
+SUBROUTINE subMEND_output(sDate,ihr, sPAR, sINI, sOUT)
+!    USE MOD_MEND
+!!Hourly output for all state variables and fluxes
+    !!ARGUMENTS:
+    TYPE(sMEND_PAR), intent(in) :: sPAR
+    TYPE(sMEND_INI), intent(in) :: sINI
+    TYPE(sMEND_OUT), intent(in) :: sOUT
+    CHARACTER(LEN=8),intent(in) :: sDate
+    INTEGER,         intent(in) :: ihr
+    
+    !!LOCAL VARIABLES:
+    CHARACTER(LEN=2)  str2
+    CHARACTER(LEN=10) sDateHr
+    
+    call sInt2Str(ihr,2,str2)
+    sDateHr = sDate//str2
+!    if (sINI%iModel .eq. 0) then
+    write(sINI%iFout_VAR_hour, '(A10,13e20.3,13e20.3,13e20.3)') &
+        sDateHr, sOUT % CPOOL,sOUT % CPOOLI(1),sOUT % CPOOLI(2)
+    write(sINI%iFout_FLX_hour, '(A10,50e20.3)') sDateHr, sOUT % CFLUX
+    write(sINI%iFout_PAR_hour, '(A10,50e20.3)') sDateHr, sPAR
+!    end if
+END SUBROUTINE subMEND_output
+
+!-----------------------------------------------------------------------------
+SUBROUTINE subMEND_output_rate(sDate,ihr, sINI, sPAR, sINP, sOUT)
 !    USE MOD_MEND
 !!Hourly output for derived parameters
 !!"Hour","kPOC1","kPOC2","kMOC","kDOC","kMBC","phi","rMBA"
@@ -172,23 +221,29 @@ SUBROUTINE subMEND_output_rate(sINI, sPAR, sINP, sOUT)
     TYPE(sMEND_PAR), intent(in) :: sPAR
     TYPE(sMEND_INP), intent(in) :: sINP
     TYPE(sMEND_OUT), intent(in) :: sOUT   
-    !CHARACTER(LEN=8),intent(in) :: sDate
-    !INTEGER,         intent(in) :: ihr
+    CHARACTER(LEN=8),intent(in) :: sDate
+    INTEGER,         intent(in) :: ihr
     
     !!LOCAL VARIABLES 
-    REAL(r8) kPOC1           !!Equivalent 1st-order decomposition rate; k=Vd*ENZP/(POC + Ks)
-    REAL(r8) kPOC2           !!Equivalent 1st-order decomposition rate; k=Vd*ENZP/(POC + Ks)
-    REAL(r8) kMOC            !!Equivalent 1st-order decomposition rate; k=Vd*ENZM/(MOC + Ks)
-    REAL(r8) kDOC            !!Equivalent 1st-order turnover rate of DOC; k=[(Vg+Vm)/Yg]*MBC/(DOC + Ks)
-    REAL(r8) kMBa            !!Equivalent 1st-order turnover rate of Active Mcirobes; k=respiration_rate + mortality_rate+Enzyme_production_rate
-    REAL(r8) kMBa_in         !!Equivalent 1st-order assimilation rate of active microbes 
-    REAL(r8) kMBd            !!Equivalent 1st-order turnover rate of dormant microbes
-    REAL(r8) kMBd_in         !!Equivalent 1st-order microbial dormancy rate 
-    REAL(r8) kMB             !!Equivalent 1st-order turnover rate of microbes
-    REAL(r8) kMB_in          !!Equivalent 1st-order assimilation rate of total microbes
-    REAL(r8) phi             !!DOC saturation level; phi=DOC/(DOC+Ks)
-    REAL(r8) rMBa            !!Active Fraction of Microbes, r=MBCA/MBC
-    REAL(r8) CUE             !!Apparent Microbial Carbon Use Efficiency, CUE=[DOM_to_MBA - CO2_gmo - death]/DOM_to_MBA
+    REAL(8) kPOC1           !!Equivalent 1st-order decomposition rate; k=Vd*ENZP/(POC + Ks)
+    REAL(8) kPOC2           !!Equivalent 1st-order decomposition rate; k=Vd*ENZP/(POC + Ks)
+    REAL(8) kMOC            !!Equivalent 1st-order decomposition rate; k=Vd*ENZM/(MOC + Ks)
+    REAL(8) kDOC            !!Equivalent 1st-order turnover rate of DOC; k=[(Vg+Vm)/Yg]*MBC/(DOC + Ks)
+    REAL(8) kMBa            !!Equivalent 1st-order turnover rate of Active Mcirobes; k=respiration_rate + mortality_rate+Enzyme_production_rate
+    REAL(8) kMBa_in         !!Equivalent 1st-order assimilation rate of active microbes 
+    REAL(8) kMBd            !!Equivalent 1st-order turnover rate of dormant microbes
+    REAL(8) kMBd_in         !!Equivalent 1st-order microbial dormancy rate 
+    REAL(8) kMB             !!Equivalent 1st-order turnover rate of microbes
+    REAL(8) kMB_in          !!Equivalent 1st-order assimilation rate of total microbes
+    REAL(8) phi             !!DOC saturation level; phi=DOC/(DOC+Ks)
+    REAL(8) rMBa            !!Active Fraction of Microbes, r=MBCA/MBC
+    REAL(8) CUE             !!Apparent Microbial Carbon Use Efficiency, CUE=[DOM_to_MBA - CO2_gmo - death]/DOM_to_MBA
+    
+!    CHARACTER(LEN=2)  str2
+!    CHARACTER(LEN=10) sDateHr
+    
+ !   call sInt2Str(ihr,2,str2)
+ !   sDateHr = sDate//str2
     
     phi = sINP%CPOOL%DOC/(sPAR%KsDOC+sINP%CPOOL%DOC)
     rMBa = sINP%CPOOL%MBCA/sINP%CPOOL%MBC
@@ -196,19 +251,23 @@ SUBROUTINE subMEND_output_rate(sINI, sPAR, sINP, sOUT)
     kPOC2 = sPAR%VdPOC(2)*sINP%CPOOL%ENZP(2)/(sPAR%KsPOC(2)+sINP%CPOOL%POC(2)) 
     kMOC = sPAR%VdMOC*sINP%CPOOL%ENZM/(sPAR%KsMOC+sINP%CPOOL%MOC)
     kDOC = (sPAR%Vg + sPAR%Vm)/sPAR%Yg*sINP%CPOOL%MBCA/(sPAR%KsDOC+sINP%CPOOL%DOC)
-    kMBa = (sPAR%Vg + sPAR%Vm)*(1.0/sPAR%Yg - 1.0)*phi &
+    kMBa = (sPAR%Vg + sPAR%Vm)*(1.D0/sPAR%Yg - 1.D0)*phi &
             + sPAR%rMORT + (sPAR%pENZP+sPAR%pENZM) * sPAR%Vm 
     kMBa_in = (sPAR%Vg + sPAR%Vm)/sPAR%Yg*phi + sOUT%CFLUX%MBCD_to_MBCA/sINP%CPOOL%MBCA
     kMBd_in = sOUT%CFLUX%MBCA_to_MBCD/sINP%CPOOL%MBCD
     kMBd = (sOUT%CFLUX%MBCD_to_MBCA + sOUT%CFLUX%CO2_maintn_dorm)/sINP%CPOOL%MBCD
     kMB = (sOUT%CFLUX%CO2_gm + sOUT%CFLUX%MBC_PM)/sINP%CPOOL%MBC
     kMB_in = sOUT%CFLUX%DOC_to_MBC/sINP%CPOOL%MBC       
-    if (sOUT%CFLUX%DOC_to_MBC > 0.0) then
+    if (sOUT%CFLUX%DOC_to_MBC > 0.D0) then
         CUE = (sOUT%CFLUX%DOC_to_MBC - sOUT%CFLUX%CO2_gm - sOUT%CFLUX%MBC_PM)/sOUT%CFLUX%DOC_to_MBC
     else
-        CUE = 0.
+        CUE = 0.D0
     end if
-
+!    if (sINI%iModel .eq. 0) then
+!    write(sINI%iFout_rate_hour, '(A10,30e20.3)') &
+!            sDateHr, kPOC1,kPOC2,kMOC,kDOC,kMBa,kMBa_in,kMBd,kMBd_in,kMB,kMB_in,phi,rMBa,CUE, &
+!            sOUT%RE,sOUT%TOCbeg,sOUT%TOCend,sOUT%TOCinp,sOUT%TOCout
+!    end if
 END SUBROUTINE subMEND_output_rate
 !-----------------------------------------------------------------------------
 SUBROUTINE subMEND_RUN(xx, sPAR, sINI, sOUT)
@@ -216,15 +275,14 @@ SUBROUTINE subMEND_RUN(xx, sPAR, sINI, sOUT)
     TYPE(sMEND_PAR), intent(inout) :: sPAR
     TYPE(sMEND_INI), intent(inout) :: sINI
     TYPE(sMEND_OUT), intent(inout) :: sOUT
-    REAL(r8)        , intent(in)    :: xx(sINI%nPar)
+    REAL(8)        , intent(in)    :: xx(sINI%nPar)
     
     !!LOCAL VARIABLES:
-    TYPE(sMEND_INP) sINP
-    INTEGER j  
+    TYPE(sMEND_INP) sINP  
 !!    INTEGER*4 i, k 
  !   INTEGER j, lp, jbeg,jend, tstep, ibeg, iend, iday
  !   INTEGER iFunc, iObs_time, iHour
-    REAL(r8) frISOadd(const_nISO)
+    REAL(8) frISOadd(const_nISO)
 !    INTEGER nHour,nday,nmon
 !    REAL(8), ALLOCATABLE:: dSIM_d(:,:)  !!daily
 !    REAL(8), ALLOCATABLE:: dSIM_m(:,:)  !!monthly
@@ -252,9 +310,11 @@ SUBROUTINE subMEND_RUN(xx, sPAR, sINI, sOUT)
     
     sINI%LCI0       = xx(1) !initial LCI
     sINI%r0         = xx(2) !fraction of active biomass
+!     
+!    call subMEND_INI(sINI) !initialization: initial pool sizes
     
-    frISOadd(2) = 1.0/(1.0 + sINI%SIN_C12_C14) !C14
-    frISOadd(1) = 1.0 - frISOadd(2)            !C12
+    frISOadd(2) = 1d0/(1d0 + sINI%SIN_C12_C14) !C14
+    frISOadd(1) = 1d0 - frISOadd(2)            !C12
     
     sINP = sINI%sINP
     
@@ -272,18 +332,18 @@ SUBROUTINE subMEND_RUN(xx, sPAR, sINI, sOUT)
     sINP%SWP = sINI%SWP
     sINP%pH  = sINI%SpH
 
-    !jbeg = 1
-    !jend = 86400            
+    jbeg = 1
+    jend = 86400            
     !!External INPUT: BEGIN
-    sINP % CADD % POCadd(1) = sINP%SIN * sINI%SIN_frac(1) !+ sINI%SIN_other(1,1)  !![mg POC/g soil/h], inputs to POC
-    sINP % CADD % POCadd(2) = sINP%SIN * sINI%SIN_frac(2) !+ sINI%SIN_other(1,2)
-    sINP % CADD % DOCadd    = sINP%SIN * sINI%SIN_frac(3) !+ sINI%SIN_other(1,3)  !![mg DOC/g soil/h], inputs to DOC
+    sINP % CADD % POCadd(1) = sINP%SIN * sINI%SIN_frac(1) + sINI%SIN_other(1,1)  !![mg POC/g soil/h], inputs to POC
+    sINP % CADD % POCadd(2) = sINP%SIN * sINI%SIN_frac(2) + sINI%SIN_other(1,2)
+    sINP % CADD % DOCadd    = sINP%SIN * sINI%SIN_frac(3) + sINI%SIN_other(1,3)  !![mg DOC/g soil/h], inputs to DOC
 
-    !if(i.ge.jbeg.and.i.le.jend) then
-    !    sINP%CADD%POCadd(1) = sINP%CADD%POCadd(1)+sINI%SIN_other(2,1)/DBLE(jend-jbeg+1)
-    !    sINP%CADD%POCadd(2) = sINP%CADD%POCadd(2)+sINI%SIN_other(2,2)/DBLE(jend-jbeg+1)
-    !    sINP%CADD%DOCadd    = sINP%CADD%DOCadd   +sINI%SIN_other(2,3)/DBLE(jend-jbeg+1)
-    !end if
+    if(i.ge.jbeg.and.i.le.jend) then
+        sINP%CADD%POCadd(1) = sINP%CADD%POCadd(1)+sINI%SIN_other(2,1)/DBLE(jend-jbeg+1)
+        sINP%CADD%POCadd(2) = sINP%CADD%POCadd(2)+sINI%SIN_other(2,2)/DBLE(jend-jbeg+1)
+        sINP%CADD%DOCadd    = sINP%CADD%DOCadd   +sINI%SIN_other(2,3)/DBLE(jend-jbeg+1)
+    end if
     !        write(*,*)i,sINP % CADD % POCadd(1:2),sINP % CADD % DOCadd
 
     do j = 1, const_nPOC
@@ -296,7 +356,8 @@ SUBROUTINE subMEND_RUN(xx, sPAR, sINI, sOUT)
     call subMEND_PAR(xx, sPAR, sINI)   !!modify parameter values by soil temperature, water potential, pH
     call subMEND(sPAR, sINI, sOUT) !!MEND model 
     !output results for model simulation
-    call subMEND_output_rate(sINI, sPAR, sINP, sOUT)
+!    call subMEND_output_rate(sDate,lp, sINI, sPAR, sINP, sOUT)
+!    call subMEND_output(sDate,lp, sPAR, sINI, sOUT)
 
 END SUBROUTINE subMEND_RUN
 !-----------------------------------------------------------------------------
@@ -321,8 +382,8 @@ SUBROUTINE subMEND(sPAR, sINI, sOUT)
     TYPE(sSORP_OUT) sSorpOUT
 
     INTEGER i, j, k, iFunc
-    REAL(r8) OC1, OC2, sumPOC, sumENZP, phi
-    REAL(r8) frPOC(const_nPOC), frENZP(const_nPOC), POCdec(const_nPOC), ENZP_loss(const_nPOC)
+    REAL(8) OC1, OC2, sumPOC, sumENZP, phi
+    REAL(8) frPOC(const_nPOC), frENZP(const_nPOC), POCdec(const_nPOC), ENZP_loss(const_nPOC)
     
 !    ASSOCIATE(sINP => sINI%sINP) 
     sINP = sINI%sINP
@@ -341,7 +402,7 @@ SUBROUTINE subMEND(sPAR, sINI, sOUT)
         POCdec(i) = fV_MM(sINI%iKinetics, smmPAR, smmINP)
         sOUT % CFLUX % POCdec(i) = min(POCdec(i), sINP % CPOOL % POC(i))
         sOUT%CFLUX%POCdec_to_DOC(i) = sPAR%frPOC2DOC*sOUT % CFLUX % POCdec(i) 
-        sOUT%CFLUX%POCdec_to_MOC(i) = (1.0 - sPAR%frPOC2DOC) * sOUT%CFLUX%POCdec(i) 
+        sOUT%CFLUX%POCdec_to_MOC(i) = (1.d0 - sPAR%frPOC2DOC) * sOUT%CFLUX%POCdec(i) 
     end DO!for i = 1:sINP%nPOC
 
     !Flux 3: MOC decomposition
@@ -375,11 +436,11 @@ SUBROUTINE subMEND(sPAR, sINI, sOUT)
     
     smmINP % substrate = sINP % CPOOL % DOC
     smmINP % enzyme = sINP % CPOOL % MBCA
-    smmPAR % vm = sPAR % Vg * (1.0/sPAR % Yg - 1.0)
+    smmPAR % vm = sPAR % Vg * (1.D0/sPAR % Yg - 1.D0)
     smmPAR % km = sPAR % KsDOC
     sOUT % CFLUX % CO2_growth = fV_MM(0, smmPAR, smmINP)
 
-    smmPAR % vm = sPAR % Vm * (1.0/sPAR % Yg - 1.0)
+    smmPAR % vm = sPAR % Vm * (1.D0/sPAR % Yg - 1.D0)
     sOUT % CFLUX % CO2_maintn = fV_MM(0, smmPAR, smmINP) 
                                     
     sOUT % CFLUX % CO2_gm = sOUT%CFLUX%CO2_growth + sOUT%CFLUX%CO2_maintn + sOUT%CFLUX%CO2_maintn_dorm
@@ -400,7 +461,7 @@ SUBROUTINE subMEND(sPAR, sINI, sOUT)
 !    sOUT % CFLUX % MBC_mortality = (1.d0 - sPAR % pENZP - sPAR % pENZM) * sOUT % CFLUX % MBC_PM
     sOUT % CFLUX % MBC_mortality = sPAR%rMORT * sINP%CPOOL%MBCA
     sOUT % CFLUX % MBC_to_DOC = sPAR % frMBC2DOC * sOUT % CFLUX % MBC_mortality
-    sOUT % CFLUX % MBC_to_POC = (1.0 - sPAR % frMBC2DOC) * sOUT % CFLUX % MBC_mortality
+    sOUT % CFLUX % MBC_to_POC = (1.d0 - sPAR % frMBC2DOC) * sOUT % CFLUX % MBC_mortality
     !Flux 9: enzyme synthesis
     sumPOC = sum(sINP % CPOOL % POC)
     frPOC = sINP % CPOOL % POC/sumPOC !compute the fraction of each type of POC, e%g%, lignin, cellulose 
@@ -417,7 +478,7 @@ SUBROUTINE subMEND(sPAR, sINI, sOUT)
     
     !Internal Flux: microbial dormancy and reactivation
     phi = sINP % CPOOL % DOC/(sINP % CPOOL % DOC + sPAR % KsDOC)
-    sOUT % CFLUX % MBCA_to_MBCD = (1.0 - phi) * sPAR % VmA2D * sINP % CPOOL % MBCA
+    sOUT % CFLUX % MBCA_to_MBCD = (1.d0 - phi) * sPAR % VmA2D * sINP % CPOOL % MBCA
     sOUT % CFLUX % MBCD_to_MBCA = phi * sPAR % VmD2A * sINP % CPOOL % MBCD
 
     !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -572,9 +633,9 @@ SUBROUTINE subMEND(sPAR, sINI, sOUT)
         stop
     end if
     
-    if(abs(sOUT % RE).gt.1.e-8) then
+    if(dabs(sOUT % RE).gt.1.D-8) then
         print*,"Balance Check ERROR: sOUT%RE=",sOUT % RE
-    !else
+    else
 !        print*,"Balance Check: ",sOUT % RE
     end if
     
@@ -594,27 +655,27 @@ SUBROUTINE subMEND_PAR(xx, sPAR, sINI)
     !!ARGUMENTS:
     TYPE(sMEND_PAR), intent(inout) :: sPAR
     TYPE(sMEND_INI), intent(inout) :: sINI
-    REAL(r8)        , intent(in)    :: xx(sINI%nPar)
+    REAL(8)        , intent(in)    :: xx(sINI%nPar)
     
     !!LOCAL VARIABLES:
-    REAL(r8) CUE_slope,CUE_ref, SWPmin !!CUE_slope = (-0.005, -0.016)  
-    REAL(r8) Vm0  !!specific maintenance rate without any modification
+    REAL(8) CUE_slope,CUE_ref, SWPmin !!CUE_slope = (-0.005, -0.016)  
+    REAL(8) Vm0  !!specific maintenance rate without any modification
     
-    REAL(r8) tp_scalar       !!temperature scalar
-    REAL(r8) wp_scalar       !!INCrease with increasing wp 
-    REAL(r8) wp_scalar_low   !!DECrease with increasing wp 
-    REAL(r8) wp_scalar_opt   !!with increasing wp, INcrease first to OPTimal condition, then decrease
-    REAL(r8) pH_scalar   !!pH scalar
+    REAL(8) tp_scalar       !!temperature scalar
+    REAL(8) wp_scalar       !!INCrease with increasing wp 
+    REAL(8) wp_scalar_low   !!DECrease with increasing wp 
+    REAL(8) wp_scalar_opt   !!with increasing wp, INcrease first to OPTimal condition, then decrease
+    REAL(8) pH_scalar   !!pH scalar
     
-    REAL(r8) tp
-    REAL(r8) wp
-    REAL(r8) pH
+    REAL(8) tp
+    REAL(8) wp
+    REAL(8) pH
     
     CHARACTER(len=3) BIOME  !!'ASM' = arid/semiarid/mediterranean; 'MGC'=mesic grassland & cropland; 'MDF'=Mesic Deciduous Forest; 'MCF'=MEsic Conifer Forest
     CHARACTER(len=3) SOM    !!'SOD' = disturbed soil; 'SOL'=intact soil; 'LIT'=litter
     CHARACTER(len=10) sCase
     
-    SWPmin = -13.86  !!for Microbial Mortality
+    SWPmin = -13.86d0  !!for Microbial Mortality
     
 !    sPAR%iKinetics = sINI%iKinetics
     BIOME = trim(sINI%BIOME)
@@ -684,7 +745,7 @@ SUBROUTINE subMEND_PAR(xx, sPAR, sINI)
     
     sCase = "MR"
     tp_scalar = fTArh(sCase, tp, const_Tref)
-    Vm0 = xx(17) * sPAR%alpha/(1.0 - sPAR%alpha)
+    Vm0 = xx(17) * sPAR%alpha/(1.D0 - sPAR%alpha)
     sPAR % Vm         = Vm0*tp_scalar !!*wp_scalar ![1/h], specific microbial maintenance rate
      
     sCase = "Km"
@@ -693,7 +754,7 @@ SUBROUTINE subMEND_PAR(xx, sPAR, sINI)
     
     sCase = "CUE"  !!label, no-use
     CUE_ref   = xx(20)
-    CUE_slope = -1.0*xx(21)
+    CUE_slope = -1.D0*xx(21)
     sPAR % Yg = fT_CUE(tp, const_Tref, CUE_slope, CUE_ref) ![-], carbon use efficiency in uptake of DOC by MB 
     
     !![7] MICROBIAL MORTALITY
@@ -726,7 +787,7 @@ END SUBROUTINE subMEND_PAR
 !==================================================================
 !! MODEL KINETICS
 !------------------------------------------------------------------  
-REAL(r8) FUNCTION fV_MM(iType, sPAR, sINP)
+REAL(8) FUNCTION fV_MM(iType, sPAR, sINP)
     !Michaelis-Menten Kinetics (Equation)
     !!ARGUMENTS:
     INTEGER,       INTENT(IN) :: iType
@@ -754,7 +815,7 @@ INTEGER FUNCTION fAds(sPAR, sINP, sOUT)
     TYPE(sSORP_PAR), INTENT(IN) :: sPAR
     TYPE(sSORP_OUT), INTENT(OUT) :: sOUT
     
-    sOUT % ads = sPAR % Kads * sINP % adsorbate * (1.0 - sINP % adsorbent/sPAR % Qmax)
+    sOUT % ads = sPAR % Kads * sINP % adsorbate * (1.d0 - sINP % adsorbent/sPAR % Qmax)
     sOUT % des = sPAR % Kdes * sINP % adsorbent/sPAR % Qmax
     if (sOUT % des > (sINP % adsorbent + sOUT % ads)) then
         sOUT % des = sINP % adsorbent + sOUT % ads
@@ -769,32 +830,32 @@ END FUNCTION fAds
 !!=================================================================
 !! TEMPERATURE SCALAR: BEGIN
 !------------------------------------------------------------------
-REAL(r8) function fTArrhenius(tmp, Ea)
+REAL(8) function fTArrhenius(tmp, Ea)
     !!ARGUMENTS:
-    REAL(r8) tmp,Ea
+    REAL(8)tmp,Ea
     !Ea [kJ/mol]: Arrhenius activation energy
     !temp (C): temperature
-    fTArrhenius = exp(-Ea * 1.e3/(const_R * (tmp + const_tmp_C2K)))
+    fTArrhenius = dexp(-Ea * 1d3/(const_R * (tmp + const_tmp_C2K)))
     return
 END function fTArrhenius
 !------------------------------------------------------------------
-REAL(r8) function fTArh0(T, Tref, Ea)
+REAL(8) function fTArh0(T, Tref, Ea)
 !    USE MOD_MEND
     !fTvm,[-] temperature-adjusted factor for maximum reaction rate in M-M kinetics 
     !fT = 1 at T = Tref
     !Ea [KJ/mol]: Arrhenius activation energy
     !temp (C): temperature
     !!ARGUMENTS:
-    REAL(r8), intent(in) :: T, Tref, Ea
-    REAL(r8) TKref, TK
+    REAL(8), intent(in) :: T, Tref, Ea
+    REAL(8) TKref, TK
     TKref = Tref + const_tmp_C2K
     TK = T + const_tmp_C2K
-    fTArh0 = exp(Ea*1.e3/const_R * (1.0/TKref - 1.0/TK))
+    fTArh0 = dexp(Ea*1.D3/const_R * (1.d0/TKref - 1.d0/TK))
     return
 END function fTArh0
 
 !------------------------------------------------------------------
-REAL(r8) function fTArh(sCase, T, Tref)
+REAL(8) function fTArh(sCase, T, Tref)
 !    USE MOD_MEND
     !fTvm,[-] temperature-adjusted factor for maximum reaction rate in M-M kinetics 
     !fT = 1 at T = Tref
@@ -802,77 +863,77 @@ REAL(r8) function fTArh(sCase, T, Tref)
     !temp (C): temperature
     !!ARGUMENTS:  
     CHARACTER(*), intent(inout) :: sCase
-    REAL(r8)          , intent(in) :: T, Tref
+    REAL(8)          , intent(in) :: T, Tref
     
     !!LOCAL VARIABLES:
-    REAL(r8) TKref, TK, Ea
+    REAL(8) TKref, TK, Ea
     
 !    sCase = trim(sCase)
     SELECT CASE (trim(sCase))
         CASE ("BG")  !! Beta-glucosidase
-            Ea = 42.2
+            Ea = 42.2d0
         CASE ("CBH") !! Cellobiohydrolase
-            Ea = 32.2
+            Ea = 32.2d0
         CASE ("EG")  !! Endo-glucanase
-            Ea = 34.4
+            Ea = 34.4d0
         CASE ("PER") !! Peroxidase
-            Ea = 52.9
+            Ea = 52.9d0
         CASE ("POX") !! Phenol oxidase
-            Ea = 53.1
+            Ea = 53.1d0
         CASE ("LIG") !! Ligninases
-            Ea = 53.0
+            Ea = 53.0d0
         CASE ("CEL") !! Cellulases
-            Ea = 36.3
+            Ea = 36.3d0
         CASE ("NAG") !! N-acetylglutamate synthase
-            Ea = 52.9
+            Ea = 52.9d0
         CASE ("PAC") !! Acid phosphatases
-            Ea = 36.3
+            Ea = 36.3d0
         CASE ("PAL") !! Alkaline phosphatases
-            Ea = 23.6
+            Ea = 23.6d0
         CASE ("PHO") !! PHOSPHATASES
-            Ea = 34.4
+            Ea = 34.4d0
         CASE ("Km")  !! half-saturation constant
-            Ea = 30.
+            Ea = 30d0
         CASE ("MR")  !! Microbial Maintenance
-            Ea = 20.
+            Ea = 20d0
         CASE ("Kads")!! adsorption
-            Ea = 5.
+            Ea = 5d0
         CASE ("Kdes")!! desorption
-            Ea = 20.
+            Ea = 20d0
         CASE ("DOM") !! DOM uptake
-            Ea = 47.
+            Ea = 47d0
         CASE DEFAULT
-            Ea = 47.
+            Ea = 47d0
     END SELECT
     fTArh = fTArh0(T, Tref, Ea)
     return
 END function fTArh
 !------------------------------------------------------------------
-REAL(r8) function fT_Linear(T, Tref, slope, intercept)
+REAL(8) function fT_Linear(T, Tref, slope, intercept)
     !fKmT: [mg/m3], half-saturation constant in M-M kinetics (Km)modified by Temperature
     !slope: [mg/m3/C]
     !intercept: [mg/m3]
     !!ARGUMENTS:
-    REAL(r8), intent(in) :: T, Tref, slope, intercept
+    REAL(8), intent(in) :: T, Tref, slope, intercept
     
     fT_Linear = slope * (T - Tref) + intercept
     return
 END function fT_Linear
 !------------------------------------------------------------------
-REAL(r8) function fT_CUE(T,Tref,slope,CUEref)
+REAL(8) function fT_CUE(T,Tref,slope,CUEref)
     !fT_CUE: [-], half-saturation constant in M-M kinetics (Km)modified by Temperature
     !slope: [1/degree C]
     !intercept: [-]
     !! parameter values: Wang et al. (2015), ISMEJ 
     !!ARGUMENTS:
-    REAL(r8), intent(in):: T, Tref,slope,CUEref
+    REAL(8), intent(in):: T, Tref,slope,CUEref
 !    REAL(8), PARAMETER :: Tref      = 0    !![degree C]
 !    REAL(8), PARAMETER :: slope     = -0.01
 !    REAL(8), PARAMETER :: intercept = 0.56  !! []
     
     !!LOCAL VARIABLES:
-    REAL(r8), PARAMETER:: CUEmax = 0.9
-    REAL(r8), PARAMETER:: CUEmin = 0.1e-1
+    REAL(8), PARAMETER:: CUEmax = 0.9D0
+    REAL(8), PARAMETER:: CUEmin = 0.1D-1
     
     fT_CUE = fT_Linear(T, Tref, slope, CUEref)
     if(fT_CUE.gt.CUEmax) then
@@ -884,25 +945,25 @@ REAL(r8) function fT_CUE(T,Tref,slope,CUEref)
     return
 END function fT_CUE
 !------------------------------------------------------------------
-REAL(r8) function fTAG(tmp)
+REAL(8) function fTAG(tmp)
     !Arrhenius Equation used in ECOSYS
     !Grant, et al., 1993. SBB 25, 1317-1329.
     !!ARGUMENTS:
-    REAL(r8) tmp
+    REAL(8) tmp
     
     !!LOCAL VARIABLES:
-    REAL(r8) A, S, Ha, Hdl, Hdh, b1, b2, a1, a2, a3
-    A = 17.1124 !a parameter selected such that fmt=1 at temp = 30 C
-    S = 710 ![J/mol/K], the change in entropy
-    Ha = 57500 ![J/mol], energy of activation
-    Hdl = 192500 ![J/mol], energy of low temperature deactivation
-    Hdh = 222500 ![J/mol], energy of high temperature deactivation
+    REAL(8) A, S, Ha, Hdl, Hdh, b1, b2, a1, a2, a3
+    A = 17.1124D0 !a parameter selected such that fmt=1 at temp = 30 C
+    S = 710D0 ![J/mol/K], the change in entropy
+    Ha = 57500D0 ![J/mol], energy of activation
+    Hdl = 192500D0![J/mol], energy of low temperature deactivation
+    Hdh = 222500D0![J/mol], energy of high temperature deactivation
     b1 = const_tmp_C2K + tmp
     b2 = const_R * b1
-    a1 = exp(A - Ha/b2)
-    a2 = exp((Hdl - S * b1)/b2)
-    a3 = exp((-Hdh + S * b1)/b2)
-    fTAG = b1 * a1/(1.0 + a2 + a3)
+    a1 = dexp(A - Ha/b2)
+    a2 = dexp((Hdl - S * b1)/b2)
+    a3 = dexp((-Hdh + S * b1)/b2)
+    fTAG = b1 * a1/(1.0D0 + a2 + a3)
     return
 END function fTAG
 !!-----------------------------------------------------------------
@@ -912,56 +973,56 @@ END function fTAG
 !!=================================================================
 !! Soil Water Scalar: BEGIN
 !!-----------------------------------------------------------------
-REAL(r8) function fSWP2SWC(SWP,SWP_units,SWCres,SWCsat,alpha,n)
+REAL(8) function fSWP2SWC(SWP,SWP_units,SWCres,SWCsat,alpha,n)
 !!van-Genuchten equation
 !!convert SWP(cm) to SWC (0-1)
 !!SWP will be converted to cm
     !!ARGUMENTS:
     CHARACTER(len=*) SWP_units  
-    REAL(r8),intent(in):: SWP,SWCres,SWCsat,alpha,n
+    REAL(8),intent(in):: SWP,SWCres,SWCsat,alpha,n
     
     !!LOCAL VARIABLES:
-    REAL(r8) SWP_cm, m, eff_sat  !!effective saturation
+    REAL(8) SWP_cm, m, eff_sat  !!effective saturation
 
     if (trim(SWP_units).eq."MPa") then
         SWP_cm = SWP/const_cm2MPa
     else if (trim(SWP_units).eq."bar") then  !!1 bar = 100 kPa = 0.1 MPa
         SWP_cm = SWP*0.1/const_cm2MPa
     else if (trim(SWP_units).eq."kPa") then  !!1 kPa = 1d-3 MPa
-        SWP_cm = SWP*1e-3/const_cm2MPa
+        SWP_cm = SWP*1d-3/const_cm2MPa
     else if (trim(SWP_units).eq."Pa") then  !!1 kPa = 1d-6 MPa
-        SWP_cm = SWP*1e-6/const_cm2MPa
+        SWP_cm = SWP*1d-6/const_cm2MPa
     else if (trim(SWP_units).eq."mm") then
         SWP_cm = SWP*0.1
     else if (trim(SWP_units).eq."m") then
-        SWP_cm = SWP*100.
+        SWP_cm = SWP*100
     end if
     
-    m = 1.0-1.0/n
+    m = 1d0-1d0/n
     
-    eff_sat = (1/(1+(alpha*abs(SWP_cm))**n))**m
+    eff_sat = (1/(1+(alpha*dabs(SWP_cm))**n))**m
     fSWP2SWC = SWCres + (SWCsat - SWCres)*eff_sat
     return
    
 END function fSWP2SWC
 !!-----------------------------------------------------------------
-REAL(r8) function fSWC2SWP(SWC0,SWCres,SWCsat,alpha,n,SWPmin)
+REAL(8) function fSWC2SWP(SWC0,SWCres,SWCsat,alpha,n,SWPmin)
 !!van-Genuchten equation, SWP in units of [cm], SWC if fraction (0-1)
 !!return fSWC2SWP), actually fSWC2SWP<0
 !!convert SWC(0-1) to SWP(MPa)
 !!SWC needs be converted to fraction first
 !    USE MOD_MEND
 !    IMPLICIT NONE
-    REAL(r8),PARAMETER::rlim = 1.01
+    REAL(8),PARAMETER::rlim = 1.01d0
     !!ARGUMENTS:
-    REAL(r8),intent(in):: SWC0
-    REAL(r8) SWCres,SWCsat,alpha,n
+    REAL(8),intent(in):: SWC0
+    REAL(8) SWCres,SWCsat,alpha,n
     
     !!LOCAL VARIABLES:
-    REAL(r8) SWC,SWPmin  !!min SWP <0
-    REAL(r8) m, eff_sat  !!effective saturation
+    REAL(8) SWC,SWPmin  !!min SWP <0
+    REAL(8) m, eff_sat  !!effective saturation
     
-    m = 1.0-1.0/n
+    m = 1.d0-1.d0/n
 
     if (SWC0.le.SWCres*rlim) then
 !        fSWC2SWP = SWPmin
@@ -972,8 +1033,8 @@ REAL(r8) function fSWC2SWP(SWC0,SWCres,SWCsat,alpha,n,SWPmin)
 
     if (SWC.lt.SWCsat) then
         eff_sat = (SWC - SWCres)/(SWCsat - SWCres)
-        fSWC2SWP = (1.0/(eff_sat**(1.0/m)) - 1.0)**(1.0/n)/alpha
-        fSWC2SWP = -1.0*fSWC2SWP*const_cm2MPa
+        fSWC2SWP = (1.d0/(eff_sat**(1.d0/m)) - 1.d0)**(1.d0/n)/alpha
+        fSWC2SWP = -1.d0*fSWC2SWP*const_cm2MPa
     else
         fSWC2SWP = 0
     end if
@@ -981,29 +1042,29 @@ REAL(r8) function fSWC2SWP(SWC0,SWCres,SWCsat,alpha,n,SWPmin)
     return
 END function fSWC2SWP
 !------------------------------------------------------------------
-REAL(r8) function fSWP0(SWP,SWPmin,w)
+REAL(8) function fSWP0(SWP,SWPmin,w)
     !Rate Scalar for Soil Water Potential (SWP)
     !Manzoni et al (2012), Ecology, 93: 930-938
 !    USE MOD_MEND
 !    IMPLICIT NONE
     
-    REAL(r8), PARAMETER :: SWP_FC = -0.033 ![MPa], field capacity SWP 
+    REAL(8), PARAMETER :: SWP_FC = -0.033 ![MPa], field capacity SWP 
     !!ARGUMENTS:
-    REAL(r8) SWP, SWPmin ![MPa]
-    REAL(r8) w
+    REAL(8) SWP, SWPmin ![MPa]
+    REAL(8) w
     
     if (SWP.lt.SWPmin) then
-        fSWP0 = 0.0  
+        fSWP0 = 0.0d0  
     else if (SWP.lt.SWP_FC) then
-        fSWP0 = 1-(log(SWP/SWP_FC)/log(SWPmin/SWP_FC))**w
+        fSWP0 = 1-(dlog(SWP/SWP_FC)/dlog(SWPmin/SWP_FC))**w
     else 
-        fSWP0 = 1.0
+        fSWP0 = 1.0d0
     end if
     return
 END function fSWP0
 
 !------------------------------------------------------------------
-REAL(r8) function fSWP(SWP,BIOME,SOM)
+REAL(8) function fSWP(SWP,BIOME,SOM)
     !SWP Scalar for SOM (Cellulose) decomposition
     !Manzoni et al (2012), Ecology, 93: 930-938
     !!fSWP increases with increasing SWP (wetter condition)
@@ -1011,137 +1072,137 @@ REAL(r8) function fSWP(SWP,BIOME,SOM)
     !REAL(8), PARAMETER :: SWP_FC = -0.033 ![MPa], field capacity SWP 
 
     !!ARGUMENTS:
-    REAL(r8) SWP ![MPa]
+    REAL(8) SWP ![MPa]
     CHARACTER(len=3) BIOME  !!'ASM' = arid/semiarid/mediterranean; 'MGC'=mesic grassland & cropland; 'MDF'=Mesic Deciduous Forest; 'MCF'=MEsic Conifer Forest
     CHARACTER(len=3) SOM    !!'SOD' = disturbed soil; 'SOL'=intact soil; 'LIT'=litter
     
     !!LOCAL VARIABLES:
-    REAL(r8) SWPmin, w ![MPa]
+    REAL(8) SWPmin, w ![MPa]
     
     if (trim(SOM).eq."SOD") then
-        SWPmin = -1.71
-        w      = 1.43
+        SWPmin = -1.71d0
+        w      = 1.43d0
     else if (trim(SOM).eq."SOL") then
-        SWPmin = -13.86
-        w      = 1.20
+        SWPmin = -13.86d0
+        w      = 1.20d0
     else if (trim(SOM).eq."LIT") then
-        SWPmin = -36.49
-        w      = 1.04
+        SWPmin = -36.49d0
+        w      = 1.04d0
     end if
     
     SELECT CASE (trim(BIOME)) 
         CASE ("ASM")  !!Arid, Semiarid, & Mediterranean
             if (trim(SOM).eq."SOL") then
-                SWPmin = -10.95
-                w      = 1.26
+                SWPmin = -10.95d0
+                w      = 1.26d0
             end if
         CASE ("MGC")  !!Mesic Grassland & Cropland
             if (trim(SOM).eq."SOD") then
-                SWPmin = -1.71
-                w      = 1.43
+                SWPmin = -1.71d0
+                w      = 1.43d0
             else if (trim(SOM).eq."SOL") then
-                SWPmin = -22.61
-                w      = 1.11
+                SWPmin = -22.61d0
+                w      = 1.11d0
             else if (trim(SOM).eq."LIT") then
-                SWPmin = -39.73
-                w      = 0.89
+                SWPmin = -39.73d0
+                w      = 0.89d0
             end if
         CASE ("MDF")    !!Mesic Deciduous Forest
             if (trim(SOM).eq."SOL") then
-                SWPmin = -4.97
-                w      = 1.07
+                SWPmin = -4.97d0
+                w      = 1.07d0
             else if (trim(SOM).eq."LIT") then
-                SWPmin = -29.00
-                w      = 1.27
+                SWPmin = -29.00d0
+                w      = 1.27d0
             end if
         CASE ("MCF")    !!MEsic Conifer Forest
             if (trim(SOM).eq."SOL") then
-                SWPmin = -8.24
-                w      = 1.40
+                SWPmin = -8.24d0
+                w      = 1.40d0
             else if (trim(SOM).eq."LIT") then
-                SWPmin = -39.85
-                w      = 1.06
+                SWPmin = -39.85d0
+                w      = 1.06d0
             end if
         CASE DEFAULT    !!All Biome Average
             if (trim(SOM).eq."SOD") then
-                SWPmin = -1.71
-                w      = 1.43
+                SWPmin = -1.71d0
+                w      = 1.43d0
             else if (trim(SOM).eq."SOL") then
-                SWPmin = -13.86
-                w      = 1.20
+                SWPmin = -13.86d0
+                w      = 1.20d0
             else if (trim(SOM).eq."LIT") then
-                SWPmin = -36.49
-                w      = 1.04
+                SWPmin = -36.49d0
+                w      = 1.04d0
             end if
     END SELECT
     fSWP = fSWP0(SWP,SWPmin,w)
     return
 END function fSWP
 !------------------------------------------------------------------
-REAL(r8) FUNCTION fSWP_Death(SWP,SWPmin,w)
+REAL(8) FUNCTION fSWP_Death(SWP,SWPmin,w)
     !!SWP Scalar for Microbial Mortality
     !!fSWP_Death DEcreases with increasing SWP (wetter condition)
 
     !!ARGUMENTS:
-    REAL(r8) SWP ![MPa]
+    REAL(8) SWP ![MPa]
     !!ARGUMENTS:
-    REAL(r8) SWPmin ![MPa]
-    REAL(r8) w
+    REAL(8) SWPmin ![MPa]
+    REAL(8) w
 !    CHARACTER(len=3) BIOME  !!'ASM' = arid/semiarid/mediterranean; 'MGC'=mesic grassland & cropland; 'MDF'=Mesic Deciduous Forest; 'MCF'=MEsic Conifer Forest
 !    CHARACTER(len=3) SOM    !!'SOD' = disturbed soil; 'SOL'=intact soil; 'LIT'=litter
     
-    fSWP_Death = 1.0 - fSWP0(SWP,SWPmin,w)
+    fSWP_Death = 1.d0 - fSWP0(SWP,SWPmin,w)
 !    fSWP_Death = 1.d0 - fSWP(SWP,BIOME,SOM)
     
     return
-END FUNCTION fSWP_Death
+END FUNCTION fSWP_MicrobeMortality
 !------------------------------------------------------------------
-REAL(r8) function fSWP_OPT(SWP)
+REAL(8) function fSWP_OPT(SWP)
     !SWP Scalar for SOM (lignin) decomposition
     !Hansen et al (1990), DAISY Model, page 105, Eq (6-16)
     
-    REAL(r8), PARAMETER :: SWPmin = -exp(2.5*log(10.))   !![MPa]
-    REAL(r8), PARAMETER :: SWPlow = -exp(-1.5*log(10.))
-    REAL(r8), PARAMETER :: SWPhigh= -exp(-2.5*log(10.))
-    REAL(r8), PARAMETER :: SWPmax = -exp(-4.0*log(10.))
+    REAL(8), PARAMETER :: SWPmin = -dexp(2.5*dlog(10d0))   !![MPa]
+    REAL(8), PARAMETER :: SWPlow = -dexp(-1.5*dlog(10d0))
+    REAL(8), PARAMETER :: SWPhigh= -dexp(-2.5*dlog(10d0))
+    REAL(8), PARAMETER :: SWPmax = -dexp(-4.0*dlog(10d0))
     !!ARGUMENTS:
-    REAL(r8) SWP ![MPa]
+    REAL(8) SWP ![MPa]
     
     if (SWP.le.SWPmin) then
-        fSWP_OPT = 0.0  
+        fSWP_OPT = 0.0d0  
     else if (SWP.le.SWPlow) then
-        fSWP_OPT = 0.625-0.25*log10(abs(SWP))
+        fSWP_OPT = 0.625-0.25*dlog10(dabs(SWP))
     else if (SWP.le.SWPhigh) then
-        fSWP_OPT = 1.0
+        fSWP_OPT = 1.0d0
     else if (SWP.le.SWPmax) then
-        fSWP_OPT = (2.5+0.4*log10(abs(SWP)))/1.5
+        fSWP_OPT = (2.5+0.4*dlog10(dabs(SWP)))/1.5
     else
         fSWP_OPT = 0.6
     end if
     return
 END function fSWP_OPT
 !------------------------------------------------------------------
-REAL(r8) function fSWP_CLM(SWP,SWPsat)
+REAL(8) function fSWP_CLM(SWP,SWPsat)
     !Rate Scalar for Soil Water Potential (SWP)
     !CLM4.5 Technical Note, page 285, Eq (15.6)
     !Andren and Paustain (1987), Orchard and Cook (1983).
     
-    REAL(r8), PARAMETER :: SWPmin = -10. ![MPa], lower limit for SWP control on decomposition rate
+    REAL(8), PARAMETER :: SWPmin = -10 ![MPa], lower limit for SWP control on decomposition rate
     !!ARGUMENTS:
-    REAL(r8) SWP, SWPsat ![MPa], saturated SWP
+    REAL(8) SWP, SWPsat ![MPa], saturated SWP
     
     if (SWP.lt.SWPmin) then
-        fSWP_CLM = 0.0
+        fSWP_CLM = 0.0d0
     else if (SWP.le.SWPsat) then
-        fSWP_CLM = log(SWPmin/SWP)/log(SWPmin/SWPsat)
+        fSWP_CLM = dlog(SWPmin/SWP)/dlog(SWPmin/SWPsat)
     else
-        fSWP_CLM = 1.0
+        fSWP_CLM = 1.0d0
     end if
     return
 END function fSWP_CLM
 
 !------------------------------------------------------------------
-REAL(r8) function fSWPsat(p_sand,p_clay)
+REAL(8) function fSWPsat(p_sand,p_clay)
     !Saturated Soil Water Potential (SWP) [MPa]
     !CLM4.5 Technical Note, page 285, Eq (15.7)
     !Cosby et al. (1984)
@@ -1149,30 +1210,30 @@ REAL(r8) function fSWPsat(p_sand,p_clay)
     !p_clay (0-100): volume % of clay
 
     
-    REAL(r8), PARAMETER :: SWP_base = -9.8e-5 ![MPa], base SWP
-    REAL(r8), PARAMETER :: a = 1.54
-    REAL(r8), PARAMETER :: b = 9.5e-3
-    REAL(r8), PARAMETER :: c = 6.3e-3
+    REAL(8), PARAMETER :: SWP_base = -9.8d-5 ![MPa], base SWP
+    REAL(8), PARAMETER :: a = 1.54d0
+    REAL(8), PARAMETER :: b = 9.5d-3
+    REAL(8), PARAMETER :: c = 6.3d-3
     
     !!ARGUMENTS:
-    REAL(r8) p_sand, p_clay, p_silt
+    REAL(8) p_sand, p_clay, p_silt
     
-    p_silt = 100. - p_sand - p_clay
-    fSWPsat = SWP_base*exp((a-b*p_sand+c*p_silt)*log(10.))
+    p_silt = 100d0 - p_sand - p_clay
+    fSWPsat = SWP_base*dexp((a-b*p_sand+c*p_silt)*dlog(10d0))
     return
 END function fSWPsat
 
 !------------------------------------------------------------------
-REAL(r8) function fSWP_A2D(SWP, SWP_A2D, w)
+REAL(8) function fSWP_A2D(SWP, SWP_A2D, w)
     !Soil Water Scalar for Microbial Dormancy
     !! Manzoni (2014) SBB, 73: 69-83
 
     !!ARGUMENTS:
-    REAL(r8), intent(in):: SWP_A2D !! = -0.4 [MPa], 
-    REAL(r8), intent(in):: SWP
-    REAL(r8), intent(in):: w       !! = 4 
+    REAL(8), intent(in):: SWP_A2D !! = -0.4 [MPa], 
+    REAL(8), intent(in):: SWP
+    REAL(8), intent(in):: w       !! = 4 
     
-    fSWP_A2D = abs(SWP)**w/(abs(SWP)**w + abs(SWP_A2D)**w)
+    fSWP_A2D = dabs(SWP)**w/(dabs(SWP)**w + dabs(SWP_A2D)**w)
 !    if(ISNAN(fSWP_A2D)) then
 !        print*,"wp_scalar_low=",fSWP_A2D
 !    end if
@@ -1180,14 +1241,14 @@ REAL(r8) function fSWP_A2D(SWP, SWP_A2D, w)
 END function fSWP_A2D
 
 !------------------------------------------------------------------
-REAL(r8) function fSWP_D2A(SWP, SWP_D2A, w)
+REAL(8) function fSWP_D2A(SWP, SWP_D2A, w)
     !!Soil Water Scalar for Microbial reactivation
     !!ARGUMENTS:
-    REAL(r8), intent(in):: SWP_D2A !! = 1/4*SWP_A2D [MPa]
-    REAL(r8), intent(in):: SWP
-    REAL(r8), intent(in):: w       !! = 4 
+    REAL(8), intent(in):: SWP_D2A !! = 1/4*SWP_A2D [MPa]
+    REAL(8), intent(in):: SWP
+    REAL(8), intent(in):: w       !! = 4 
     
-    fSWP_D2A = abs(SWP_D2A)**w/(abs(SWP)**w + abs(SWP_D2A)**w)
+    fSWP_D2A = dabs(SWP_D2A)**w/(dabs(SWP)**w + dabs(SWP_D2A)**w)
     return
 END function fSWP_D2A
 !!-----------------------------------------------------------------
@@ -1198,15 +1259,15 @@ END function fSWP_D2A
 !!=================================================================
 !! pH Scalar: BEGIN
 !------------------------------------------------------------------
-REAL(r8) FUNCTION fpH(sCase,pH)
+REAL(8) FUNCTION fpH(sCase,pH)
 !    REAL(8) fpH0 !! function
     !!ARGUMENTS:
     CHARACTER(len=*) , intent(in) :: sCase
-    REAL(r8)          , intent(in) :: pH !pH value
+    REAL(8)          , intent(in) :: pH !pH value
     
     !!LOCAL VARIABLES
-    REAL(r8) pHopt !optimum pH
-    REAL(r8) pHsen !pH sensitivity
+    REAL(8) pHopt !optimum pH
+    REAL(8) pHsen !pH sensitivity
     
 !    sCase = trim(sCase)
     SELECT CASE (trim(sCase))
@@ -1252,12 +1313,12 @@ REAL(r8) FUNCTION fpH(sCase,pH)
     return
 END FUNCTION fpH
 !------------------------------------------------------------------
-REAL(r8) FUNCTION fpH0(pH, pHopt, pHsen)
+REAL(8) FUNCTION fpH0(pH, pHopt, pHsen)
     !!ARGUMENTS:
-    REAL(r8), intent(in) :: pH !pH value
-    REAL(r8), intent(in) :: pHopt !optimum pH
-    REAL(r8), intent(in) :: pHsen !pH sensitivity
-    fpH0 = exp(-1.0 * ((pH - pHopt)/pHsen)**2.0)
+    REAL(8), intent(in) :: pH !pH value
+    REAL(8), intent(in) :: pHopt !optimum pH
+    REAL(8), intent(in) :: pHsen !pH sensitivity
+    fpH0 = dexp(-1d0 * ((pH - pHopt)/pHsen)**2d0)
     return
 END FUNCTION fpH0
 !!-----------------------------------------------------------------
@@ -1267,18 +1328,18 @@ END FUNCTION fpH0
 !!=================================================================
 !! ISOTOPES: BEGIN
 !!-----------------------------------------------------------------
-REAL(r8) FUNCTION fPermil(iOpt, Rstd, iso1, iso2)
+REAL(8) FUNCTION fPermil(iOpt, Rstd, iso1, iso2)
     !Convert isotope concentration to signature/abundance [‰]
     !Rastetter et al. 2005. Ecological Applications 15, 1772-1782.
     !!ARGUMENTS:
     INTEGER, intent(in) :: iOpt !option, 0-input concentration of both iso1 and iso2, otherwise, iso2 = ratio of iso2/iso1
-    REAL(r8), intent(in) :: Rstd !standard ratio of iso2/iso1, e.g., C14/C12 = 1d-12, C13/C12 = 0.0112372
-    REAL(r8), intent(in) :: iso1 !concentration of iso1
-    REAL(r8), intent(in) :: iso2 !concentration of iso2, or iso2/iso1
+    REAL(8), intent(in) :: Rstd !standard ratio of iso2/iso1, e.g., C14/C12 = 1d-12, C13/C12 = 0.0112372
+    REAL(8), intent(in) :: iso1 !concentration of iso1
+    REAL(8), intent(in) :: iso2 !concentration of iso2, or iso2/iso1
     if (iOpt .eq. 0) then
-        fPermil = ((iso2/iso1)/Rstd - 1.0) * 1000.0
+        fPermil = ((iso2/iso1)/Rstd - 1d0) * 1000d0
     else
-        fPermil = (iso2/Rstd - 1.0) * 1000.0
+        fPermil = (iso2/Rstd - 1d0) * 1000d0
     end if
     return
 END FUNCTION fPermil

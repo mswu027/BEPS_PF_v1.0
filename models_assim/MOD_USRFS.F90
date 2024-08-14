@@ -9,10 +9,9 @@ MODULE MOD_USRFS
     !! [2] ARRAY FUNCTION
     !! [3] DATETIME FUNCTION
     !------------------------------------------------------------------
-    use shr_kind_mod, only: r8=>shr_kind_r8
     IMPLICIT NONE
-    REAL(r8), PARAMETER:: dLOW  = 1.0e-8
-    REAL(r8), PARAMETER:: dHIGH = 1.0e10
+    REAL(8), PARAMETER:: dLOW  = 1.0D-8
+    REAL(8), PARAMETER:: dHIGH = 1.0D+10
     ! ----------
     ! Visibility
     ! ----------
@@ -70,18 +69,18 @@ CONTAINS
     !! [1] OBJECTIVE FUNCTION: BEGIN
     !------------------------------------------------------------------
 
-    REAL(r8) FUNCTION fWAVG(n, ww, xx, dFill)
+    REAL(8) FUNCTION fWAVG(n, ww, xx, dFill)
         !!compute weighting average
         !!ARGUMENTS:
         INTEGER n
-        REAL(r8), DIMENSION(n) :: ww, xx
-        REAL(r8) dFill
+        REAL(8), DIMENSION(n) :: ww, xx
+        REAL(8) dFill
         
         !!LOCAL VARIABLES:
-        REAL(r8) sum1      
+        REAL(8) sum1      
         INTEGER j, k
         INTEGER jj(n)
-        REAL(r8), DIMENSION(:), ALLOCATABLE :: ww2
+        REAL(8), DIMENSION(:), ALLOCATABLE :: ww2
         k = 0
         do j = 1, n
             if (xx(j) .ne. dFill) then !!has a value different than dFill (e.g., -9999)
@@ -110,8 +109,8 @@ CONTAINS
         !!assign value to wobj based on wobj0
         !!ARGUMENTS:
         INTEGER nobj, nobj0
-        REAL(r8), DIMENSION(nobj) :: wobj
-        REAL(r8), DIMENSION(nobj0) :: wobj0
+        REAL(8), DIMENSION(nobj) :: wobj
+        REAL(8), DIMENSION(nobj0) :: wobj0
         
         if (nobj .lt. 1) then
             return
@@ -124,17 +123,17 @@ CONTAINS
         return
     END !!SUBROUTINE !!WOBJ_INI
     !------------------------------------------------------------------
-    REAL(r8) function fNSE(nArray, Dataobs, Datasim, dFill)
+    REAL(8) function fNSE(nArray, Dataobs, Datasim, dFill)
         !Nash-Sutcliffe Efficiency Coefficient; Determination Coefficient
         !data excluded from calculation if Dataobs(i) = const_FillValue 
         !    REAL(8), parameter:: const_FillValue = -999d0
         !!ARGUMENTS:
         INTEGER, intent(in) :: nArray
-        REAL(r8) dFill
-        REAL(r8), DIMENSION(nArray) :: Dataobs, Datasim
+        REAL(8) dFill
+        REAL(8), DIMENSION(nArray) :: Dataobs, Datasim
         
         !!LOCAL VARIABLES:
-        REAL(r8) AVGobs, sum11, sum12
+        REAL(8) AVGobs, sum11, sum12
         INTEGER i, j, m
         INTEGER iData(nArray)
 
@@ -151,7 +150,7 @@ CONTAINS
             fNSE = dFill
             return
         end if
-        AVGobs = sum11/REAL(m) !SUM(Dataobs)/nArray
+        AVGobs = sum11/DBLE(m) !SUM(Dataobs)/nArray
 
         sum11 = 0
         sum12 = 0
@@ -165,18 +164,18 @@ CONTAINS
         return
     END !!FUNCTION  
     !------------------------------------------------------------------
-    REAL(r8) function f1NSE(nArray, Dataobs, Datasim, dFill)
+    REAL(8) function f1NSE(nArray, Dataobs, Datasim, dFill)
         !f1NSE = 1.0 - fNSE
         !NSE:Nash-Sutcliffe Efficiency Coefficient; Determination Coefficient
         !data excluded from calculation if Dataobs(i) = const_FillValue 
         !    REAL(8), parameter:: const_FillValue = -999d0
         !!ARGUMENTS:
         INTEGER, intent(in) :: nArray
-        REAL(r8) dFill
-        REAL(r8), DIMENSION(nArray) :: Dataobs, Datasim
+        REAL(8) dFill
+        REAL(8), DIMENSION(nArray) :: Dataobs, Datasim
         
         !!LOCAL VARIABLES:
-        REAL(r8) AVGobs, sum11, sum12
+        REAL(8) AVGobs, sum11, sum12
         INTEGER i, j, m
         INTEGER iData(nArray)
 
@@ -207,17 +206,17 @@ CONTAINS
         return
     END !!FUNCTION   
     !------------------------------------------------------------------
-    REAL(r8) function fMARE(nArray, Dataobs, Datasim, dFill)
+    REAL(8) function fMARE(nArray, Dataobs, Datasim, dFill)
         !!Mean Absolute Relative Error
         !	implicit REAL*8 (a-h,o-z)
         !	dimension Dataobs(1000),Datasim(1000)
         !!ARGUMENTS:
         INTEGER nArray
-        REAL(r8), DIMENSION(nArray) :: Dataobs, Datasim
-        REAL(r8) dFill
+        REAL(8), DIMENSION(nArray) :: Dataobs, Datasim
+        REAL(8) dFill
         
         !!LOCAL VARIABLES:
-        REAL(r8) sum1
+        REAL(8) sum1
         INTEGER i, j, m, iData(nArray)
 
         m = 0
@@ -234,22 +233,22 @@ CONTAINS
         sum1 = 0
         do i = 1, m
             j = iData(i)
-            sum1 = sum1 + ABS(Datasim(j) - Dataobs(j))/max(ABS(Dataobs(j)), dLOW)
+            sum1 = sum1 + DABS(Datasim(j) - Dataobs(j))/max(DABS(Dataobs(j)), dLOW)
         end do
         fMARE = sum1/REAL(m)
         return
     END !!FUNCTION
     !------------------------------------------------------------------
-    REAL(r8) function fMAP(nArray, Dataobs, Datasim, dFillValue)
+    REAL(8) function fMAP(nArray, Dataobs, Datasim, dFillValue)
         !Mean Absolute Percent Error (MAP), best MAP = 0, [Kothamasu et al., 2004]
         !data excluded from calculation if Dataobs(i) = const_FillValue 
         !    REAL(8), parameter:: const_FillValue = -999d0
         !!ARGUMENTS:
         INTEGER, intent(in) :: nArray
-        REAL(r8), intent(in) :: Dataobs(nArray), Datasim(nArray), dFillValue
+        REAL(8), intent(in) :: Dataobs(nArray), Datasim(nArray), dFillValue
         
         !!LOCAL VARIABLES:
-        REAL(r8) sum11
+        REAL(8) sum11
         INTEGER i, m, iData(nArray)
 
         m = 0
@@ -272,21 +271,21 @@ CONTAINS
             sum11 = sum11 + abs((Datasim(iData(i)) - Dataobs(idata(i)))/Dataobs(iData(i)))
         end do
 
-        fMAP = sum11/REAL(m)
+        fMAP = sum11/m
         return
     END !!FUNCTION     
     !------------------------------------------------------------------
-    REAL(r8) FUNCTION fNRMSE(nn, dobs, dobs_sd, dsim, dFill)
+    REAL(8) FUNCTION fNRMSE(nn, dobs, dobs_sd, dsim, dFill)
         !!Normalized Root-Mean-Square Error
         !!ARGUMENTS:      
         INTEGER nn
-        REAL(r8) dFill
-        REAL(r8), DIMENSION(nn) :: dobs, dobs_sd, dsim
+        REAL(8) dFill
+        REAL(8), DIMENSION(nn) :: dobs, dobs_sd, dsim
         
         !!LOCAL VARIABLES:
         INTEGER j,k
-        REAL(r8) sum1, dobs_range
-        REAL(r8), PARAMETER :: dtol = 1.0e-6
+        REAL(8) sum1, dobs_range
+        REAL(8), PARAMETER :: dtol = 1.0d-6
         
 
         dobs_range = fRANGEarray(nn, dobs, dFill)
@@ -316,13 +315,13 @@ CONTAINS
     END !!FUNCTION
 
     !------------------------------------------------------------------
-    REAL(r8) function fSUM(nArray, xx, dFill)
+    REAL(8) function fSUM(nArray, xx, dFill)
         !!compute SUM of all elements in an Array. 
         !        implicit REAL(8)*8 (a-h,o-z)
         !!ARGUMENTS:
         INTEGER nArray
-        REAL(r8), DIMENSION(nArray) :: xx
-        REAL(r8) dFill
+        REAL(8), DIMENSION(nArray) :: xx
+        REAL(8) dFill
         
         !!LOCAL VARIABLES:
         INTEGER jua
@@ -336,13 +335,13 @@ CONTAINS
         return
     END !!FUNCTION
     !------------------------------------------------------------------
-    REAL(r8) function fAVG(nArray, xx, dFill)
+    REAL(8) function fAVG(nArray, xx, dFill)
         !!compute SUM of all elements in an Array. 
         !        implicit REAL*8 (a-h,o-z)
         !!ARGUMENTS:
         INTEGER nArray
-        REAL(r8), DIMENSION(nArray) :: xx
-        REAL(r8) dFill
+        REAL(8), DIMENSION(nArray) :: xx
+        REAL(8) dFill
         
         !!LOCAL VARIABLES:
         INTEGER jua,k
@@ -363,16 +362,16 @@ CONTAINS
         return
     END
     !------------------------------------------------------------------
-    REAL(r8) function f1RAVG(nn, dobs, dsim, dFill)
+    REAL(8) function f1RAVG(nn, dobs, dsim, dFill)
         !!f1RAVG = abs(1.0 - fAVG_sim/fAVG_obs) 
         !        implicit REAL*8 (a-h,o-z)
         !!ARGUMENTS:
         INTEGER nn
-        REAL(r8), DIMENSION(nn) :: dobs, dsim
-        REAL(r8) dFill
+        REAL(8), DIMENSION(nn) :: dobs, dsim
+        REAL(8) dFill
         
         !!LOCAL VARIABLES:
-        REAL(r8) fAVG_obs, fAVG_sim
+        REAL(8) fAVG_obs, fAVG_sim
 
         fAVG_obs = fAVG(nn, dobs, dFill)
         fAVG_sim = fAVG(nn, dsim, dFill)
@@ -380,18 +379,18 @@ CONTAINS
             f1RAVG = dFill
             return
         else
-            f1RAVG = abs(1.0 - fAVG_sim/fAVG_obs)
+            f1RAVG = dabs(1.0d0 - fAVG_sim/fAVG_obs)
             return
         end if
     END
     !------------------------------------------------------------------	
-    REAL(r8) function fSUM2(nArray, xx, iBegin, iEnd, dFill)
+    REAL(8) function fSUM2(nArray, xx, iBegin, iEnd, dFill)
         !!compute AVERAGE of selected elements (iBegin to iEnd) in an Array. 
         !        implicit REAL*8 (a-h,o-z)
         !!ARGUMENTS:
         INTEGER nArray, iBegin, iEnd
-        REAL(r8), DIMENSION(nArray) :: xx
-        REAL(r8) dFill
+        REAL(8), DIMENSION(nArray) :: xx
+        REAL(8) dFill
         
         !1LOCAL VARIABLES:
         INTEGER jua
@@ -405,13 +404,13 @@ CONTAINS
         return
     END
     !------------------------------------------------------------------	
-    REAL(r8) function fAVG2(nArray, xx, iBegin, iEnd, dFill)
+    REAL(8) function fAVG2(nArray, xx, iBegin, iEnd, dFill)
         !!compute AVERAGE of selected elements (iBegin to iEnd) in an Array. 
         !        implicit REAL*8 (a-h,o-z)
         !!ARGUMENTS:
         INTEGER nArray, iBegin, iEnd
-        REAL(r8), DIMENSION(nArray) :: xx
-        REAL(r8) dFill
+        REAL(8), DIMENSION(nArray) :: xx
+        REAL(8) dFill
         
         !!LOCAL VARIABLES:
         INTEGER jua, k
@@ -433,16 +432,16 @@ CONTAINS
     END
     !------------------------------------------------------------------
 
-    REAL(r8) function fLxy(nArray, xx, yy, dFill)
+    REAL(8) function fLxy(nArray, xx, yy, dFill)
         !!ARGUMENTS:
         INTEGER nArray
-        REAL(r8), DIMENSION(nArray) :: xx, yy
-        REAL(r8) dFill
+        REAL(8), DIMENSION(nArray) :: xx, yy
+        REAL(8) dFill
         
         !!LOCAL VARIABLES:
-        REAL(r8), DIMENSION(nArray) :: xx1, yy1
+        REAL(8), DIMENSION(nArray) :: xx1, yy1
         INTEGER jua, k   
-        REAL(r8) sumxy, sumx, sumy
+        REAL(8) sumxy, sumx, sumy
         !        REAL(8) fSUM2 !!FUNCTION
 
         sumxy = 0.0
@@ -465,15 +464,15 @@ CONTAINS
         return
     END
     !------------------------------------------------------------------
-    REAL(r8) function fCORR(nArray, xx, yy, dFill)
+    REAL(8) function fCORR(nArray, xx, yy, dFill)
         !!CORRELATION COEFFICIENT
         !!ARGUMENTS:
         INTEGER nArray
-        REAL(r8), DIMENSION(nArray) :: xx, yy
-        REAL(r8) dFill
+        REAL(8), DIMENSION(nArray) :: xx, yy
+        REAL(8) dFill
         
         !!LOCAL VARIABLES:
-        REAL(r8) aLxx, aLyy, aLxy
+        REAL(8) aLxx, aLyy, aLxy
 
         aLxx = fLxy(nArray, xx, xx, dFill)
         aLyy = fLxy(nArray, yy, yy, dFill)
@@ -486,17 +485,17 @@ CONTAINS
         return
     END
     !------------------------------------------------------------------      
-    REAL(r8) function fVARIANCE(n, xx, dFill)
+    REAL(8) function fVARIANCE(n, xx, dFill)
         !!ARGUMENTS:
         INTEGER n
-        REAL(r8), DIMENSION(n) :: xx
-        REAL(r8) dFill
+        REAL(8), DIMENSION(n) :: xx
+        REAL(8) dFill
         
         !!LOCAL VARIABLES:
         INTEGER j, k
-        REAL(r8) avg, avg2
+        REAL(8) avg, avg2
         avg = fAVG(n, xx, dFill)
-        avg2 = 0
+        avg2 = 0d0
         k = 0
         do j = 1, n
             if (xx(j) .ne. dFill) then
@@ -512,33 +511,33 @@ CONTAINS
         return
     END !!function fVARIANCE     
     !------------------------------------------------------------------      
-    REAL(r8) function fSTDDEV(n, xx, dFill)
+    REAL(8) function fSTDDEV(n, xx, dFill)
         !!standard deviation
         !!ARGUMENTS:
         INTEGER n
-        REAL(r8), DIMENSION(n) :: xx
-        REAL(r8) dFill
+        REAL(8), DIMENSION(n) :: xx
+        REAL(8) dFill
         
         !!LOCAL VARIABLES:
-        REAL(r8) variance
+        REAL(8) variance
         variance = fVARIANCE(n, xx, dFill)
         if (variance .eq. dFill) then
             fSTDDEV = dFill
         else
-            fSTDDEV = sqrt(variance)
+            fSTDDEV = dsqrt(variance)
         end if
         return
     END !!function fSTDDEV
     !------------------------------------------------------------------      
-    REAL(r8) function fSTDERR(n, xx, dFill)
+    REAL(8) function fSTDERR(n, xx, dFill)
         !!standard error
         !!ARGUMENTS:
         INTEGER n
-        REAL(r8), DIMENSION(n) :: xx
-        REAL(r8) dFill
+        REAL(8), DIMENSION(n) :: xx
+        REAL(8) dFill
         
         !!LOCAL VARIABLES:
-        REAL(r8) sd
+        REAL(8) sd
         sd = fSTDDEV(n, xx, dFill)
         if (sd .eq. dFill) then
             fSTDERR = dFill
@@ -555,11 +554,11 @@ CONTAINS
     !! [2] ARRAY FUNCTION: BEGIN
     !------------------------------------------------------------------
 
-    REAL(r8) FUNCTION fMAXarray(nn, dobs, dFill)
+    REAL(8) FUNCTION fMAXarray(nn, dobs, dFill)
         !!ARGUMENTS:
-        REAL(r8) dFill
+        REAL(8) dFill
         INTEGER nn
-        REAL(r8), DIMENSION(nn) :: dobs
+        REAL(8), DIMENSION(nn) :: dobs
         
         !!LOCAL VARIABLES:
         INTEGER j
@@ -572,11 +571,11 @@ CONTAINS
         return
     END !!FUNCTION
     !------------------------------------------------------------------
-    REAL(r8) FUNCTION fMINarray(nn, dobs, dFill)
+    REAL(8) FUNCTION fMINarray(nn, dobs, dFill)
         !!ARGUMENTS:
-        REAL(r8) dFill
+        REAL(8) dFill
         INTEGER nn
-        REAL(r8), DIMENSION(nn) :: dobs
+        REAL(8), DIMENSION(nn) :: dobs
         
         !!LOCAL VARIABLES:
         INTEGER j
@@ -593,15 +592,15 @@ CONTAINS
         return
     END !!FUNCTION
     !------------------------------------------------------------------
-    REAL(r8) FUNCTION fRANGEarray(nn, dobs, dFill)
+    REAL(8) FUNCTION fRANGEarray(nn, dobs, dFill)
         !!Normalized Root-Mean-Square Error
         !!ARGUMENTS:
-        REAL(r8) dFill
+        REAL(8) dFill
         INTEGER nn
-        REAL(r8), DIMENSION(nn) :: dobs
+        REAL(8), DIMENSION(nn) :: dobs
         
         !!LOCAL VARIABLES
-        REAL(r8) dobs_max, dobs_min, dobs_range
+        REAL(8) dobs_max, dobs_min, dobs_range
 
         dobs_max = fMAXarray(nn, dobs, dFill)
         dobs_min = fMINarray(nn, dobs, dFill)
@@ -619,12 +618,12 @@ CONTAINS
         !!Normalize an Array to make the sum = 1.0
         !!ARGUMENTS:
         INTEGER n
-        REAL(r8), DIMENSION(n) :: xx
-        REAL(r8) dFill
+        REAL(8), DIMENSION(n) :: xx
+        REAL(8) dFill
         
         !!LOCAL VARIABLES:
         INTEGER j
-        REAL(r8) sum1
+        REAL(8) sum1
         !            REAL(8) fSUM  !!function
         sum1 = fSUM(n, xx, dFill)
         do j = 1, n
@@ -645,7 +644,7 @@ CONTAINS
         !!LOCAL VARIABLES:
         INTEGER k, k1, lpos
         
-        REAL(r8) randx
+        REAL(8) randx
         if (m .ge. npg) then
             do k = 1, npg
                 lcs(k) = k
@@ -711,11 +710,11 @@ CONTAINS
         !!ARGUMENTS:
           INTEGER n,m
     !      REAL(8) ra(n),rb(2000,m)
-          REAL(r8) ra(n),rb(:,:)
+          REAL(8) ra(n),rb(:,:)
 
           !!LOCAL VARIABLES
     !      REAL(8) wk(2000,m)
-          REAL(r8) wk(n,m)
+          REAL(8) wk(n,m)
           INTEGER iwk(n)
           INTEGER i,j
     !      dimension ra(n),rb(2000,m),iwk(n)
@@ -808,7 +807,7 @@ SUBROUTINE indexx(n,arr,indx)
     !!ARGUMENTS:
     INTEGER n
     INTEGER indx(n)
-    REAL(r8) arr(n)
+    REAL(8) arr(n)
 
     !!LOCAL VARIABLES:
     INTEGER, PARAMETER :: M = 7
@@ -816,7 +815,7 @@ SUBROUTINE indexx(n,arr,indx)
 !        Indexes an array arr(1:n), i.e., outputs the array indx(1:n) such that arr(indx(j))
 !        is in ascending order for j = 1, 2, . . . ,N. The input quantities n and arr are not changed.
     INTEGER i,indxt,ir,itemp,j,jstack,k,l,istack(NSTACK)
-    REAL(r8) a
+    REAL(8) a
     do 11 j=1,n
         indx(j)=j
  11 continue !! end do !!11
@@ -1209,7 +1208,7 @@ END
         CHARACTER(len=100) sFormat
         
         str_out = "0"
-        ndigit = int(LOG10(dble(inum_in)))
+        ndigit = int(DLOG10(dble(inum_in)))
         ndigit = ndigit + 1
         if (ndigit>=nLen) then
 !            write(*,*)"Error: # of digits of INPUT_integer >= Length of OUT_string!"
@@ -1267,7 +1266,7 @@ END
     END
     !------------------------------------------------------------------
     
-    REAL(r8) FUNCTION gasdev(idum)
+    REAL(8) FUNCTION gasdev(idum)
     !!MODIFIED BY WGS, REPLACING gasdev0
     !!HAS BEEN TESTED BY WGS
     
