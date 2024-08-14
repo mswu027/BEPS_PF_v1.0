@@ -9,8 +9,8 @@ use shr_kind_mod,only: r8=>shr_kind_r8
 implicit none
 
 ! For plant
-integer,parameter :: PFT  = 10 !previous 9, with c4 grass and crop added
- !(/1,2,6,9,10,13,14,15,40,41/) =>(/conifer evergreen,conifer decidous,broadleaf decidous,broadleaf evergreen,mix,shrub,grass,crop,c4grass,c4crop/)
+integer,parameter :: PFT  = 14 !previous 9, with c4 grass and crop added
+ !(/1,2,6,9,10,13,14,15,40,41,1001,1002,1003,1004/) =>(/conifer evergreen,conifer decidous,broadleaf decidous,broadleaf evergreen,mix,shrub,grass,crop,c4grass,c4crop,1001:corn   1002:soybean   1003:spring wheat   1004:rice/)
 integer,parameter :: texture = 11 ! 11 soil texture classes
 ! For Soil
 integer :: nparameters=20000

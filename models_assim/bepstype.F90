@@ -35,8 +35,11 @@ module bepstype
      real(r8),pointer::  Snow(:)   ! Snow rate
      real(r8),pointer::  Swdr(:)   ! SW direct radiation
      real(r8),pointer::  Swdf(:)   ! SW diffuse radiation
-     character(len=16) :: meteo_ref_yyyymmdd !--iLab::to consistenly handle tempooral settings
-                                             !--      expected format yyyy-mm-dd
+     character(len=10) :: meteo_ref_yyyymmdd = '' !--iLab::format 'yyyy-mm-dd'
+                                                  !        met forcing time units is
+                                                  !        "seconds since yyyy-mm-dd"
+                                                  !        and we need to keep track on that
+     integer :: meteo_ref_time(4)                 !-- iLab::reference time year/mon/day/hour
 #endif
   end type forc
 
@@ -119,129 +122,54 @@ module bepstype
 
      real(r8),pointer:: lai(:,:)     ! for photosynthesis
      real(r8),pointer:: Vcmax(:,:)   ! for data assimilation
-          ! 2024/03/29  add the canopy height
-     real(r8),pointer:: HeightC(:)
      !     character,pointer:: name(:)
+     character(len=10) :: lai_ref_yyyymmdd = ''  !-- iLab::format 'yyyy-mm-dd'
+                                                 !         expected LAI time unit is
+                                                 !         "days since yyyy-mm-dd"
+                                                 !         and we need to keep track on that
+     integer :: lai_ref_time(4)                  !-- iLab::reference time year/mon/day/hour
   end type surf
 
   type(surf),save,target,public:: bound   ! boundary conditions
 
   !******************for assimilation and parameter optimization/
   type,public::para
-     real(r8),pointer:: p_Vcmax(:,:)
-     real(r8),pointer:: p_q10(:,:)
-     real(r8),pointer:: p_VJ_slope(:,:)
-     real(r8),pointer:: p_N_leaf(:,:)
-     real(r8),pointer:: p_r_decay(:,:)
-     real(r8),pointer:: p_b_h2o(:,:)
-     real(r8),pointer:: p_sif_alpha(:,:)
-     real(r8),pointer:: p_sif_beta(:,:)
-     real(r8),pointer:: p_taweff(:,:)
-     real(r8),pointer:: p_D0(:,:)
-     real(r8),pointer:: p_Ksat_scalar(:,:)
-     real(r8),pointer:: p_b_scalar(:,:)
-     real(r8),pointer:: p_m_h2o(:,:)
-     real(r8),pointer:: p_f_leaf(:,:)
-     real(r8),pointer:: p_kc25(:,:)
-     real(r8),pointer:: p_ko25(:,:)
-     real(r8),pointer:: p_tau25(:,:)
+     real(r8),pointer:: p_Vcmax(:)
+     real(r8),pointer:: p_VJ_slope(:)
+     real(r8),pointer:: p_q10(:)
+     real(r8),pointer:: p_sif_alpha(:)
+     real(r8),pointer:: p_sif_beta(:)
+     real(r8),pointer:: p_taweff(:)
+     real(r8),pointer:: p_D0(:)
+     real(r8),pointer:: p_Ksat_scalar(:)
+     real(r8),pointer:: p_b_scalar(:)
+     real(r8),pointer:: p_f_leaf
+     real(r8),pointer:: p_kc25
+     real(r8),pointer:: p_ko25
+     real(r8),pointer:: p_tau25
  !    real(r8),pointer:: p_f_lr
-     real(r8),pointer:: p_agb2vod(:,:)
+     real(r8),pointer:: p_agb2vod
 
-     real(r8),pointer:: u_Vcmax(:,:)
-     real(r8),pointer:: u_q10(:,:)
-     real(r8),pointer:: u_VJ_slope(:,:)
-     real(r8),pointer:: u_N_leaf(:,:)
-     real(r8),pointer:: u_r_decay(:,:)
-     real(r8),pointer:: u_b_h2o(:,:)
-     real(r8),pointer:: u_sif_alpha(:,:)
-     real(r8),pointer:: u_sif_beta(:,:)
-     real(r8),pointer:: u_taweff(:,:)
-     real(r8),pointer:: u_D0(:,:)
-     real(r8),pointer:: u_Ksat_scalar(:,:)
-     real(r8),pointer:: u_b_scalar(:,:)
-     real(r8),pointer:: u_m_h2o(:,:)
-     real(r8),pointer:: u_f_leaf(:,:)
-     real(r8),pointer:: u_kc25(:,:)
-     real(r8),pointer:: u_ko25(:,:)
-     real(r8),pointer:: u_tau25(:,:)
+     real(r8),pointer:: u_Vcmax(:)
+     real(r8),pointer:: u_VJ_slope(:)
+     real(r8),pointer:: u_q10(:)
+     real(r8),pointer:: u_sif_alpha(:)
+     real(r8),pointer:: u_sif_beta(:)
+     real(r8),pointer:: u_taweff(:)
+     real(r8),pointer:: u_D0(:)
+     real(r8),pointer:: u_Ksat_scalar(:)
+     real(r8),pointer:: u_b_scalar(:)
+     real(r8),pointer:: u_f_leaf
+     real(r8),pointer:: u_kc25
+     real(r8),pointer:: u_ko25
+     real(r8),pointer:: u_tau25
 !     real(r8),pointer:: u_f_lr
-     real(r8),pointer:: u_agb2vod(:,:)
+     real(r8),pointer:: u_agb2vod
 
   end type para
 
   type(para),save,target,public:: assim   ! optimization of parameters
 
-  !******************for Particle Fliter/
-  type,public::PF_para
-
-     !real(r8),pointer:: Vcmax
-     !real(r8),pointer:: q10
-     !real(r8),pointer:: VJ_slope
-     !real(r8),pointer:: N_leaf
-     !real(r8),pointer:: r_decay
-     !real(r8),pointer:: b_h2o
-     !real(r8),pointer:: sif_alpha
-     !real(r8),pointer:: sif_beta
-     !real(r8),pointer:: taweff
-     !real(r8),pointer:: D0
-     !real(r8),pointer:: Ksat_scalar
-     !real(r8),pointer:: b_scalar
-     !real(r8),pointer:: m_h2o
-     !real(r8),pointer:: f_leaf
-     !real(r8),pointer:: kc25
-     !real(r8),pointer:: ko25
-     !real(r8),pointer:: tau25
- !    real(r8),pointer:: p_f_lr
-     !real(r8),pointer:: agb2vod
-
-
-     real(r8),pointer:: Vcmax(:,:)
-     real(r8),pointer:: q10(:,:)
-     real(r8),pointer:: VJ_slope(:,:)
-     real(r8),pointer:: N_leaf(:,:)
-     real(r8),pointer:: r_decay(:,:)
-     real(r8),pointer:: b_h2o(:,:)
-     real(r8),pointer:: sif_alpha(:,:)
-     real(r8),pointer:: sif_beta(:,:)
-     real(r8),pointer:: taweff(:,:)
-     real(r8),pointer:: D0(:,:)
-     real(r8),pointer:: Ksat_scalar(:,:)
-     real(r8),pointer:: b_scalar(:,:)
-     real(r8),pointer:: m_h2o(:,:)
-     real(r8),pointer:: f_leaf(:,:)
-     real(r8),pointer:: kc25(:,:)
-     real(r8),pointer:: ko25(:,:)
-     real(r8),pointer:: tau25(:,:)
- !    real(r8),pointer:: p_f_lr
-     real(r8),pointer:: agb2vod(:,:)
-     real(r8),pointer:: pfweight(:,:)
-     real(r8),pointer:: pfweightupdate(:,:)
-
-
-  end type PF_para
-
-  type(PF_para),save,target,public:: PF   ! PF parameters
-
-  !******************for Particle Fliter observation/
-  type,public::PF_obs0
-
-    real(r8),pointer:: obs_GPP(:)
-
-  end type PF_obs0
-
-  type(PF_obs0),save,target,public:: PF_obs   
-
-  !******************for Particle Fliter resample/
-  type,public::PF_resample0
-
-    real(r8),pointer:: outparticles(:,:)
-    real(r8),pointer:: resample_weight(:)
-    real(r8),pointer:: resample_weight_update(:)
-
-  end type PF_resample0
-
-  type(PF_resample0),save,target,public:: PF_resample   
 
   !*******************************************************************
   !------------------Soil Status----------

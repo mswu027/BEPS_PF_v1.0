@@ -21,6 +21,17 @@ public :: lai_cal,       &
           transpiration, &
           evaporation_canopy
 
+private :: SFC_VPD, &
+           TEMP_FUNC, &
+           LAMBDA,  &
+           ES, &
+           TBOLTZ, &
+           TBOLTZC4, &
+           fluorescence, &
+           VT_FUNC, &
+           RT_FUNC, &
+           KT_FUNC
+
 contains
 
 subroutine lai_cal ( stem_o,stem_u,LC,CosZs,lai_o,clumping,lai_u, &
@@ -116,7 +127,7 @@ end subroutine
 
 
 
-subroutine Vcmax_Jmax(lai_o, clumping, Vcmax0, VJ_slope,slope_Vcmax_N, leaf_N, CosZs,  &
+subroutine Vcmax_Jmax(lai_o, clumping, Vcmax0, VJ_slope,slope_Vcmax_N, leaf_N, CosZs,&
                       Vcmax_sunlit, Vcmax_shaded, Jmax_sunlit, Jmax_shaded)
 implicit none
 
@@ -164,8 +175,8 @@ implicit none
         Vcmax_shaded = Vcmax0
     end if
 
-    Jmax_sunlit = max(Vcmax_sunlit * 2.39 - 14.2, 20.0)
-    Jmax_shaded = max(Vcmax_shaded * 2.39 - 14.2, 20.0)
+    Jmax_sunlit = Vcmax_sunlit * 2.39 - 14.2
+    Jmax_shaded = Vcmax_shaded * 2.39 - 14.2
 
 
 end subroutine
@@ -231,8 +242,7 @@ subroutine transpiration(tempL_o_sunlit, tempL_o_shaded, tempL_u_sunlit,    &
                tempL_u_shaded, temp_air, rh_air, Gtrans_o_sunlit,           &
                Gtrans_o_shaded, Gtrans_u_sunlit, Gtrans_u_shaded,           &
                lai_o_sunlit, lai_o_shaded, lai_u_sunlit, lai_u_shaded,      &
-               trans_o, trans_u,trans_o_sunlit, trans_o_shaded,             &
-               trans_u_sunlit, trans_u_shaded)
+               trans_o, trans_u )
 use meteoMod
 implicit none
 
@@ -241,7 +251,7 @@ implicit none
     real(r8)  ::  Gtrans_o_sunlit, Gtrans_o_shaded, Gtrans_u_sunlit, Gtrans_u_shaded
     real(r8)  ::  lai_o_sunlit, lai_o_shaded, lai_u_sunlit, lai_u_shaded
     real(r8)  ::  trans_o, trans_u
-    real(r8)) ::  trans_o_sunlit, trans_o_shaded,trans_u_sunlit,trans_u_shaded
+
     real(r8)  ::  LHt_o_sunlit, LHt_o_shaded, LHt_u_sunlit, LHt_u_shaded  !latent heat from leaves W/m2
 
     call meteo_pack(temp_air,rh_air)
@@ -254,11 +264,6 @@ implicit none
 
     trans_o =1/latent_water *(LHt_o_sunlit *lai_o_sunlit +LHt_o_shaded*lai_o_shaded )
     trans_u =1/latent_water *(LHt_u_sunlit *lai_u_sunlit +LHt_u_shaded*lai_u_shaded )
-
-    trans_o_sunlit = 1/latent_water * LHt_o_sunlit * lai_o_sunlit
-    trans_o_shaded = 1/latent_water * LHt_o_shaded * lai_o_shaded
-    trans_u_sunlit = 1/latent_water * LHt_u_sunlit * lai_u_sunlit
-    trans_u_shaded = 1/latent_water * LHt_u_shaded * lai_u_shaded
 
 end subroutine
 
@@ -279,10 +284,10 @@ implicit none
 !temperature of sunlit and shaded leaves from other storey (leaf temperature module).
 !temperature of air, relative humidity,
 !aerodynamic conductance of water (snow) for sunlit shaded leaves from overstorey
-!and understorey;
-!percentage of overstorey or understorey covered by water or snow;
+!and understorey 
+!percentage of overstorey or understorey covered by water or snow 
 !leaf area index, sunlit and shaded, overstorey and understorey
-!(from leaf area index module);
+!(from leaf area index module) 
 
 ! output:
 !evaporation of water and snow from overstorey and understorey
@@ -344,7 +349,7 @@ subroutine photosynthesis(LC,temp_leaf_p,f_leaf,p_kc25,p_ko25,p_tau25,rad_leaf,e
                          LH_leaf,Gs_w,gs_h2o_mole,aphoto,ci,ffpa,sif_alpha,sif_beta,xSIF,&
                          cosii,cosi,cos_assim)
 
-implicit none
+
 !*************************************************************************
 ! This program solves a cubic equation to calculate
 ! leaf photosynthesis.  This cubic expression is derived from solving
@@ -441,6 +446,7 @@ implicit none
 ! alternative algorithms to solve for the correct root.
 
 !*************************************************************************
+    implicit none
 
     real(r8)  :: temp_leaf_p     ! It is temporay, will be removed later
     real(r8)  :: f_leaf          ! Leaf respiration ratio, default value of 0.5
@@ -453,7 +459,6 @@ implicit none
     real(r8)  :: b_h2o           ! the intercept term in BWB model (mol H2O m-2 s-1)
     real(r8)  :: m_h2o           ! the slope in BWB model
     integer   :: LC              !landcover type
-    integer   :: plant_type_v2              !Xiuli 0303/2023  <-----xiaorong 07/22/2019
     real(r8)  :: p_kc25,p_ko25,p_tau25       ! replace, kc25,ko25,tau25 with three pramters, default values are 274.6,419.8,2904.12, respectively
     real(r8)  :: cii             ! initial intercellular co2 concentration (ppm)
     real(r8)  :: temp_leaf_c     ! leaf temperature (deg C)
@@ -516,13 +521,17 @@ implicit none
 
     real(r8)  :: Aquad,Bquad,Cquad
     real(r8)  :: b_ps, a_ps, e_ps, d_ps
-    real(r8)  :: product1
+    real(r8)  :: product1,product
     real(r8)  :: ps_1
     real(r8)  :: delta_1
     real(r8)  :: r3q
     real(r8)  :: minroot, maxroot, midroot
     real(r8)  :: tprime25
-    real(r8)  :: k_T_opt,k_T,Theta,Beta,M1,M2,M
+    real(r8)  :: k_T_opt,k_T,M1,M2,M
+    real(r8)  :: VT,RT,KT,kt25,Alpha,Beta,Theta,Qp,c4_a,c4_b,c4_c,c4_d
+    !integer   :: quad2,OUTDAT2
+    !quad2=500
+    !OUTDAT2=600
     minroot=0.0
     maxroot=0.0
     midroot=0.0
@@ -585,7 +594,7 @@ implicit none
 
 !    jmopt   = 2.39*vc_opt - 14.2
 
-     jmopt   = max(vj_slope*vc_opt - 14.2, 20.0)
+     jmopt   = vj_slope*vc_opt - 14.2
 
     call TBOLTZ(jmopt, ejm, toptjm, temp_leaf_K, jmax)  ! Apply temperature correction to JMAX
 
@@ -607,7 +616,7 @@ implicit none
 !        for A
 
 !****************************************
-    if(LC == 40 .or. LC==41) then   ! analytical solution for C4 photosynthesis, added by MOUSONG.WU@201907, refer to Chen et al.2019 AFM
+    if (LC == 40 .or. LC==41) then   ! analytical solution for C4 photosynthesis, added by MOUSONG.WU@201907, refer to Chen et al.2019 AFM
 
         k_T_opt = 2.*1.e4*vc_opt
 
@@ -764,12 +773,12 @@ implicit none
 
 
 !  // Bin Chen:
-!         r_tot = 1.0/b_co2 + 1.0/g_lb_c; // total resistance to CO2 (m2 s mol-1)
-!         denom = g_lb_c * b_co2;
+!         r_tot = 1.0/b_co2 + 1.0/g_lb_c  // total resistance to CO2 (m2 s mol-1)
+!         denom = g_lb_c * b_co2 
 
-!         Aquad = r_tot * e_ps;
-!         Bquad = (e_ps*resp_ld + a_ps)*r_tot - b_ps - e_ps*ca;
-!         Cquad = a_ps*(ca-d_ps) - resp_ld*(e_ps*ca+b_ps);
+!         Aquad = r_tot * e_ps 
+!         Bquad = (e_ps*resp_ld + a_ps)*r_tot - b_ps - e_ps*ca 
+!         Cquad = a_ps*(ca-d_ps) - resp_ld*(e_ps*ca+b_ps) 
 
 
 300 Aquad = Beta + k_T/g_lb_c + 1.6*k_T/b_co2
@@ -794,7 +803,6 @@ implicit none
     ci = cs - aphoto / gs_co2_mole
 
     Gs_w = gs_h2o_mole * temp_leaf_K * (met%pstat273)     !m s-1
-
 
     else
         alpha_ps = 1.0 + (b_co2 / g_lb_c) - m_co2*rh_leaf*f_soilwater
@@ -986,12 +994,12 @@ implicit none
 
 
 !  // Bin Chen:
-!         r_tot = 1.0/b_co2 + 1.0/g_lb_c; // total resistance to CO2 (m2 s mol-1)
-!         denom = g_lb_c * b_co2;
+!         r_tot = 1.0/b_co2 + 1.0/g_lb_c  // total resistance to CO2 (m2 s mol-1)
+!         denom = g_lb_c * b_co2 
 
-!         Aquad = r_tot * e_ps;
-!         Bquad = (e_ps*resp_ld + a_ps)*r_tot - b_ps - e_ps*ca;
-!         Cquad = a_ps*(ca-d_ps) - resp_ld*(e_ps*ca+b_ps);
+!         Aquad = r_tot * e_ps 
+!         Bquad = (e_ps*resp_ld + a_ps)*r_tot - b_ps - e_ps*ca 
+!         Cquad = a_ps*(ca-d_ps) - resp_ld*(e_ps*ca+b_ps) 
 
 100 ps_1    = ca * g_lb_c * b_co2
     delta_1 = b_co2 + g_lb_c
@@ -1017,45 +1025,246 @@ implicit none
     ci = cs - aphoto / gs_co2_mole
 
     Gs_w = gs_h2o_mole * temp_leaf_K * (met%pstat273)     !m s-1
-end if
+    
+    end if
+
+
+    if (LC == 1001) then   ! C4 model refer to Xiaorong Wang
+
+        ca=CO2_air
+!       iphoton = 4.55*0.5*rad_leaf
+        iphoton = 4.55*f_leaf*rad_leaf   ! replace 0.5 to a coefficient, f_leaf, leaf respiration rate, for optimization purpose, @MOUSONG WU, 2020-09-14
+
+        if(2*iphoton < 1)then
+            iphoton = 0
+        end if
+
+        temp_leaf_K = temp_leaf_c + 273.13
+
+
+        call LAMBDA(temp_leaf_p, fact%latent)
+        bound_layer_res%vapor = 1.0/g_lb_w
+
+        met%press_bars  = 1.013
+        met%pstat273    = 0.022624 / (273.16 * met%press_bars)
+
+        met%T_Kelvin    = temp_leaf_c+273.13
+        met%rhova_g     = e_air * 2165/met%T_Kelvin   ! absolute humidity, g m-3
+        met%rhova_kg    = met%rhova_g / 1000.0        ! absolute humidity, kg m-3
+
+
+        g_lb_c  = 1. / (1.0/g_lb_w*1.6 * temp_leaf_K * (met%pstat273))
+
+        m_co2 = m_h2o/1.6
+        b_co2 = b_h2o/1.6
+
+        call SFC_VPD(temp_leaf_K, LH_leaf, rh_leaf)
+
+        tprime25 = temp_leaf_K - tk_25                ! temperature difference
+
+        resp_ld25=vc_opt * 0.021
+
+        if(2.0*iphoton > 10) then                      ! Bin Chen: check this later.
+            resp_ld25 = resp_ld25 * 0.4               ! reduce respiration by 40% in light according to Amthor
+        end if
+
+        kt25=20000*vc_opt    !Collatz 1992
+
+        call VT_FUNC(temp_leaf_K,vc_opt,VT)      !VT=VT_FUNC(temp_leaf_K,vc_opt) //VT   //Collatz 1992
+        call RT_FUNC(temp_leaf_K,resp_ld25,RT)   !RT=RT_FUNC(temp_leaf_K,resp_ld25) //RT   //Collatz 1992
+        call KT_FUNC(temp_leaf_K,kt25,KT)        !KT=KT_FUNC(temp_leaf_K,kt25) //KT   //Collatz 1992
+
+        !M is the intermediate variable that gives the minimum of wc and wj
+        !Theta M^2 - M(wj + wc) + wj wc = 0
+        ! a x^2+b x+c=0
+        ! x = [-b +/- sqrt(b^2 - 4 a c)]/2a
+
+        Alpha=0.05   ! in relation to the quantum efficiency          //Collatz 1992
+        Qp=iphoton   ! absorbed photosynthetically active radiation   //Collatz 1992
+
+        wc = VT         !Collatz 1992
+        wj = Alpha*Qp   !Collatz 1992
+
+
+        Theta=0.83   !Collatz 1992
+        Beta=0.93    !Collatz 1992
+		
+		
+		M1=((wj+wc)+sqrt((wj+wc)*(wj+wc)-4*Theta*wj*wc))/(2*Theta) 
+        M2=((wj+wc)-sqrt((wj+wc)*(wj+wc)-4*Theta*wj*wc))/(2*Theta) 
+
+        if(M1<M2) then
+           M=M1 
+        else
+           M=M2 
+        end if
+
+        c4_a = Beta*m_h2o*rh_leaf*f_soilwater -Beta*b_h2o/g_lb_c &
+               - 1.6*KT/g_lb_c + KT*m_h2o*rh_leaf*f_soilwater &
+               /g_lb_c - KT*b_h2o/(g_lb_c*g_lb_c) 
+
+        c4_b = Beta*b_h2o*ca - Beta*m_h2o*rh_leaf*RT*f_soilwater &
+               +  1.6*KT*ca - M*m_h2o*rh_leaf*f_soilwater &
+               - KT*m_h2o*rh_leaf*ca*f_soilwater - M*b_h2o/g_lb_c &
+               - RT*KT*m_co2*rh_leaf*f_soilwater /g_lb_c &
+               +2*KT*b_h2o*ca /g_lb_c + (1.6*KT*RT+1.6*KT*M-M*KT*m_h2o*rh_leaf*f_soilwater) &
+               /g_lb_c +  M*KT*b_h2o/(g_lb_c*g_lb_c) 
+
+        c4_c = RT*M*m_h2o*rh_leaf*f_soilwater - M*b_h2o*ca + RT*KT*m_h2o*rh_leaf*ca*f_soilwater &
+               - KT*b_h2o*ca*ca+(M*KT*m_h2o*rh_leaf*f_soilwater -1.6*KT*RT-1.6*KT*M)*ca &
+               - 2*M*KT*b_h2o*ca/g_lb_c - (1.6*M*RT*KT - M*KT*m_h2o*rh_leaf*RT*f_soilwater )/g_lb_c 
+
+        c4_d = M*KT*b_h2o*ca*ca + 1.6*M*RT*KT*ca - M*RT*KT*m_h2o*rh_leaf*ca*f_soilwater 
+
+
+        denom = c4_a 
+        p_cubic = c4_b/c4_a 
+        q_cubic = c4_c/c4_a 
+        r_cubic = c4_d/c4_a 
+		
+		
+		!Use solution from Numerical Recipes from Press
+        Qroot = (p_cubic*p_cubic - 3.0 * q_cubic) / 9.0 
+        Rroot = (2.0 * p_cubic*p_cubic*p_cubic  - 9.0 * p_cubic * q_cubic + 27.0 * r_cubic) / 54.0 
+       	r3q = Rroot / sqrt(Qroot*Qroot*Qroot) 
+
+	    if (r3q>1) then 
+            r3q=1 	!  by G. Mo
+        end if
+	    if (r3q<-1) then 
+            r3q=-1 	!  by G. Mo
+        end if
+
+	    ang_L = acos(r3q) 
+
+        root1 = -2.0 * sqrt(Qroot) * cos(ang_L / 3.0) - p_cubic / 3.0   ! real roots
+        root2 = -2.0 * sqrt(Qroot) * cos((ang_L + PI2) / 3.0) - p_cubic / 3.0 
+        root3 = -2.0 * sqrt(Qroot) * cos((ang_L - PI2) / 3.0) - p_cubic / 3.0 
+		
+		
+		! Here A = x - p / 3, allowing the cubic expression to be expressed
+        !as: x^3 + ax + b = 0
+		! rank roots #1,#2 and #3 according to the minimum, intermediate and maximum value
+
+	   if(root1 <= root2 .and. root1 <= root3) then
+		   minroot=root1 
+		   if (root2 <= root3) then
+			   midroot=root2 
+               maxroot=root3 
+           else
+           
+			   midroot=root3 
+               maxroot=root2 
+            end if
+        end if
+		   
+	   
+       if(root2 <= root1 .and. root2 <= root3) then
+		   minroot=root2 
+		   if (root1 <= root3) then
+			   midroot=root1 
+               maxroot=root3 
+           else
+			   midroot=root3 
+               maxroot=root1 
+            end if
+        end if
+
+
+       if(root3 <= root1 .and. root3 <= root2) then
+		   minroot=root3 
+           if (root1 < root2) then
+			   midroot=root1 
+               maxroot=root2 
+           else
+			   midroot=root2 
+               maxroot=root1 
+            end if
+        end if
+
+		aphoto=0 
+
+        if (minroot > 0 .and. midroot > 0 .and. maxroot > 0) aphoto=minroot 
+
+
+        if (minroot < 0 .and. midroot < 0 .and. maxroot > 0) aphoto=maxroot 
+
+
+        if (minroot < 0 .and. midroot > 0 .and. maxroot > 0) aphoto=midroot 
+
+        if(aphoto <= 0.0) then
+			goto 500 
+		else
+			goto 600 
+        end if
+!a quadratic solution of A is derived if gs=b, but a cubic form occurs
+!if gs =ax + b.  Use quadratic case when A <=0
+500 Aquad = Beta+KT/g_lb_c+1.6*KT/b_h2o 
+	Bquad = 2*Beta*RT-M-ca*KT-(KT/g_lb_c+1.6*KT/b_h2o)*(M-RT) 
+	Cquad = Beta*RT*RT-M*RT+ca*KT*(M-RT) 
+
+    product=Bquad * Bquad - 4.0 * Aquad * Cquad 
+
+    if (product >= 0) then
+	!	*aphoto = (-Bquad + sqrt(product)) / (2.0 * Aquad) 
+		aphoto = (-Bquad - sqrt(product)) / (2.0 * Aquad) 
+    end if
+
+    !Tests suggest that APHOTO2 is the correct photosynthetic root when
+    !light is zero because root 2, not root 1 yields the dark respiration
+    !value rd.
+		
+600 aphoto =max(0., aphoto) 
+
+    cs = ca - aphoto / g_lb_c 
+
+	gs_h2o_mole = (f_soilwater *m_h2o* rh_leaf *aphoto / cs) + b_h2o  ! mol m-2 s-1
+	gs_co2_mole = gs_h2o_mole /1.6 
+
+	ci = cs - aphoto / gs_co2_mole 
+
+	Gs_w = gs_h2o_mole * temp_leaf_K * (met%pstat273)  ! m s-1
+
+    end if
+    
 
    !! QBO
-!   ffpa = 0.8;   ! 0.6~0.9
+!   ffpa = 0.8    ! 0.6~0.9
 
-  if(iphoton <= 0.) then
-    xSIF = 0.
-   else    ! C4 je is added, @MOUSONG WU, 2020-09-10
-     if (LC == 40 .or. LC==41) then
-        je = aphoto
-     else
-        je = max(aphoto*(ci+2.0*gammac)/(ci-gammac),0.0)
-     end if
+    if(iphoton <= 0.) then
+        xSIF = 0.
+    else    ! C4 je is added, @MOUSONG WU, 2020-09-10
+        if (LC == 40 .or. LC==41) then
+            je = aphoto
+        else
+            je = max(aphoto*(ci+2.0*gammac)/(ci-gammac),0.0)
+        end if
 
-    xxn=1.0-je/(iphoton*ffpa*0.05)
-    if(xxn < 0) xxn = 0.
+        xxn=1.0-je/(iphoton*ffpa*0.05)
+        if(xxn < 0) xxn = 0.
 
-    kf  = 0.05
-    kd  = 0.95
-    kp  = 4.0
+        kf  = 0.05
+        kd  = 0.95
+        kp  = 4.0
 
-    ps_sif = kp/(kf+kp+kd)*(1.-xxn)
-    kn     =  (sif_alpha*xxn + sif_beta)*xxn
-   ! kn     = (6.2473*xxn - 0.5994)*xxn
-    fm     = kf/(kf+kd+kn)
-    fs     = fm*(1.0-ps_sif)
+        ps_sif = kp/(kf+kp+kd)*(1.-xxn)
+        kn     =  (sif_alpha*xxn + sif_beta)*xxn
+        ! kn     = (6.2473*xxn - 0.5994)*xxn
+        fm     = kf/(kf+kd+kn)
+        fs     = fm*(1.0-ps_sif)
 
-    if(xxn < 0.26) fs = -0.0075*xxn+0.0181
+        if(xxn < 0.26) fs = -0.0075*xxn+0.0181
 
-    xSIF   = fs*iphoton*ffpa
-!    xSIF = iphoton
-  end if
+        xSIF   = fs*iphoton*ffpa
+!       xSIF = iphoton
+    end if
 
-! add the module for calculating COS uptake by plants, @MOUSONG.WU 2020-09-17
+    ! add the module for calculating COS uptake by plants, @MOUSONG.WU 2020-09-17
 
-call cos_plant(LC,cosii,convf,gs_h2o_mole,g_lb_cos,vcmax,ffpa,f_soilwater,cos_assim)
+    call cos_plant(LC,cosii,convf,gs_h2o_mole,g_lb_cos,vcmax,ffpa,f_soilwater,cos_assim)
 
-coss = cosa - cos_assim/g_lb_cos                           ! ppb
-cosi = coss - cos_assim/(gs_h2o_mole/1.56)                 ! ppb
+    coss = cosa - cos_assim/g_lb_cos                           ! ppb
+    cosi = coss - cos_assim/(gs_h2o_mole/1.56)                 ! ppb
 
 end subroutine
 
@@ -1203,8 +1412,41 @@ subroutine fluorescence(x,fs)
 
 end subroutine
 
+!*----------------------------------------------------------------*!
+!xiaorong 21/07/2019
+!VT_FUNC :The temperature dependence of the substrate saturated rubisco capacity(vmax)
+!//Q10:(umol/m2/s)   Vcmax25:vcmax at 25 Degrees celsiusï¼Œ  Tl:leave temperature(K)
+!/*----------------------------------------------------------------*/
+subroutine VT_FUNC(Tl,Vcmax25,y)
+   implicit none
+   real(r8)  :: Tl, Vcmax25, y,Q10
+   Q10=2.4 
+   y=(Vcmax25*Q10**((Tl-298.13)/10))/( (1+exp (0.3*(286.13-Tl)))*(1+exp(0.3*(Tl-309.13)))) 
+end subroutine
 
 
+!/*----------------------------------------------------------------*/
+!//xiaorong 21/07/2019
+!//RT_FUNC :the pseudo-first order rate constant with respect to co2 (k) and the leaf respiration (RT) are goven as Q10 function
+!//Q10:(umol/m2/s)   Rd25:respiration at 25 Degrees celsiusï¼Œ  Tl:leave temperature(K)
+!/*----------------------------------------------------------------*/
+subroutine RT_FUNC(Tl,Rd25,y)
+   implicit none
+   real(r8)  :: Tl,Rd25, Q10,y
+   Q10=2 
+   y=(Rd25*Q10**((Tl-298.13)/10))/(1+exp(1.3*(Tl-328.13))) 
+end subroutine
+
+!/*----------------------------------------------------------------*/
+!//xiaorong 21/07/2019
+!//Q10:(mol/m2/s)  Tl:leave temperature(K)
+!/*----------------------------------------------------------------*/
+subroutine KT_FUNC(Tl,KT25,y)
+   implicit none
+   real(r8)  :: Tl,KT25, Q10,y
+   Q10=2.4  !//mol/m2/s-->umol/m2/s
+   y=(KT25*Q10**((Tl-298.13)/10)) 
+end subroutine
 
 end module
 

@@ -29,6 +29,10 @@ type :: results
    real(r8)  :: COS_grnd
 !   real(r8)  :: COS_grnd2
    real(r8)  :: fAPAR
+   real(r8)  :: PWS
+   real(r8)  :: ETa
+   real(r8)  :: VOD
+   real(r8)  :: fei_leaf
 end type results
 
 type :: climatedata
